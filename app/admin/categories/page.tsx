@@ -8,14 +8,12 @@ import {
   ListChecks,
   Pencil,
   Search,
-  Settings,
   Trash2,
   UserCircle2,
-  Users,
   X,
   Plus,
-  FileText,
 } from "lucide-react";
+import AdminSidebar from "../../components/admin/AdminSidebar";
 
 type Category = {
   _id: string;
@@ -53,7 +51,7 @@ export default function AdminCategoriesPage() {
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
   const [form, setForm] = useState<CategoryForm>(initialForm);
   const [submitting, setSubmitting] = useState(false);
-
+  const [totalParameters, setTotalParameters] = useState(0);
   async function fetchCategories() {
     try {
       setLoading(true);
@@ -75,6 +73,7 @@ export default function AdminCategoriesPage() {
 
   useEffect(() => {
     fetchCategories();
+    fetchParametersCount();
   }, []);
 
   const filteredCategories = useMemo(() => {
@@ -92,7 +91,6 @@ export default function AdminCategoriesPage() {
 
   const totalCategories = categories.length;
   const activeCategories = categories.filter((c) => c.isActive).length;
-  const totalParameters = 0; // later connect with /api/parameters
 
   function openAddModal() {
     setEditingCategory(null);
@@ -120,7 +118,7 @@ export default function AdminCategoriesPage() {
 
   function handleInputChange<K extends keyof CategoryForm>(
     key: K,
-    value: CategoryForm[K]
+    value: CategoryForm[K],
   ) {
     setForm((prev) => ({ ...prev, [key]: value }));
   }
@@ -230,11 +228,24 @@ export default function AdminCategoriesPage() {
       alert("Something went wrong while updating status");
     }
   }
+  async function fetchParametersCount() {
+    try {
+      const res = await fetch("/api/parameters", { cache: "no-store" });
+      const data = await res.json();
+
+      if (data.success) {
+        setTotalParameters(data.data.length);
+      }
+    } catch (error) {
+      console.error("Error fetching parameters count:", error);
+    }
+  }
 
   return (
     <div className="min-h-screen bg-[#f8f8f8] text-[#111]">
       <div className="flex">
-        <aside className="hidden min-h-screen w-[290px] border-r border-gray-200 bg-white lg:block">
+        <AdminSidebar />
+        {/* <aside className="hidden min-h-screen w-[290px] border-r border-gray-200 bg-white lg:block">
           <div className="flex items-center gap-3 px-6 py-6">
             <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#ca1f23] text-white shadow-md">
               <ListChecks size={24} />
@@ -249,18 +260,27 @@ export default function AdminCategoriesPage() {
           </div>
 
           <nav className="mt-4 space-y-2 px-3">
-            <SidebarItem icon={<LayoutDashboard size={20} />} label="Dashboard" />
+            <SidebarItem
+              icon={<LayoutDashboard size={20} />}
+              label="Dashboard"
+            />
             <SidebarItem
               active
               icon={<Grid2x2 size={20} />}
               label="Categories Management"
             />
-            <SidebarItem icon={<ListChecks size={20} />} label="Parameters Management" />
-            <SidebarItem icon={<Users size={20} />} label="Faculty Category Assignment" />
+            <SidebarItem
+              icon={<ListChecks size={20} />}
+              label="Parameters Management"
+            />
+            <SidebarItem
+              icon={<Users size={20} />}
+              label="Faculty Category Assignment"
+            />
             <SidebarItem icon={<FileText size={20} />} label="Reports" />
             <SidebarItem icon={<Settings size={20} />} label="Settings" />
           </nav>
-        </aside>
+        </aside> */}
 
         <main className="flex-1">
           <header className="flex items-center justify-between border-b border-gray-200 bg-white px-6 py-4">
@@ -380,11 +400,15 @@ export default function AdminCategoriesPage() {
                             <td className="px-5 py-4 font-medium">
                               {category.categoryName}
                             </td>
-                            <td className="px-5 py-4">{category.categoryCode}</td>
+                            <td className="px-5 py-4">
+                              {category.categoryCode}
+                            </td>
                             <td className="px-5 py-4">
                               {category.description || "-"}
                             </td>
-                            <td className="px-5 py-4">{category.displayOrder}</td>
+                            <td className="px-5 py-4">
+                              {category.displayOrder}
+                            </td>
                             <td className="px-5 py-4">
                               <button
                                 onClick={() => handleToggleStatus(category)}
@@ -517,9 +541,7 @@ export default function AdminCategoriesPage() {
                 <span className="font-medium">Active</span>
                 <button
                   type="button"
-                  onClick={() =>
-                    handleInputChange("isActive", !form.isActive)
-                  }
+                  onClick={() => handleInputChange("isActive", !form.isActive)}
                   className={`relative h-7 w-14 rounded-full transition ${
                     form.isActive ? "bg-[#00a651]" : "bg-gray-300"
                   }`}
@@ -543,8 +565,8 @@ export default function AdminCategoriesPage() {
                       ? "Updating..."
                       : "Saving..."
                     : editingCategory
-                    ? "Update"
-                    : "Save"}
+                      ? "Update"
+                      : "Save"}
                 </button>
 
                 <button
@@ -563,28 +585,28 @@ export default function AdminCategoriesPage() {
   );
 }
 
-function SidebarItem({
-  icon,
-  label,
-  active = false,
-}: {
-  icon: React.ReactNode;
-  label: string;
-  active?: boolean;
-}) {
-  return (
-    <button
-      className={`flex w-full items-center gap-3 rounded-2xl px-4 py-4 text-left text-lg transition ${
-        active
-          ? "bg-red-50 font-medium text-[#ca1f23]"
-          : "text-gray-800 hover:bg-gray-50"
-      }`}
-    >
-      <span>{icon}</span>
-      <span>{label}</span>
-    </button>
-  );
-}
+// function SidebarItem({
+//   icon,
+//   label,
+//   active = false,
+// }: {
+//   icon: React.ReactNode;
+//   label: string;
+//   active?: boolean;
+// }) {
+//   return (
+//     <button
+//       className={`flex w-full items-center gap-3 rounded-2xl px-4 py-4 text-left text-lg transition ${
+//         active
+//           ? "bg-red-50 font-medium text-[#ca1f23]"
+//           : "text-gray-800 hover:bg-gray-50"
+//       }`}
+//     >
+//       <span>{icon}</span>
+//       <span>{label}</span>
+//     </button>
+//   );
+// }
 
 function StatCard({
   title,
