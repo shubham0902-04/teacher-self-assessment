@@ -180,8 +180,8 @@ export default function FacultyCategoryAssignmentPage() {
           >
             <option value="">All Departments</option>
             {Array.from(new Set(faculties.map((f) => f.department))).map(
-              (dept) => (
-                <option key={dept} value={dept}>
+              (dept,index) => (
+                <option key={dept + index} value={dept}>
                   {dept}
                 </option>
               ),

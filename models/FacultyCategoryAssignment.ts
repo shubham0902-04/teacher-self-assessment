@@ -1,24 +1,25 @@
 import mongoose from "mongoose";
 
 const FacultyCategoryAssignmentSchema = new mongoose.Schema({
-
+  
   facultyId: {
-    type: String,
-    required: true
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "User",
+    required: true,
   },
 
   assignedCategories: [
     {
-      type: String
-    }
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "EvaluationCategory",
+    },
   ],
 
   academicYear: {
     type: String,
-    required: true
-  }
-
+    required: true,
+  },
 });
 
 export default mongoose.models.FacultyCategoryAssignment ||
-mongoose.model("FacultyCategoryAssignment", FacultyCategoryAssignmentSchema);
+  mongoose.model("FacultyCategoryAssignment", FacultyCategoryAssignmentSchema);

@@ -1,20 +1,15 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import AdminSidebar from "@/app/components/admin/AdminSidebar";
 import {
   Bell,
-  Grid2x2,
-  LayoutDashboard,
-  ListChecks,
   Pencil,
   Search,
-  Settings,
   Trash2,
   UserCircle2,
-  Users,
   X,
   Plus,
-  FileText,
 } from "lucide-react";
 
 type Category = {
@@ -297,44 +292,11 @@ export default function AdminParametersPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#f8f8f8] text-[#111]">
-      <div className="flex">
-        <aside className="hidden min-h-screen w-[290px] border-r border-gray-200 bg-white lg:block">
-          <div className="flex items-center gap-3 px-6 py-6">
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#ca1f23] text-white shadow-md">
-              <ListChecks size={24} />
-            </div>
-            <div>
-              <h1 className="text-[18px] font-bold leading-6">
-                Teacher Self
-                <br />
-                Assessment System
-              </h1>
-            </div>
-          </div>
+   <div className="flex min-h-screen bg-[#f8f8f8] text-[#111]">
+         <AdminSidebar />
+   
+         <div className="flex-1 p-10">
 
-          <nav className="mt-4 space-y-2 px-3">
-            <SidebarItem
-              icon={<LayoutDashboard size={20} />}
-              label="Dashboard"
-            />
-            <SidebarItem
-              icon={<Grid2x2 size={20} />}
-              label="Categories Management"
-            />
-            <SidebarItem
-              active
-              icon={<ListChecks size={20} />}
-              label="Parameters Management"
-            />
-            <SidebarItem
-              icon={<Users size={20} />}
-              label="Faculty Category Assignment"
-            />
-            <SidebarItem icon={<FileText size={20} />} label="Reports" />
-            <SidebarItem icon={<Settings size={20} />} label="Settings" />
-          </nav>
-        </aside>
 
         <main className="flex-1">
           <header className="flex items-center justify-between border-b border-gray-200 bg-white px-6 py-4">
@@ -723,28 +685,7 @@ export default function AdminParametersPage() {
   );
 }
 
-function SidebarItem({
-  icon,
-  label,
-  active = false,
-}: {
-  icon: React.ReactNode;
-  label: string;
-  active?: boolean;
-}) {
-  return (
-    <button
-      className={`flex w-full items-center gap-3 rounded-2xl px-4 py-4 text-left text-lg transition ${
-        active
-          ? "bg-red-50 font-medium text-[#ca1f23]"
-          : "text-gray-800 hover:bg-gray-50"
-      }`}
-    >
-      <span>{icon}</span>
-      <span>{label}</span>
-    </button>
-  );
-}
+
 
 function StatCard({ title, value }: { title: string; value: number }) {
   return (

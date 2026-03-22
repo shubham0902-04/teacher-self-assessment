@@ -1,27 +1,22 @@
 import mongoose from "mongoose";
 
-const EntrySchema = new mongoose.Schema(
+// 🔥 FIELD VALUE (IMPORTANT)
+const FieldValueSchema = new mongoose.Schema(
   {
-    title: {
+    fieldId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "ParameterField",
+      required: true,
+    },
+
+    fieldName: {
       type: String,
-      default: "",
+      required: true,
       trim: true,
     },
 
-    description: {
-      type: String,
-      default: "",
-      trim: true,
-    },
-
-    activityDate: {
-      type: Date,
-    },
-
-    details: {
-      type: String,
-      default: "",
-      trim: true,
+    value: {
+      type: mongoose.Schema.Types.Mixed, // number / text / date
     },
 
     marks: {
@@ -39,6 +34,20 @@ const EntrySchema = new mongoose.Schema(
       },
     },
 
+    remarks: {
+      type: String,
+      default: "",
+      trim: true,
+    },
+  },
+  { _id: false },
+);
+
+// 🔥 ENTRY (1 row of form)
+const EntrySchema = new mongoose.Schema(
+  {
+    fields: [FieldValueSchema], // 🔥 KEY CHANGE
+
     evidenceFiles: [
       {
         type: mongoose.Schema.Types.ObjectId,
@@ -49,6 +58,7 @@ const EntrySchema = new mongoose.Schema(
   { _id: true },
 );
 
+// 🔥 PARAMETER
 const ParameterDataSchema = new mongoose.Schema(
   {
     parameterId: {
@@ -68,6 +78,7 @@ const ParameterDataSchema = new mongoose.Schema(
   { _id: true },
 );
 
+// 🔥 CATEGORY
 const CategoryDataSchema = new mongoose.Schema(
   {
     categoryId: {
@@ -87,6 +98,7 @@ const CategoryDataSchema = new mongoose.Schema(
   { _id: true },
 );
 
+// 🔥 MAIN SCHEMA
 const TeacherEvaluationSchema = new mongoose.Schema(
   {
     facultyId: {
@@ -156,28 +168,21 @@ const TeacherEvaluationSchema = new mongoose.Schema(
       trim: true,
     },
 
-    submittedToHODAt: {
-      type: Date,
-    },
-
-    reviewedByHODAt: {
-      type: Date,
-    },
-
-    submittedToPrincipalAt: {
-      type: Date,
-    },
-
-    reviewedByPrincipalAt: {
-      type: Date,
-    },
-
-    finalizedAt: {
-      type: Date,
-    },
+    submittedToHODAt: Date,
+    reviewedByHODAt: Date,
+    submittedToPrincipalAt: Date,
+    reviewedByPrincipalAt: Date,
+    finalizedAt: Date,
   },
   { timestamps: true },
 );
 
+// 🔥 INDEXES (IMPORTANT)
+TeacherEvaluationSchema.index(
+  { facultyId: 1, academicYear: 1 },
+  { unique: true },
+);
+
+// 🔥 EXPORT
 export default mongoose.models.TeacherEvaluation ||
   mongoose.model("TeacherEvaluation", TeacherEvaluationSchema);

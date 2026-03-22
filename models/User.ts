@@ -3,12 +3,20 @@ import mongoose from "mongoose";
 const UserSchema = new mongoose.Schema(
   {
     name: String,
-    email: String,
+    email: {
+      type: String,
+      unique: true,
+    },
     employeeId: String,
+
+    password: {
+      type: String,
+      required: true,
+    },
 
     role: {
       type: String,
-      enum: ["Admin", "Director", "Chairman", "Principal", "HOD", "Faculty"],
+      enum: ["Admin", "Chairman", "Principal", "HOD", "Faculty"],
     },
 
     schoolId: {
@@ -21,12 +29,17 @@ const UserSchema = new mongoose.Schema(
       ref: "Department",
     },
 
+    createdBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+    },
+
     isActive: {
       type: Boolean,
       default: true,
     },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 export default mongoose.models.User || mongoose.model("User", UserSchema);
