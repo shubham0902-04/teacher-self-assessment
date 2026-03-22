@@ -31,7 +31,7 @@ const menu = [
       { name: "Categories", path: "/admin/categories", icon: FolderKanban },
       { name: "Parameters", path: "/admin/parameters", icon: ListChecks },
       {
-        name: "Parameter Fields",
+        name: "Parameter Criteria",
         path: "/admin/parameter-fields",
         icon: SlidersHorizontal,
       },
