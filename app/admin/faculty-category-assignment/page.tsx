@@ -2,13 +2,14 @@
 
 import AdminSidebar from "@/app/components/admin/AdminSidebar";
 import { useEffect, useState } from "react";
-import { Search, X, Save, Users, CheckSquare } from "lucide-react";
+import { Search, X, Save, Users, CheckSquare, Building2 } from "lucide-react";
 import { toast } from "sonner";
 
 type Faculty = {
   _id: string;
   name: string;
-  department: string;
+  departmentId?: { _id: string; departmentName: string } | null;
+  schoolId?: { _id: string; schoolName: string } | null;
 };
 
 type Category = {
@@ -38,19 +39,32 @@ export default function FacultyCategoryAssignmentPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
-  // ---------------- FILTER ----------------
-
-  const departments = Array.from(new Set(faculties.map((f) => f.department))).filter(Boolean);
+  // Unique departments from faculties
+  const departments = Array.from(
+    new Map(
+      faculties
+        .filter((f) => f.departmentId && typeof f.departmentId === "object")
+        .map((f) => {
+          const dept = f.departmentId as {
+            _id: string;
+            departmentName: string;
+          };
+          return [dept._id, dept];
+        }),
+    ).values(),
+  );
 
   const filteredFaculties = faculties.filter((fac) => {
     const matchName = fac.name.toLowerCase().includes(search.toLowerCase());
-    const matchDept = departmentFilter === "" || fac.department === departmentFilter;
+    const deptId =
+      typeof fac.departmentId === "object" ? fac.departmentId?._id : null;
+    const matchDept = departmentFilter === "" || deptId === departmentFilter;
     return matchName && matchDept;
   });
 
-  // how many faculty have all categories assigned
   const fullyAssigned = faculties.filter(
-    (f) => selected[f._id]?.length === categories.length
+    (f) =>
+      selected[f._id]?.length === categories.length && categories.length > 0,
   ).length;
 
   // ---------------- LOAD ----------------
@@ -96,13 +110,15 @@ export default function FacultyCategoryAssignmentPage() {
     setSelected((prev) => {
       const facultyCats = prev[facultyId] || [];
       if (facultyCats.includes(categoryId)) {
-        return { ...prev, [facultyId]: facultyCats.filter((c) => c !== categoryId) };
+        return {
+          ...prev,
+          [facultyId]: facultyCats.filter((c) => c !== categoryId),
+        };
       }
       return { ...prev, [facultyId]: [...facultyCats, categoryId] };
     });
   }
 
-  // Select all faculty for one category
   function bulkSelectCategory(categoryId: string) {
     setSelected((prev) => {
       const updated = { ...prev };
@@ -114,10 +130,9 @@ export default function FacultyCategoryAssignmentPage() {
       });
       return updated;
     });
-    toast.success(`All faculty assigned to this category`);
+    toast.success("All faculty assigned to this category");
   }
 
-  // Select all categories for one faculty
   function bulkSelectFaculty(facultyId: string) {
     setSelected((prev) => ({
       ...prev,
@@ -143,7 +158,6 @@ export default function FacultyCategoryAssignmentPage() {
       });
 
       const data = await res.json();
-
       if (data.success) {
         toast.success("Assignments saved successfully");
       } else {
@@ -163,16 +177,16 @@ export default function FacultyCategoryAssignmentPage() {
       <AdminSidebar />
 
       <main className="flex-1 overflow-y-auto p-6">
-
         {/* HEADER */}
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h1 className="text-3xl font-bold text-[#111]">Faculty Category Assignment</h1>
+            <h1 className="text-3xl font-bold text-[#111]">
+              Faculty Category Assignment
+            </h1>
             <p className="text-sm text-gray-400 mt-0.5">
               Academic Year: {ACADEMIC_YEAR}
             </p>
           </div>
-
           <button
             onClick={saveAll}
             disabled={saving}
@@ -207,7 +221,7 @@ export default function FacultyCategoryAssignmentPage() {
           </div>
         )}
 
-        {/* BULK SELECT BUTTONS */}
+        {/* BULK SELECT */}
         {!loading && categories.length > 0 && (
           <div className="mb-4">
             <p className="text-xs font-medium text-gray-400 uppercase tracking-wider mb-2">
@@ -240,7 +254,10 @@ export default function FacultyCategoryAssignmentPage() {
               className="flex-1 text-sm text-[#111] placeholder:text-gray-400 outline-none bg-transparent"
             />
             {search && (
-              <button onClick={() => setSearch("")} className="text-gray-400 hover:text-gray-600 transition">
+              <button
+                onClick={() => setSearch("")}
+                className="text-gray-400 hover:text-gray-600 transition"
+              >
                 <X size={14} />
               </button>
             )}
@@ -252,9 +269,9 @@ export default function FacultyCategoryAssignmentPage() {
             className="bg-white border border-gray-200 rounded-xl px-4 py-3 text-sm text-[#111] outline-none focus:border-[#ca1f23] shadow-sm"
           >
             <option value="">All Departments</option>
-            {departments.map((dept, i) => (
-              <option key={dept + i} value={dept}>
-                {dept}
+            {departments.map((dept) => (
+              <option key={dept._id} value={dept._id}>
+                {dept.departmentName}
               </option>
             ))}
           </select>
@@ -283,7 +300,10 @@ export default function FacultyCategoryAssignmentPage() {
                     </th>
                     <th className="px-5 py-4">Department</th>
                     {categories.map((cat) => (
-                      <th key={cat._id} className="px-5 py-4 text-center whitespace-nowrap">
+                      <th
+                        key={cat._id}
+                        className="px-5 py-4 text-center whitespace-nowrap"
+                      >
                         {cat.categoryName}
                       </th>
                     ))}
@@ -304,11 +324,19 @@ export default function FacultyCategoryAssignmentPage() {
                   ) : (
                     filteredFaculties.map((fac) => {
                       const assignedCount = selected[fac._id]?.length ?? 0;
-                      const allAssigned = assignedCount === categories.length && categories.length > 0;
+                      const allAssigned =
+                        assignedCount === categories.length &&
+                        categories.length > 0;
+                      const deptName =
+                        typeof fac.departmentId === "object"
+                          ? fac.departmentId?.departmentName
+                          : null;
 
                       return (
-                        <tr key={fac._id} className="hover:bg-gray-50/60 transition">
-                          {/* Faculty name */}
+                        <tr
+                          key={fac._id}
+                          className="hover:bg-gray-50/60 transition"
+                        >
                           <td className="px-5 py-3.5 sticky left-0 bg-white hover:bg-gray-50/60 z-10">
                             <div className="flex items-center gap-2.5">
                               <div className="w-7 h-7 rounded-full bg-[#ca1f23]/10 flex items-center justify-center text-[11px] font-bold text-[#ca1f23] shrink-0">
@@ -325,38 +353,41 @@ export default function FacultyCategoryAssignmentPage() {
                             </div>
                           </td>
 
-                          {/* Department */}
                           <td className="px-5 py-3.5">
-                            {fac.department ? (
-                              <span className="text-xs font-medium bg-gray-100 text-gray-600 px-2.5 py-1 rounded-full">
-                                {fac.department}
+                            {deptName ? (
+                              <span className="inline-flex items-center gap-1.5 text-xs font-medium bg-blue-50 text-blue-700 px-2.5 py-1 rounded-full">
+                                <Building2 size={11} />
+                                {deptName}
                               </span>
                             ) : (
                               <span className="text-gray-300 text-xs">—</span>
                             )}
                           </td>
 
-                          {/* Category checkboxes */}
                           {categories.map((cat) => {
-                            const checked = selected[fac._id]?.includes(cat._id) ?? false;
+                            const checked =
+                              selected[fac._id]?.includes(cat._id) ?? false;
                             return (
-                              <td key={cat._id} className="px-5 py-3.5 text-center">
+                              <td
+                                key={cat._id}
+                                className="px-5 py-3.5 text-center"
+                              >
                                 <input
                                   type="checkbox"
                                   checked={checked}
-                                  onChange={() => toggleCategory(fac._id, cat._id)}
-                                  className="w-4 h-4 accent-[#ca1f23] cursor-pointer rounded"
+                                  onChange={() =>
+                                    toggleCategory(fac._id, cat._id)
+                                  }
+                                  className="w-4 h-4 accent-[#ca1f23] cursor-pointer"
                                 />
                               </td>
                             );
                           })}
 
-                          {/* Select all button for this faculty */}
                           <td className="px-5 py-3.5 text-center">
                             <button
                               onClick={() => bulkSelectFaculty(fac._id)}
                               disabled={allAssigned}
-                              title="Assign all categories"
                               className={`text-xs font-medium px-2.5 py-1 rounded-lg transition ${
                                 allAssigned
                                   ? "bg-green-50 text-green-600 cursor-default"
@@ -375,10 +406,10 @@ export default function FacultyCategoryAssignmentPage() {
             </div>
           )}
 
-          {/* Footer */}
           {!loading && filteredFaculties.length > 0 && (
             <div className="px-6 py-3 border-t border-gray-100 text-xs text-gray-400">
-              Showing {filteredFaculties.length} of {faculties.length} faculty members
+              Showing {filteredFaculties.length} of {faculties.length} faculty
+              members
             </div>
           )}
         </div>

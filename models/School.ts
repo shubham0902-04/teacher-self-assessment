@@ -2,14 +2,22 @@ import mongoose from "mongoose";
 
 const SchoolSchema = new mongoose.Schema(
   {
-    schoolName: String,
-    schoolCode: String,
-
+    schoolName: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+    schoolCode: {
+      type: String,
+      required: true,
+      unique: true,
+      trim: true,
+      uppercase: true,
+    },
     principalId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
     },
-
     isActive: {
       type: Boolean,
       default: true,

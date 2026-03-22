@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   LayoutDashboard,
   FolderKanban,
@@ -16,6 +16,8 @@ import {
   X,
   LogOut,
   AlertTriangle,
+  Building2,
+  School,
 } from "lucide-react";
 
 const menu = [
@@ -31,7 +33,7 @@ const menu = [
       { name: "Categories", path: "/admin/categories", icon: FolderKanban },
       { name: "Parameters", path: "/admin/parameters", icon: ListChecks },
       {
-        name: "Parameter Criteria",
+        name: "Parameter Fields",
         path: "/admin/parameter-fields",
         icon: SlidersHorizontal,
       },
@@ -40,6 +42,8 @@ const menu = [
   {
     label: "Management",
     items: [
+      { name: "Schools", path: "/admin/schools", icon: School },
+      { name: "Departments", path: "/admin/departments", icon: Building2 },
       {
         name: "Faculty Assignment",
         path: "/admin/faculty-category-assignment",
@@ -67,7 +71,23 @@ function SidebarContent({
   const initial = userName ? userName.charAt(0).toUpperCase() : "A";
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full overflow-hidden">
+      <style>{`
+        .sidebar-nav::-webkit-scrollbar {
+          width: 3px;
+        }
+        .sidebar-nav::-webkit-scrollbar-track {
+          background: transparent;
+        }
+        .sidebar-nav::-webkit-scrollbar-thumb {
+          background: rgba(255,255,255,0.12);
+          border-radius: 999px;
+        }
+        .sidebar-nav::-webkit-scrollbar-thumb:hover {
+          background: rgba(202,31,35,0.7);
+        }
+      `}</style>
+
       {/* LOGO */}
       <div className="px-5 pt-6 pb-5 border-b border-white/[0.06] shrink-0">
         <div className="flex items-center gap-3">
@@ -86,7 +106,14 @@ function SidebarContent({
       </div>
 
       {/* NAV */}
-      <nav className="flex-1 overflow-y-auto py-4 px-3 space-y-5">
+      <nav
+        className="sidebar-nav flex-1 py-4 px-3 space-y-5"
+        style={{
+          overflowY: "auto",
+          scrollbarWidth: "thin",
+          scrollbarColor: "rgba(255,255,255,0.12) transparent",
+        }}
+      >
         {menu.map((group) => (
           <div key={group.label}>
             <p className="text-[10px] font-semibold uppercase tracking-widest text-white/25 px-3 mb-2">
@@ -179,17 +206,20 @@ export default function AdminSidebar() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
 
-  // Lazy initializer — sirf first render pe chalta hai, useEffect ki zaroorat nahi
-  const [userName] = useState<string>(() => {
-    if (typeof window === "undefined") return "";
+  const [userName, setUserName] = useState("");
+
+  useEffect(() => {
     try {
       const stored = localStorage.getItem("user");
-      if (stored) return JSON.parse(stored).name || "";
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setUserName(parsed.name || "");
+      }
     } catch {
       // ignore
     }
-    return "";
-  });
+  }, []);
 
   function handleLogout() {
     // Cookie delete
@@ -205,7 +235,23 @@ export default function AdminSidebar() {
   return (
     <>
       {/* DESKTOP */}
-      <aside className="hidden lg:flex w-[260px] shrink-0 sticky top-0 h-screen bg-[#0f0f0f] text-white flex-col">
+      {/* Spacer — reserves space in flex layout */}
+      <div className="hidden lg:block w-[260px] shrink-0" />
+      {/* Actual fixed sidebar — outside flex flow */}
+      <aside
+        className="hidden lg:flex flex-col"
+        style={{
+          position: "fixed",
+          top: 0,
+          left: 0,
+          width: "260px",
+          height: "100vh",
+          background: "#0f0f0f",
+          color: "white",
+          zIndex: 30,
+          overflowY: "auto",
+        }}
+      >
         <SidebarContent
           pathname={pathname}
           userName={userName}
