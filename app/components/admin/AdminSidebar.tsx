@@ -23,9 +23,7 @@ import {
 const menu = [
   {
     label: "Overview",
-    items: [
-      { name: "Dashboard", path: "/admin/dashboard", icon: LayoutDashboard },
-    ],
+    items: [{ name: "Dashboard", path: "/admin", icon: LayoutDashboard }],
   },
   {
     label: "Evaluation Setup",
@@ -33,7 +31,7 @@ const menu = [
       { name: "Categories", path: "/admin/categories", icon: FolderKanban },
       { name: "Parameters", path: "/admin/parameters", icon: ListChecks },
       {
-        name: "Parameter Fields",
+        name: "Parameter Criteria",
         path: "/admin/parameter-fields",
         icon: SlidersHorizontal,
       },
@@ -73,19 +71,10 @@ function SidebarContent({
   return (
     <div className="flex flex-col h-full overflow-hidden">
       <style>{`
-        .sidebar-nav::-webkit-scrollbar {
-          width: 3px;
-        }
-        .sidebar-nav::-webkit-scrollbar-track {
-          background: transparent;
-        }
-        .sidebar-nav::-webkit-scrollbar-thumb {
-          background: rgba(255,255,255,0.12);
-          border-radius: 999px;
-        }
-        .sidebar-nav::-webkit-scrollbar-thumb:hover {
-          background: rgba(202,31,35,0.7);
-        }
+        .sidebar-nav::-webkit-scrollbar { width: 3px; }
+        .sidebar-nav::-webkit-scrollbar-track { background: transparent; }
+        .sidebar-nav::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); border-radius: 999px; }
+        .sidebar-nav::-webkit-scrollbar-thumb:hover { background: rgba(202,31,35,0.7); }
       `}</style>
 
       {/* LOGO */}
@@ -119,24 +108,26 @@ function SidebarContent({
             <p className="text-[10px] font-semibold uppercase tracking-widest text-white/25 px-3 mb-2">
               {group.label}
             </p>
-
             <div className="space-y-0.5">
               {group.items.map((item) => {
-                const isActive = pathname.startsWith(item.path);
+                const isActive =
+                  item.path === "/admin"
+                    ? pathname === "/admin"
+                    : pathname.startsWith(item.path);
                 const Icon = item.icon;
 
                 return (
                   <Link key={item.path} href={item.path} onClick={onNavigate}>
                     <div
                       className={`
-                        group relative flex items-center gap-3 px-3 py-2.5 rounded-xl
-                        transition-all duration-150 cursor-pointer
-                        ${
-                          isActive
-                            ? "bg-[#ca1f23] text-white shadow-md shadow-red-900/30"
-                            : "text-white/50 hover:text-white hover:bg-white/[0.06]"
-                        }
-                      `}
+                      group relative flex items-center gap-3 px-3 py-2.5 rounded-xl
+                      transition-all duration-150 cursor-pointer
+                      ${
+                        isActive
+                          ? "bg-[#ca1f23] text-white shadow-md shadow-red-900/30"
+                          : "text-white/50 hover:text-white hover:bg-white/[0.06]"
+                      }
+                    `}
                     >
                       {isActive && (
                         <span className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 rounded-r-full bg-white/60" />
@@ -167,11 +158,9 @@ function SidebarContent({
         ))}
       </nav>
 
-      {/* BOTTOM — User info + Logout */}
+      {/* BOTTOM */}
       <div className="px-4 py-4 border-t border-white/[0.06] shrink-0">
-        {/* User + logout in one row */}
         <div className="flex items-center gap-2">
-          {/* User badge */}
           <div className="flex items-center gap-2.5 flex-1 min-w-0 px-2 py-2 rounded-xl">
             <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#ca1f23] to-[#8b1417] flex items-center justify-center text-[12px] font-bold text-white shrink-0">
               {initial}
@@ -185,8 +174,6 @@ function SidebarContent({
               </p>
             </div>
           </div>
-
-          {/* Logout icon button */}
           <button
             onClick={onLogoutClick}
             title="Logout"
@@ -205,7 +192,6 @@ export default function AdminSidebar() {
   const router = useRouter();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
-
   const [userName, setUserName] = useState("");
 
   useEffect(() => {
@@ -217,27 +203,26 @@ export default function AdminSidebar() {
         setUserName(parsed.name || "");
       }
     } catch {
-      // ignore
+      /* ignore */
     }
   }, []);
 
-  function handleLogout() {
-    // Cookie delete
-    document.cookie = "token=; path=/; max-age=0; SameSite=Lax";
-    // localStorage clear
+  async function handleLogout() {
+    // Server se httpOnly cookie delete karwao
+    await fetch("/api/auth/logout", { method: "POST" });
+    // localStorage bhi clear karo
     localStorage.removeItem("token");
     localStorage.removeItem("role");
     localStorage.removeItem("user");
-    // Redirect
+    // Login pe bhejo
     router.push("/login");
   }
 
   return (
     <>
-      {/* DESKTOP */}
-      {/* Spacer — reserves space in flex layout */}
+      {/* DESKTOP — spacer */}
       <div className="hidden lg:block w-[260px] shrink-0" />
-      {/* Actual fixed sidebar — outside flex flow */}
+      {/* DESKTOP — fixed sidebar */}
       <aside
         className="hidden lg:flex flex-col"
         style={{
@@ -249,7 +234,6 @@ export default function AdminSidebar() {
           background: "#0f0f0f",
           color: "white",
           zIndex: 30,
-          overflowY: "auto",
         }}
       >
         <SidebarContent
@@ -277,7 +261,6 @@ export default function AdminSidebar() {
             <Menu size={22} />
           </button>
         </div>
-
         <div className="h-14" />
 
         {mobileOpen && (
@@ -289,10 +272,10 @@ export default function AdminSidebar() {
 
         <aside
           className={`
-            fixed top-0 left-0 z-50 h-full w-[260px] bg-[#0f0f0f] text-white
-            transition-transform duration-300 ease-in-out
-            ${mobileOpen ? "translate-x-0" : "-translate-x-full"}
-          `}
+          fixed top-0 left-0 z-50 h-full w-[260px] bg-[#0f0f0f] text-white
+          transition-transform duration-300 ease-in-out
+          ${mobileOpen ? "translate-x-0" : "-translate-x-full"}
+        `}
         >
           <button
             onClick={() => setMobileOpen(false)}
@@ -300,7 +283,6 @@ export default function AdminSidebar() {
           >
             <X size={18} />
           </button>
-
           <SidebarContent
             pathname={pathname}
             userName={userName}
@@ -317,11 +299,8 @@ export default function AdminSidebar() {
       {showLogoutModal && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/40">
           <div className="w-full max-w-sm bg-white rounded-2xl shadow-2xl overflow-hidden">
-            {/* Red top strip */}
             <div className="h-1 bg-[#ca1f23]" />
-
             <div className="p-6">
-              {/* Icon + heading */}
               <div className="flex items-start gap-4 mb-5">
                 <div className="w-10 h-10 rounded-xl bg-red-50 flex items-center justify-center shrink-0">
                   <AlertTriangle size={18} className="text-[#ca1f23]" />
@@ -336,8 +315,6 @@ export default function AdminSidebar() {
                   </p>
                 </div>
               </div>
-
-              {/* Buttons */}
               <div className="flex gap-2.5">
                 <button
                   onClick={() => setShowLogoutModal(false)}

@@ -17,7 +17,6 @@ export async function POST(req: Request) {
       );
     }
 
-    // Find user
     const user = await User.findOne({ email: email.toLowerCase().trim() });
 
     if (!user) {
@@ -27,7 +26,6 @@ export async function POST(req: Request) {
       );
     }
 
-    // Check active
     if (!user.isActive) {
       return NextResponse.json(
         { success: false, message: "Account deactivated hai — admin se contact karo" },
@@ -35,7 +33,6 @@ export async function POST(req: Request) {
       );
     }
 
-    // Check password
     const isMatch = await bcrypt.compare(password, user.password);
 
     if (!isMatch) {
@@ -45,7 +42,6 @@ export async function POST(req: Request) {
       );
     }
 
-    // Sign JWT — env variable use karo, hardcoded secret nahi
     const secret = process.env.JWT_SECRET;
     if (!secret) {
       console.error("JWT_SECRET not set in environment");
@@ -61,7 +57,6 @@ export async function POST(req: Request) {
       { expiresIn: "7d" }
     );
 
-    // Return user without password
     const safeUser = {
       _id: user._id,
       name: user.name,
@@ -70,11 +65,22 @@ export async function POST(req: Request) {
       employeeId: user.employeeId,
     };
 
-    return NextResponse.json({
+    const response = NextResponse.json({
       success: true,
       token,
       user: safeUser,
     });
+
+    // httpOnly cookie set karo — middleware isko padhega
+    response.cookies.set("token", token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      maxAge: 60 * 60 * 24 * 7, // 7 din
+      path: "/",
+    });
+
+    return response;
 
   } catch (error) {
     console.error("Login error:", error);

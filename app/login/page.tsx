@@ -53,13 +53,12 @@ export default function LoginPage() {
       }
 
       const role = data.user.role;
-      if (role === "Admin") router.push("/admin/dashboard");
+      if (role === "Admin") router.push("/admin");
       else if (role === "Faculty") router.push("/faculty");
       else if (role === "HOD") router.push("/hod");
       else if (role === "Principal") router.push("/principal");
       else if (role === "Chairman") router.push("/director");
       else router.push("/admin/dashboard");
-
     } catch {
       toast.error("Network error — dobara try karo");
     } finally {
@@ -70,15 +69,12 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen bg-[#f8f8f8] flex items-center justify-center p-4">
       <div className="w-full max-w-md">
-
         {/* Card */}
         <div className="bg-white rounded-3xl border border-gray-200 shadow-sm overflow-hidden">
-
           {/* Top red bar */}
           <div className="h-1.5 bg-[#ca1f23]" />
 
           <div className="px-8 py-10">
-
             {/* Logo */}
             <div className="flex flex-col items-center mb-8">
               <div className="w-14 h-14 rounded-2xl bg-[#ca1f23] flex items-center justify-center shadow-lg shadow-red-200 mb-4">
@@ -87,14 +83,11 @@ export default function LoginPage() {
               <h1 className="text-2xl font-bold text-[#111] text-center leading-tight">
                 Teacher Self-Assessment
               </h1>
-              <p className="text-sm text-gray-400 mt-1">
-                Sign in to continue
-              </p>
+              <p className="text-sm text-gray-400 mt-1">Sign in to continue</p>
             </div>
 
             {/* Form */}
             <form onSubmit={handleLogin} className="space-y-4">
-
               <div>
                 <label className="block text-sm font-medium text-[#111] mb-1.5">
                   Email Address
@@ -117,7 +110,9 @@ export default function LoginPage() {
                     type={showPassword ? "text" : "password"}
                     placeholder="••••••••"
                     value={form.password}
-                    onChange={(e) => setForm({ ...form, password: e.target.value })}
+                    onChange={(e) =>
+                      setForm({ ...form, password: e.target.value })
+                    }
                     className="w-full rounded-xl border border-gray-300 px-4 py-3 pr-11 text-[#111] text-sm outline-none focus:border-[#ca1f23] focus:ring-2 focus:ring-[#ca1f23]/10 transition placeholder:text-gray-400"
                   />
                   <button
@@ -147,7 +142,6 @@ export default function LoginPage() {
                   </>
                 )}
               </button>
-
             </form>
           </div>
         </div>
@@ -155,7 +149,6 @@ export default function LoginPage() {
         <p className="text-center text-xs text-gray-400 mt-5">
           Teacher Self-Assessment System &copy; {new Date().getFullYear()}
         </p>
-
       </div>
     </div>
   );
