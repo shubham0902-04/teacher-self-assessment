@@ -3,14 +3,16 @@
 import { useEffect, useMemo, useState } from "react";
 import AdminSidebar from "@/app/components/admin/AdminSidebar";
 import {
-  Bell,
+  ListChecks,
+  LayoutDashboard,
+  ShieldCheck,
   Pencil,
   Search,
   Trash2,
-  UserCircle2,
   X,
   Plus,
 } from "lucide-react";
+import { toast } from "sonner";
 
 type Category = {
   _id: string;
@@ -22,11 +24,7 @@ type Parameter = {
   _id: string;
   categoryId:
     | string
-    | {
-        _id: string;
-        categoryName: string;
-        categoryCode: string;
-      };
+    | { _id: string; categoryName: string; categoryCode: string };
   parameterName: string;
   parameterCode: string;
   description?: string;
@@ -61,23 +59,45 @@ const initialForm: ParameterForm = {
   isActive: true,
 };
 
+function Toggle({ value, onChange }: { value: boolean; onChange: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onChange}
+      className={`relative h-6 w-11 rounded-full transition-colors duration-200 ${
+        value ? "bg-[#00a651]" : "bg-gray-300"
+      }`}
+    >
+      <span
+        className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow-sm transition-all duration-200 ${
+          value ? "left-[22px]" : "left-0.5"
+        }`}
+      />
+    </button>
+  );
+}
+
 export default function AdminParametersPage() {
   const [parameters, setParameters] = useState<Parameter[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(false);
-
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingParameter, setEditingParameter] = useState<Parameter | null>(
     null,
   );
   const [form, setForm] = useState<ParameterForm>(initialForm);
   const [submitting, setSubmitting] = useState(false);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
 
   async function fetchCategories() {
-    const res = await fetch("/api/categories", { cache: "no-store" });
-    const data = await res.json();
-    if (data.success) setCategories(data.data || []);
+    try {
+      const res = await fetch("/api/categories", { cache: "no-store" });
+      const data = await res.json();
+      if (data.success) setCategories(data.data || []);
+    } catch {
+      toast.error("Failed to load categories");
+    }
   }
 
   async function fetchParameters() {
@@ -85,15 +105,13 @@ export default function AdminParametersPage() {
       setLoading(true);
       const res = await fetch("/api/parameters", { cache: "no-store" });
       const data = await res.json();
-
       if (data.success) {
         setParameters(data.data || []);
       } else {
-        alert(data.message || "Failed to fetch parameters");
+        toast.error(data.message || "Failed to fetch parameters");
       }
-    } catch (error) {
-      console.error(error);
-      alert("Something went wrong while fetching parameters");
+    } catch {
+      toast.error("Something went wrong while fetching parameters");
     } finally {
       setLoading(false);
     }
@@ -107,11 +125,9 @@ export default function AdminParametersPage() {
   const filteredParameters = useMemo(() => {
     const q = search.trim().toLowerCase();
     if (!q) return parameters;
-
     return parameters.filter((item) => {
       const categoryName =
         typeof item.categoryId === "object" ? item.categoryId.categoryName : "";
-
       return (
         item.parameterName.toLowerCase().includes(q) ||
         item.parameterCode.toLowerCase().includes(q) ||
@@ -168,35 +184,22 @@ export default function AdminParametersPage() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
 
-    if (!form.categoryId) {
-      alert("Please select a category");
-      return;
-    }
-
-    if (!form.parameterName.trim()) {
-      alert("Parameter Name is required");
-      return;
-    }
-
-    if (!form.parameterCode.trim()) {
-      alert("Parameter Code is required");
-      return;
-    }
+    if (!form.categoryId) return toast.error("Please select a category");
+    if (!form.parameterName.trim())
+      return toast.error("Parameter Name is required");
+    if (!form.parameterCode.trim())
+      return toast.error("Parameter Code is required");
 
     try {
       setSubmitting(true);
-
       const url = editingParameter
         ? `/api/parameters/${editingParameter._id}`
         : "/api/parameters";
-
       const method = editingParameter ? "PUT" : "POST";
 
       const res = await fetch(url, {
         method,
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           categoryId: form.categoryId,
           parameterName: form.parameterName.trim(),
@@ -211,44 +214,40 @@ export default function AdminParametersPage() {
       });
 
       const data = await res.json();
-
       if (!data.success) {
-        alert(data.message || "Operation failed");
+        toast.error(data.message || "Operation failed");
         return;
       }
 
+      toast.success(
+        editingParameter ? "Parameter updated" : "Parameter created",
+      );
       closeModal();
       fetchParameters();
-    } catch (error) {
-      console.error(error);
-      alert("Something went wrong");
+    } catch {
+      toast.error("Something went wrong");
     } finally {
       setSubmitting(false);
     }
   }
 
-  async function handleDelete(id: string) {
-    const ok = window.confirm(
-      "Are you sure you want to delete this parameter?",
-    );
-    if (!ok) return;
-
+  async function confirmDelete() {
+    if (!deleteId) return;
     try {
-      const res = await fetch(`/api/parameters/${id}`, {
+      const res = await fetch(`/api/parameters/${deleteId}`, {
         method: "DELETE",
       });
-
       const data = await res.json();
-
       if (!data.success) {
-        alert(data.message || "Delete failed");
+        toast.error(data.message || "Delete failed");
         return;
       }
-
-      fetchParameters();
-    } catch (error) {
-      console.error(error);
-      alert("Something went wrong while deleting");
+      toast.success("Parameter deleted");
+      setParameters((prev) => prev.filter((p) => p._id !== deleteId));
+    } catch {
+      toast.error("Something went wrong while deleting");
+    } finally {
+      setDeleteId(null);
     }
   }
 
@@ -257,13 +256,10 @@ export default function AdminParametersPage() {
       typeof parameter.categoryId === "object"
         ? parameter.categoryId._id
         : parameter.categoryId;
-
     try {
       const res = await fetch(`/api/parameters/${parameter._id}`, {
         method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           categoryId,
           parameterName: parameter.parameterName,
@@ -276,408 +272,457 @@ export default function AdminParametersPage() {
           isActive: !parameter.isActive,
         }),
       });
-
       const data = await res.json();
-
       if (!data.success) {
-        alert(data.message || "Status update failed");
+        toast.error(data.message || "Status update failed");
         return;
       }
-
       fetchParameters();
-    } catch (error) {
-      console.error(error);
-      alert("Something went wrong while updating status");
+    } catch {
+      toast.error("Something went wrong while updating status");
     }
   }
 
   return (
-   <div className="flex min-h-screen bg-[#f8f8f8] text-[#111]">
-         <AdminSidebar />
-   
-         <div className="flex-1 p-10">
+    <div className="flex min-h-screen bg-[#f8f8f8] text-[#111]">
+      <AdminSidebar />
 
+      <main className="flex-1 overflow-y-auto p-6">
+        {/* HEADER */}
+        <div className="flex items-center justify-between mb-6">
+          <h1 className="text-3xl font-bold text-[#111]">
+            Evaluation Parameters
+          </h1>
+          <button
+            onClick={openAddModal}
+            className="inline-flex items-center gap-2 rounded-xl bg-[#ca1f23] px-5 py-3 font-medium text-white shadow-md transition hover:opacity-95"
+          >
+            <Plus size={18} />
+            Add Parameter
+          </button>
+        </div>
 
-        <main className="flex-1">
-          <header className="flex items-center justify-between border-b border-gray-200 bg-white px-6 py-4">
-            <div />
-            <div className="flex items-center gap-4">
-              <div className="hidden items-center gap-2 rounded-xl border border-gray-300 px-4 py-3 md:flex md:w-[320px]">
-                <Search size={20} className="text-gray-500" />
-                <input
-                  placeholder="Search"
-                  className="w-full bg-transparent text-sm outline-none"
-                />
-              </div>
-              <Bell size={20} className="text-gray-600" />
-              <div className="flex items-center gap-2">
-                <div className="rounded-full bg-gray-200 p-2">
-                  <UserCircle2 size={20} className="text-gray-600" />
-                </div>
-                <span className="font-medium">Admin</span>
-              </div>
-            </div>
-          </header>
+        {/* STAT CARDS */}
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3 mb-6">
+          <StatCard
+            title="Total Parameters"
+            value={totalParameters}
+            icon={<ListChecks size={20} />}
+            bg="bg-blue-50"
+            iconColor="text-blue-600"
+          />
+          <StatCard
+            title="Active Parameters"
+            value={activeParameters}
+            icon={<LayoutDashboard size={20} />}
+            bg="bg-green-50"
+            iconColor="text-[#00a651]"
+          />
+          <StatCard
+            title="Evidence Required"
+            value={evidenceRequiredCount}
+            icon={<ShieldCheck size={20} />}
+            bg="bg-amber-50"
+            iconColor="text-amber-600"
+          />
+        </div>
 
-          <div className="p-6">
-            <h2 className="mb-6 text-4xl font-bold tracking-tight">
-              Evaluation Parameters
-            </h2>
-
-            <div className="grid grid-cols-1 gap-5 md:grid-cols-3">
-              <StatCard title="Total Parameters" value={totalParameters} />
-              <StatCard title="Active Parameters" value={activeParameters} />
-              <StatCard
-                title="Evidence Required"
-                value={evidenceRequiredCount}
-              />
-            </div>
-
-            <div className="mt-6 rounded-3xl border border-gray-200 bg-white p-6 shadow-sm">
-              <div className="mb-6 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-                <div className="w-full max-w-md">
-                  <h3 className="mb-3 text-2xl font-bold">Search Parameters</h3>
-                  <div className="flex items-center gap-2 rounded-2xl border border-gray-300 px-4 py-3">
-                    <Search size={20} className="text-gray-500" />
-                    <input
-                      value={search}
-                      onChange={(e) => setSearch(e.target.value)}
-                      placeholder="Search Parameters"
-                      className="w-full bg-transparent text-sm outline-none"
-                    />
-                  </div>
-                </div>
-
-                <button
-                  onClick={openAddModal}
-                  className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#ca1f23] px-5 py-3 font-medium text-white shadow-md transition hover:opacity-95"
-                >
-                  <Plus size={18} />
-                  Add Parameter
-                </button>
-              </div>
-
-              <div className="overflow-hidden rounded-2xl border border-gray-200">
-                <div className="overflow-x-auto">
-                  <table className="min-w-full">
-                    <thead className="bg-[#f5f5f7]">
-                      <tr className="text-left text-sm font-semibold text-gray-700">
-                        <th className="px-5 py-4">Category</th>
-                        <th className="px-5 py-4">Parameter Name</th>
-                        <th className="px-5 py-4">Parameter Code</th>
-                        <th className="px-5 py-4">Max Marks</th>
-                        <th className="px-5 py-4">Multiple Entries</th>
-                        <th className="px-5 py-4">Evidence Required</th>
-                        <th className="px-5 py-4">Display Order</th>
-                        <th className="px-5 py-4">Status</th>
-                        <th className="px-5 py-4">Actions</th>
-                      </tr>
-                    </thead>
-
-                    <tbody className="bg-white">
-                      {loading ? (
-                        <tr>
-                          <td
-                            colSpan={9}
-                            className="px-5 py-8 text-center text-gray-500"
-                          >
-                            Loading parameters...
-                          </td>
-                        </tr>
-                      ) : filteredParameters.length === 0 ? (
-                        <tr>
-                          <td
-                            colSpan={9}
-                            className="px-5 py-8 text-center text-gray-500"
-                          >
-                            No parameters found
-                          </td>
-                        </tr>
-                      ) : (
-                        filteredParameters.map((parameter) => {
-                          const category =
-                            typeof parameter.categoryId === "object"
-                              ? parameter.categoryId.categoryName
-                              : "-";
-
-                          return (
-                            <tr
-                              key={parameter._id}
-                              className="border-t border-gray-200 text-sm"
-                            >
-                              <td className="px-5 py-4 font-medium">
-                                {category}
-                              </td>
-                              <td className="px-5 py-4">
-                                {parameter.parameterName}
-                              </td>
-                              <td className="px-5 py-4">
-                                {parameter.parameterCode}
-                              </td>
-                              <td className="px-5 py-4">
-                                {parameter.maxMarks}
-                              </td>
-                              <td className="px-5 py-4">
-                                {parameter.allowMultipleEntries ? "Yes" : "No"}
-                              </td>
-                              <td className="px-5 py-4">
-                                {parameter.evidenceRequired ? "Yes" : "No"}
-                              </td>
-                              <td className="px-5 py-4">
-                                {parameter.displayOrder}
-                              </td>
-                              <td className="px-5 py-4">
-                                <button
-                                  onClick={() => handleToggleStatus(parameter)}
-                                  className={`inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-sm font-medium ${
-                                    parameter.isActive
-                                      ? "bg-green-100 text-green-700"
-                                      : "bg-gray-200 text-gray-700"
-                                  }`}
-                                >
-                                  <span
-                                    className={`h-5 w-10 rounded-full p-0.5 transition ${
-                                      parameter.isActive
-                                        ? "bg-[#00a651]"
-                                        : "bg-gray-400"
-                                    }`}
-                                  >
-                                    <span
-                                      className={`block h-4 w-4 rounded-full bg-white transition ${
-                                        parameter.isActive
-                                          ? "translate-x-5"
-                                          : ""
-                                      }`}
-                                    />
-                                  </span>
-                                  {parameter.isActive ? "Active" : "Inactive"}
-                                </button>
-                              </td>
-                              <td className="px-5 py-4">
-                                <div className="flex items-center gap-3">
-                                  <button
-                                    onClick={() => openEditModal(parameter)}
-                                    className="text-gray-600 transition hover:text-[#ca1f23]"
-                                  >
-                                    <Pencil size={18} />
-                                  </button>
-                                  <button
-                                    onClick={() => handleDelete(parameter._id)}
-                                    className="text-gray-600 transition hover:text-red-600"
-                                  >
-                                    <Trash2 size={18} />
-                                  </button>
-                                </div>
-                              </td>
-                            </tr>
-                          );
-                        })
-                      )}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            </div>
+        {/* TABLE CARD */}
+        <div className="rounded-2xl border border-gray-200 bg-white shadow-sm overflow-hidden">
+          {/* Search bar */}
+          <div className="px-6 py-4 border-b border-gray-100 flex items-center gap-3">
+            <Search size={16} className="text-gray-400 shrink-0" />
+            <input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search by name, code or category..."
+              className="flex-1 text-sm text-[#111] placeholder:text-gray-400 outline-none bg-transparent"
+            />
+            {search && (
+              <button
+                onClick={() => setSearch("")}
+                className="text-gray-400 hover:text-gray-600 transition"
+              >
+                <X size={15} />
+              </button>
+            )}
           </div>
-        </main>
-      </div>
 
+          {/* Table */}
+          <div className="overflow-x-auto">
+            <table className="min-w-full text-sm">
+              <thead className="bg-[#f5f5f7]">
+                <tr className="text-left text-sm font-semibold text-gray-600">
+                  <th className="px-5 py-4">Category</th>
+                  <th className="px-5 py-4">Parameter Name</th>
+                  <th className="px-5 py-4">Code</th>
+                  <th className="px-5 py-4">Max Marks</th>
+                  <th className="px-5 py-4">Multi Entry</th>
+                  <th className="px-5 py-4">Evidence</th>
+                  <th className="px-5 py-4">Order</th>
+                  <th className="px-5 py-4">Status</th>
+                  <th className="px-5 py-4">Actions</th>
+                </tr>
+              </thead>
+
+              <tbody className="bg-white divide-y divide-gray-100">
+                {loading ? (
+                  <tr>
+                    <td
+                      colSpan={9}
+                      className="px-5 py-12 text-center text-gray-400"
+                    >
+                      Loading parameters...
+                    </td>
+                  </tr>
+                ) : filteredParameters.length === 0 ? (
+                  <tr>
+                    <td
+                      colSpan={9}
+                      className="px-5 py-12 text-center text-gray-400"
+                    >
+                      {search
+                        ? `No results for "${search}"`
+                        : "No parameters found — add one above"}
+                    </td>
+                  </tr>
+                ) : (
+                  filteredParameters.map((parameter) => {
+                    const category =
+                      typeof parameter.categoryId === "object"
+                        ? parameter.categoryId.categoryName
+                        : "-";
+
+                    return (
+                      <tr
+                        key={parameter._id}
+                        className="hover:bg-gray-50 transition"
+                      >
+                        <td className="px-5 py-4">
+                          <span className="text-xs font-medium bg-blue-50 text-blue-700 px-2.5 py-1 rounded-full">
+                            {category}
+                          </span>
+                        </td>
+                        <td className="px-5 py-4 font-medium text-[#111]">
+                          {parameter.parameterName}
+                        </td>
+                        <td className="px-5 py-4">
+                          <span className="font-mono text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded-md">
+                            {parameter.parameterCode}
+                          </span>
+                        </td>
+                        <td className="px-5 py-4 text-gray-600">
+                          {parameter.maxMarks}
+                        </td>
+                        <td className="px-5 py-4">
+                          <span
+                            className={`text-xs font-medium px-2.5 py-1 rounded-full ${
+                              parameter.allowMultipleEntries
+                                ? "bg-green-50 text-green-700"
+                                : "bg-gray-100 text-gray-500"
+                            }`}
+                          >
+                            {parameter.allowMultipleEntries ? "Yes" : "No"}
+                          </span>
+                        </td>
+                        <td className="px-5 py-4">
+                          <span
+                            className={`text-xs font-medium px-2.5 py-1 rounded-full ${
+                              parameter.evidenceRequired
+                                ? "bg-amber-50 text-amber-700"
+                                : "bg-gray-100 text-gray-500"
+                            }`}
+                          >
+                            {parameter.evidenceRequired ? "Yes" : "No"}
+                          </span>
+                        </td>
+                        <td className="px-5 py-4 text-gray-500">
+                          {parameter.displayOrder}
+                        </td>
+                        <td className="px-5 py-4">
+                          <button
+                            onClick={() => handleToggleStatus(parameter)}
+                            className={`inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-medium transition ${
+                              parameter.isActive
+                                ? "bg-green-100 text-green-700"
+                                : "bg-gray-100 text-gray-500"
+                            }`}
+                          >
+                            <span
+                              className={`h-4 w-8 rounded-full p-0.5 transition ${
+                                parameter.isActive
+                                  ? "bg-[#00a651]"
+                                  : "bg-gray-400"
+                              }`}
+                            >
+                              <span
+                                className={`block h-3 w-3 rounded-full bg-white transition-all ${
+                                  parameter.isActive ? "translate-x-4" : ""
+                                }`}
+                              />
+                            </span>
+                            {parameter.isActive ? "Active" : "Inactive"}
+                          </button>
+                        </td>
+                        <td className="px-5 py-4">
+                          <div className="flex items-center gap-3">
+                            <button
+                              onClick={() => openEditModal(parameter)}
+                              className="text-gray-400 hover:text-[#ca1f23] transition"
+                              title="Edit"
+                            >
+                              <Pencil size={16} />
+                            </button>
+                            <button
+                              onClick={() => setDeleteId(parameter._id)}
+                              className="text-gray-400 hover:text-red-500 transition"
+                              title="Delete"
+                            >
+                              <Trash2 size={16} />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Footer count */}
+          {!loading && filteredParameters.length > 0 && (
+            <div className="px-6 py-3 border-t border-gray-100 text-xs text-gray-400">
+              Showing {filteredParameters.length} of {totalParameters}{" "}
+              parameters
+            </div>
+          )}
+        </div>
+      </main>
+
+      {/* ADD / EDIT MODAL */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/20 p-4">
-          <div className="w-full max-w-2xl rounded-3xl border border-gray-200 bg-white p-6 shadow-2xl">
-            <div className="mb-5 flex items-center justify-between">
-              <h3 className="text-2xl font-bold">
+          <div className="w-full max-w-2xl rounded-3xl border border-gray-200 bg-white shadow-2xl flex flex-col max-h-[90vh]">
+            {/* Modal header */}
+            <div className="flex items-center justify-between px-6 pt-6 pb-4 border-b border-gray-100 shrink-0">
+              <h3 className="text-xl font-bold text-[#111]">
                 {editingParameter ? "Edit Parameter" : "Add Parameter"}
               </h3>
               <button
                 onClick={closeModal}
-                className="rounded-full p-2 text-gray-500 hover:bg-gray-100"
+                className="rounded-full p-2 text-gray-400 hover:bg-gray-100 transition"
               >
-                <X size={20} />
+                <X size={18} />
               </button>
             </div>
 
-            <form
-              onSubmit={handleSubmit}
-              className="grid grid-cols-1 gap-4 md:grid-cols-2"
-            >
-              <div className="md:col-span-2">
-                <label className="mb-1 block text-sm font-medium">
-                  Category
-                </label>
-                <select
-                  value={form.categoryId}
-                  onChange={(e) =>
-                    handleInputChange("categoryId", e.target.value)
-                  }
-                  className="w-full rounded-xl border border-gray-300 px-4 py-3 outline-none focus:border-[#ca1f23]"
-                >
-                  <option value="">Select Category</option>
-                  {categories.map((category) => (
-                    <option key={category._id} value={category._id}>
-                      {category.categoryName}
-                    </option>
+            {/* Modal body — scrollable */}
+            <div className="overflow-y-auto px-6 py-5">
+              <form
+                id="parameter-form"
+                onSubmit={handleSubmit}
+                className="grid grid-cols-1 gap-4 md:grid-cols-2"
+              >
+                {/* Category */}
+                <div className="md:col-span-2">
+                  <label className="mb-1.5 block text-sm font-medium text-[#111]">
+                    Category <span className="text-red-500">*</span>
+                  </label>
+                  <select
+                    value={form.categoryId}
+                    onChange={(e) =>
+                      handleInputChange("categoryId", e.target.value)
+                    }
+                    className="w-full rounded-xl border border-gray-300 px-4 py-3 text-[#111] text-sm outline-none focus:border-[#ca1f23] bg-white"
+                  >
+                    <option value="">Select Category</option>
+                    {categories.map((category) => (
+                      <option key={category._id} value={category._id}>
+                        {category.categoryName}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Parameter Name */}
+                <div>
+                  <label className="mb-1.5 block text-sm font-medium text-[#111]">
+                    Parameter Name <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="e.g. Lectures Delivered"
+                    value={form.parameterName}
+                    onChange={(e) =>
+                      handleInputChange("parameterName", e.target.value)
+                    }
+                    className="w-full rounded-xl border border-gray-300 px-4 py-3 text-[#111] text-sm outline-none focus:border-[#ca1f23]"
+                  />
+                </div>
+
+                {/* Parameter Code */}
+                <div>
+                  <label className="mb-1.5 block text-sm font-medium text-[#111]">
+                    Parameter Code <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="e.g. TEACH-01"
+                    value={form.parameterCode}
+                    onChange={(e) =>
+                      handleInputChange("parameterCode", e.target.value)
+                    }
+                    className="w-full rounded-xl border border-gray-300 px-4 py-3 text-[#111] text-sm outline-none focus:border-[#ca1f23] uppercase"
+                  />
+                </div>
+
+                {/* Description */}
+                <div className="md:col-span-2">
+                  <label className="mb-1.5 block text-sm font-medium text-[#111]">
+                    Description
+                  </label>
+                  <textarea
+                    rows={2}
+                    placeholder="Brief description of this parameter..."
+                    value={form.description}
+                    onChange={(e) =>
+                      handleInputChange("description", e.target.value)
+                    }
+                    className="w-full rounded-xl border border-gray-300 px-4 py-3 text-[#111] text-sm outline-none focus:border-[#ca1f23] resize-none"
+                  />
+                </div>
+
+                {/* Max Marks */}
+                <div>
+                  <label className="mb-1.5 block text-sm font-medium text-[#111]">
+                    Max Marks
+                  </label>
+                  <input
+                    type="number"
+                    min={0}
+                    value={form.maxMarks}
+                    onChange={(e) =>
+                      handleInputChange("maxMarks", Number(e.target.value))
+                    }
+                    className="w-full rounded-xl border border-gray-300 px-4 py-3 text-[#111] text-sm outline-none focus:border-[#ca1f23]"
+                  />
+                </div>
+
+                {/* Display Order */}
+                <div>
+                  <label className="mb-1.5 block text-sm font-medium text-[#111]">
+                    Display Order
+                  </label>
+                  <input
+                    type="number"
+                    min={1}
+                    value={form.displayOrder}
+                    onChange={(e) =>
+                      handleInputChange("displayOrder", Number(e.target.value))
+                    }
+                    className="w-full rounded-xl border border-gray-300 px-4 py-3 text-[#111] text-sm outline-none focus:border-[#ca1f23]"
+                  />
+                </div>
+
+                {/* Toggles */}
+                <div className="md:col-span-2 grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  {[
+                    {
+                      label: "Allow Multiple Entries",
+                      key: "allowMultipleEntries" as const,
+                      value: form.allowMultipleEntries,
+                    },
+                    {
+                      label: "Evidence Required",
+                      key: "evidenceRequired" as const,
+                      value: form.evidenceRequired,
+                    },
+                    {
+                      label: "Active",
+                      key: "isActive" as const,
+                      value: form.isActive,
+                    },
+                  ].map((toggle) => (
+                    <div
+                      key={toggle.key}
+                      className="flex items-center justify-between rounded-xl border border-gray-200 px-4 py-3"
+                    >
+                      <span className="text-sm font-medium text-[#111]">
+                        {toggle.label}
+                      </span>
+                      <Toggle
+                        value={toggle.value}
+                        onChange={() =>
+                          handleInputChange(toggle.key, !toggle.value)
+                        }
+                      />
+                    </div>
                   ))}
-                </select>
-              </div>
+                </div>
+              </form>
+            </div>
 
-              <div>
-                <label className="mb-1 block text-sm font-medium">
-                  Parameter Name
-                </label>
-                <input
-                  type="text"
-                  value={form.parameterName}
-                  onChange={(e) =>
-                    handleInputChange("parameterName", e.target.value)
-                  }
-                  className="w-full rounded-xl border border-gray-300 px-4 py-3 outline-none focus:border-[#ca1f23]"
-                />
-              </div>
+            {/* Modal footer */}
+            <div className="flex items-center gap-3 px-6 py-4 border-t border-gray-100 shrink-0">
+              <button
+                type="submit"
+                form="parameter-form"
+                disabled={submitting}
+                className="flex-1 rounded-xl bg-[#ca1f23] px-4 py-3 text-sm font-medium text-white transition hover:opacity-95 disabled:opacity-50"
+              >
+                {submitting
+                  ? editingParameter
+                    ? "Updating..."
+                    : "Saving..."
+                  : editingParameter
+                    ? "Update Parameter"
+                    : "Save Parameter"}
+              </button>
+              <button
+                type="button"
+                onClick={closeModal}
+                className="rounded-xl border border-gray-300 px-5 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50 transition"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
-              <div>
-                <label className="mb-1 block text-sm font-medium">
-                  Parameter Code
-                </label>
-                <input
-                  type="text"
-                  value={form.parameterCode}
-                  onChange={(e) =>
-                    handleInputChange("parameterCode", e.target.value)
-                  }
-                  className="w-full rounded-xl border border-gray-300 px-4 py-3 outline-none focus:border-[#ca1f23]"
-                />
-              </div>
-
-              <div className="md:col-span-2">
-                <label className="mb-1 block text-sm font-medium">
-                  Description
-                </label>
-                <textarea
-                  rows={3}
-                  value={form.description}
-                  onChange={(e) =>
-                    handleInputChange("description", e.target.value)
-                  }
-                  className="w-full rounded-xl border border-gray-300 px-4 py-3 outline-none focus:border-[#ca1f23]"
-                />
-              </div>
-
-              <div>
-                <label className="mb-1 block text-sm font-medium">
-                  Max Marks
-                </label>
-                <input
-                  type="number"
-                  min={0}
-                  value={form.maxMarks}
-                  onChange={(e) =>
-                    handleInputChange("maxMarks", Number(e.target.value))
-                  }
-                  className="w-full rounded-xl border border-gray-300 px-4 py-3 outline-none focus:border-[#ca1f23]"
-                />
-              </div>
-
-              <div>
-                <label className="mb-1 block text-sm font-medium">
-                  Display Order
-                </label>
-                <input
-                  type="number"
-                  min={1}
-                  value={form.displayOrder}
-                  onChange={(e) =>
-                    handleInputChange("displayOrder", Number(e.target.value))
-                  }
-                  className="w-full rounded-xl border border-gray-300 px-4 py-3 outline-none focus:border-[#ca1f23]"
-                />
-              </div>
-
-              <div className="flex items-center justify-between rounded-xl border border-gray-200 px-4 py-3">
-                <span className="font-medium">Allow Multiple Entries</span>
-                <button
-                  type="button"
-                  onClick={() =>
-                    handleInputChange(
-                      "allowMultipleEntries",
-                      !form.allowMultipleEntries,
-                    )
-                  }
-                  className={`relative h-7 w-14 rounded-full transition ${
-                    form.allowMultipleEntries ? "bg-[#00a651]" : "bg-gray-300"
-                  }`}
-                >
-                  <span
-                    className={`absolute top-1 h-5 w-5 rounded-full bg-white transition ${
-                      form.allowMultipleEntries ? "left-8" : "left-1"
-                    }`}
-                  />
-                </button>
-              </div>
-
-              <div className="flex items-center justify-between rounded-xl border border-gray-200 px-4 py-3">
-                <span className="font-medium">Evidence Required</span>
-                <button
-                  type="button"
-                  onClick={() =>
-                    handleInputChange(
-                      "evidenceRequired",
-                      !form.evidenceRequired,
-                    )
-                  }
-                  className={`relative h-7 w-14 rounded-full transition ${
-                    form.evidenceRequired ? "bg-[#00a651]" : "bg-gray-300"
-                  }`}
-                >
-                  <span
-                    className={`absolute top-1 h-5 w-5 rounded-full bg-white transition ${
-                      form.evidenceRequired ? "left-8" : "left-1"
-                    }`}
-                  />
-                </button>
-              </div>
-
-              <div className="md:col-span-2 flex items-center justify-between rounded-xl border border-gray-200 px-4 py-3">
-                <span className="font-medium">Active</span>
-                <button
-                  type="button"
-                  onClick={() => handleInputChange("isActive", !form.isActive)}
-                  className={`relative h-7 w-14 rounded-full transition ${
-                    form.isActive ? "bg-[#00a651]" : "bg-gray-300"
-                  }`}
-                >
-                  <span
-                    className={`absolute top-1 h-5 w-5 rounded-full bg-white transition ${
-                      form.isActive ? "left-8" : "left-1"
-                    }`}
-                  />
-                </button>
-              </div>
-
-              <div className="md:col-span-2 flex items-center gap-3 pt-2">
-                <button
-                  type="submit"
-                  disabled={submitting}
-                  className="flex-1 rounded-xl bg-[#ca1f23] px-4 py-3 font-medium text-white transition hover:opacity-95 disabled:opacity-50"
-                >
-                  {submitting
-                    ? editingParameter
-                      ? "Updating..."
-                      : "Saving..."
-                    : editingParameter
-                      ? "Update"
-                      : "Save"}
-                </button>
-
-                <button
-                  type="button"
-                  onClick={closeModal}
-                  className="rounded-xl border border-gray-300 px-5 py-3 font-medium text-gray-700"
-                >
-                  Cancel
-                </button>
-              </div>
-            </form>
+      {/* DELETE CONFIRM MODAL */}
+      {deleteId && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/20 p-4">
+          <div className="w-full max-w-sm rounded-2xl border border-gray-200 bg-white p-6 shadow-2xl">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-base font-semibold text-[#111]">
+                Delete Parameter?
+              </h3>
+              <button
+                onClick={() => setDeleteId(null)}
+                className="rounded-full p-1 text-gray-400 hover:text-gray-600 transition"
+              >
+                <X size={17} />
+              </button>
+            </div>
+            <p className="text-sm text-gray-500 mb-5">
+              This action is permanent and cannot be undone.
+            </p>
+            <div className="flex gap-2.5">
+              <button
+                onClick={() => setDeleteId(null)}
+                className="flex-1 rounded-xl border border-gray-200 py-2.5 text-sm font-medium text-gray-600 hover:bg-gray-50 transition"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmDelete}
+                className="flex-1 rounded-xl bg-red-600 py-2.5 text-sm font-medium text-white hover:bg-red-700 transition"
+              >
+                Delete
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -685,14 +730,25 @@ export default function AdminParametersPage() {
   );
 }
 
-
-
-function StatCard({ title, value }: { title: string; value: number }) {
+function StatCard({
+  title,
+  value,
+  icon,
+  bg,
+  iconColor,
+}: {
+  title: string;
+  value: number;
+  icon: React.ReactNode;
+  bg: string;
+  iconColor: string;
+}) {
   return (
-    <div className="rounded-3xl border border-gray-200 bg-white p-6 shadow-sm">
+    <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm flex items-center gap-4">
+      <div className={`rounded-xl p-3 ${bg} ${iconColor}`}>{icon}</div>
       <div>
-        <p className="text-2xl font-medium">{title}</p>
-        <h3 className="text-4xl font-bold">{value}</h3>
+        <p className="text-sm text-gray-500">{title}</p>
+        <h3 className="text-3xl font-bold text-[#111]">{value}</h3>
       </div>
     </div>
   );
