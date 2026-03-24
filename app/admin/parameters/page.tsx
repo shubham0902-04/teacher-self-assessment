@@ -124,16 +124,30 @@ export default function AdminParametersPage() {
 
   const filteredParameters = useMemo(() => {
     const q = search.trim().toLowerCase();
-    if (!q) return parameters;
-    return parameters.filter((item) => {
-      const categoryName =
-        typeof item.categoryId === "object" ? item.categoryId.categoryName : "";
-      return (
-        item.parameterName.toLowerCase().includes(q) ||
-        item.parameterCode.toLowerCase().includes(q) ||
-        (item.description || "").toLowerCase().includes(q) ||
-        categoryName.toLowerCase().includes(q)
-      );
+    const filtered = q
+      ? parameters.filter((item) => {
+          const categoryName =
+            typeof item.categoryId === "object"
+              ? item.categoryId.categoryName
+              : "";
+          return (
+            item.parameterName.toLowerCase().includes(q) ||
+            item.parameterCode.toLowerCase().includes(q) ||
+            (item.description || "").toLowerCase().includes(q) ||
+            categoryName.toLowerCase().includes(q)
+          );
+        })
+      : parameters;
+
+    // Pehle category name se sort, phir displayOrder se
+    return [...filtered].sort((a, b) => {
+      const catA =
+        typeof a.categoryId === "object" ? a.categoryId.categoryName : "";
+      const catB =
+        typeof b.categoryId === "object" ? b.categoryId.categoryName : "";
+      if (catA < catB) return -1;
+      if (catA > catB) return 1;
+      return (a.displayOrder || 0) - (b.displayOrder || 0);
     });
   }, [parameters, search]);
 

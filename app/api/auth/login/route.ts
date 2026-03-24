@@ -12,8 +12,8 @@ export async function POST(req: Request) {
 
     if (!email || !password) {
       return NextResponse.json(
-        { success: false, message: "Email aur password dono required hain" },
-        { status: 400 }
+        { success: false, message: "Email and password are required." },
+        { status: 400 },
       );
     }
 
@@ -21,15 +21,19 @@ export async function POST(req: Request) {
 
     if (!user) {
       return NextResponse.json(
-        { success: false, message: "Email ya password galat hai" },
-        { status: 401 }
+        { success: false, message: "Invalid email or password." },
+        { status: 401 },
       );
     }
 
     if (!user.isActive) {
       return NextResponse.json(
-        { success: false, message: "Account deactivated hai — admin se contact karo" },
-        { status: 403 }
+        {
+          success: false,
+          message:
+            "Your account has been deactivated. Please contact the administrator.",
+        },
+        { status: 403 },
       );
     }
 
@@ -37,24 +41,27 @@ export async function POST(req: Request) {
 
     if (!isMatch) {
       return NextResponse.json(
-        { success: false, message: "Email ya password galat hai" },
-        { status: 401 }
+        { success: false, message: "Invalid email or password." },
+        { status: 401 },
       );
     }
 
     const secret = process.env.JWT_SECRET;
     if (!secret) {
-      console.error("JWT_SECRET not set in environment");
+      console.error("JWT_SECRET is not defined in environment variables.");
       return NextResponse.json(
-        { success: false, message: "Server configuration error" },
-        { status: 500 }
+        {
+          success: false,
+          message: "Internal server error. Please try again later.",
+        },
+        { status: 500 },
       );
     }
 
     const token = jwt.sign(
       { id: user._id, role: user.role, email: user.email },
       secret,
-      { expiresIn: "7d" }
+      { expiresIn: "1d" },
     );
 
     const safeUser = {
@@ -67,26 +74,28 @@ export async function POST(req: Request) {
 
     const response = NextResponse.json({
       success: true,
+      message: "Login successful.",
       token,
       user: safeUser,
     });
 
-    // httpOnly cookie set karo — middleware isko padhega
+    // Session cookie — no maxAge means cookie is deleted when browser tab is closed
     response.cookies.set("token", token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
-      maxAge: 60 * 60 * 24 * 7, // 7 din
       path: "/",
     });
 
     return response;
-
   } catch (error) {
     console.error("Login error:", error);
     return NextResponse.json(
-      { success: false, message: "Server error — dobara try karo" },
-      { status: 500 }
+      {
+        success: false,
+        message: "An unexpected error occurred. Please try again.",
+      },
+      { status: 500 },
     );
   }
 }

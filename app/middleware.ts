@@ -34,7 +34,7 @@ export async function middleware(request: NextRequest) {
 
   // ── Login page ──────────────────────────────────────────────────────────────
   if (pathname === "/login") {
-    if (!token) return NextResponse.next();
+    if (!token) return noCache(NextResponse.next());
 
     try {
       const secret = new TextEncoder().encode(process.env.JWT_SECRET);
@@ -46,7 +46,7 @@ export async function middleware(request: NextRequest) {
     } catch {
       const res = NextResponse.next();
       res.cookies.set("token", "", { maxAge: 0, path: "/" });
-      return res;
+      return noCache(res);
     }
   }
 
