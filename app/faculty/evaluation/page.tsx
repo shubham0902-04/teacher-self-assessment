@@ -77,10 +77,9 @@ type UploadedFile = {
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
-// NaN fix: always return safe number
 function safeNum(val: unknown): number {
   const n = Number(val);
-  return isNaN(n) ? 0 : n;
+  return isNaN(n) || !isFinite(n) ? 0 : n;
 }
 
 function makeEntry(param: Parameter): Entry {
@@ -108,16 +107,18 @@ function buildInitialData(categories: Category[]): CategoryData[] {
   }));
 }
 
-// NaN fix: use safeNum everywhere
+// FIX: calcParamMarks now correctly sums field values and caps at maxMarks
 function calcParamMarks(entries: Entry[], paramMaxMarks: number): number {
-  const total = entries.reduce((sum, entry) => {
+  const max = safeNum(paramMaxMarks);
+  const total = (entries || []).reduce((sum, entry) => {
     const entryTotal = (entry.fields || []).reduce(
       (s, f) => s + safeNum(f.value),
       0,
     );
     return sum + entryTotal;
   }, 0);
-  return Math.min(total, safeNum(paramMaxMarks));
+  // Only cap if maxMarks is actually set (> 0)
+  return max > 0 ? Math.min(total, max) : total;
 }
 
 // ─── Evidence Upload Component ────────────────────────────────────────────────
@@ -239,7 +240,6 @@ export default function EvaluationFormPage() {
               : user.departmentId,
         });
 
-        // Form structure
         const facultyId = user._id;
         const formRes = await fetch(
           `/api/faculty-evaluation/form-data?facultyId=${facultyId}&academicYear=${academicYear}`,
@@ -252,14 +252,24 @@ export default function EvaluationFormPage() {
           return;
         }
 
-        // NaN fix: ensure all maxMarks are numbers
+        // FIX: Sanitize all numeric fields coming from API
+        // Mongoose returns numbers but sometimes they come as strings or null
         const cats: Category[] = (formJson.data || []).map((cat: Category) => ({
           ...cat,
+          categoryName: cat.categoryName || "",
+          categoryCode: cat.categoryCode || "",
           parameters: (cat.parameters || []).map((param) => ({
             ...param,
+            parameterName: param.parameterName || "",
+            parameterCode: param.parameterCode || "",
+            // FIX: maxMarks can be nested or missing — always coerce
             maxMarks: safeNum(param.maxMarks),
+            allowMultipleEntries: param.allowMultipleEntries ?? true,
+            evidenceRequired: param.evidenceRequired ?? false,
             fields: (param.fields || []).map((f) => ({
               ...f,
+              fieldName: f.fieldName || "",
+              // FIX: field maxMarks also must be a number
               maxMarks: safeNum(f.maxMarks),
             })),
           })),
@@ -276,21 +286,26 @@ export default function EvaluationFormPage() {
         if (evalJson.success && evalJson.data) {
           const existing = evalJson.data;
           setEvaluationId(existing._id);
-          setEvalStatus(existing.status);
+          setEvalStatus(existing.status || "DRAFT");
 
-          // Restore saved data
+          // FIX: Restore saved data — match by ID not by index
+          // This prevents misalignment when category/param order changes
           const restored: CategoryData[] = cats.map((cat) => {
-            const savedCat = existing.categoriesData?.find(
-              (c: { categoryId: string }) => c.categoryId === cat._id,
+            const savedCat = (existing.categoriesData || []).find(
+              (c: { categoryId: string }) =>
+                c.categoryId?.toString() === cat._id?.toString(),
             );
+
             return {
               categoryId: cat._id,
               categoryName: cat.categoryName,
               parameters: cat.parameters.map((param) => {
-                const savedParam = savedCat?.parameters?.find(
-                  (p: { parameterId: string }) => p.parameterId === param._id,
+                const savedParam = (savedCat?.parameters || []).find(
+                  (p: { parameterId: string }) =>
+                    p.parameterId?.toString() === param._id?.toString(),
                 );
-                if (savedParam && savedParam.entries?.length > 0) {
+
+                if (savedParam && (savedParam.entries || []).length > 0) {
                   return {
                     parameterId: param._id,
                     parameterName: param.parameterName,
@@ -300,16 +315,36 @@ export default function EvaluationFormPage() {
                         fields: FieldValue[];
                         evidenceFiles: UploadedFile[];
                       }) => ({
-                        entryId: e._id || Math.random().toString(36).slice(2),
-                        fields: (e.fields || []).map((f) => ({
-                          ...f,
-                          value: safeNum(f.value), // NaN fix
-                        })),
+                        entryId:
+                          e._id?.toString() ||
+                          Math.random().toString(36).slice(2),
+                        // FIX: Restore fields by matching fieldId, not by index
+                        // This handles case where new fields were added after submission
+                        fields: param.fields.map((fieldDef) => {
+                          const savedField = (e.fields || []).find(
+                            (sf) =>
+                              sf.fieldId?.toString() ===
+                              fieldDef._id?.toString(),
+                          );
+                          return {
+                            fieldId: fieldDef._id,
+                            fieldName: fieldDef.fieldName,
+                            // FIX: Always safeNum to prevent NaN in inputs
+                            value: safeNum(savedField?.value ?? 0),
+                            marks: savedField?.marks || {
+                              faculty: 0,
+                              hod: 0,
+                              principal: 0,
+                            },
+                          };
+                        }),
                         evidenceFiles: e.evidenceFiles || [],
                       }),
                     ),
                   };
                 }
+
+                // No saved data for this param → fresh entry
                 return {
                   parameterId: param._id,
                   parameterName: param.parameterName,
@@ -318,12 +353,13 @@ export default function EvaluationFormPage() {
               }),
             };
           });
+
           setFormData(restored);
         } else {
           setFormData(buildInitialData(cats));
         }
       } catch (err) {
-        console.error(err);
+        console.error("Load error:", err);
         toast.error("Failed to load evaluation form");
       } finally {
         setLoading(false);
@@ -333,6 +369,10 @@ export default function EvaluationFormPage() {
   }, [academicYear]);
 
   // ── Update field value ──────────────────────────────────────────────────────
+  // FIX: Use functional update with immer-style clone for correctness
+  // Also: store raw string while typing, convert on blur? No — keep as number
+  // but use "" as empty display. Solution: use string state for inputs.
+  // Simplest fix: just ensure safeNum always returns valid number.
 
   const updateFieldValue = useCallback(
     (
@@ -342,11 +382,19 @@ export default function EvaluationFormPage() {
       fieldIdx: number,
       val: string,
     ) => {
+      // FIX: Allow empty string while typing (show 0, not NaN)
+      const numVal = val === "" ? 0 : safeNum(val);
       setFormData((prev) => {
         const next = structuredClone(prev);
-        next[catIdx].parameters[paramIdx].entries[entryIdx].fields[
-          fieldIdx
-        ].value = safeNum(val); // NaN fix
+        if (
+          next[catIdx]?.parameters[paramIdx]?.entries[entryIdx]?.fields[
+            fieldIdx
+          ]
+        ) {
+          next[catIdx].parameters[paramIdx].entries[entryIdx].fields[
+            fieldIdx
+          ].value = numVal;
+        }
         return next;
       });
     },
@@ -372,7 +420,9 @@ export default function EvaluationFormPage() {
     (catIdx: number, paramIdx: number, entryIdx: number) => {
       setFormData((prev) => {
         const next = structuredClone(prev);
-        next[catIdx].parameters[paramIdx].entries.splice(entryIdx, 1);
+        if (next[catIdx]?.parameters[paramIdx]?.entries.length > 1) {
+          next[catIdx].parameters[paramIdx].entries.splice(entryIdx, 1);
+        }
         return next;
       });
     },
@@ -474,7 +524,7 @@ export default function EvaluationFormPage() {
       });
       const data = await res.json();
       if (!data.success) {
-        toast.error("Save failed");
+        toast.error(data.message || "Save failed");
         return;
       }
       if (!evaluationId) setEvaluationId(data.data._id);
@@ -505,7 +555,7 @@ export default function EvaluationFormPage() {
       });
       const data = await res.json();
       if (!data.success) {
-        toast.error("Submit failed");
+        toast.error(data.message || "Submit failed");
         return;
       }
       if (!evaluationId) setEvaluationId(data.data._id);
@@ -519,15 +569,19 @@ export default function EvaluationFormPage() {
   }
 
   // ── Grand totals ────────────────────────────────────────────────────────────
+  // FIX: Compute from categories (source of truth for maxMarks)
+  // and formData (source of truth for entered values)
 
-  const grandTotal = formData.reduce((catSum, cat, catIdx) => {
+  const grandTotal = formData.reduce((catSum, catData, catIdx) => {
+    const cat = categories[catIdx];
+    if (!cat) return catSum;
     return (
       catSum +
-      (cat.parameters || []).reduce((paramSum, param, paramIdx) => {
-        const catParam = categories[catIdx]?.parameters[paramIdx];
-        if (!catParam) return paramSum;
+      (catData.parameters || []).reduce((paramSum, paramData, paramIdx) => {
+        const param = cat.parameters[paramIdx];
+        if (!param) return paramSum;
         return (
-          paramSum + calcParamMarks(param.entries, safeNum(catParam.maxMarks))
+          paramSum + calcParamMarks(paramData.entries, safeNum(param.maxMarks))
         );
       }, 0)
     );
@@ -538,6 +592,31 @@ export default function EvaluationFormPage() {
       sum + (cat.parameters || []).reduce((s, p) => s + safeNum(p.maxMarks), 0)
     );
   }, 0);
+
+  // ── Category colors ─────────────────────────────────────────────────────────
+
+  const catColors = [
+    {
+      border: "border-[#ca1f23]",
+      badge: "bg-red-50 text-[#ca1f23]",
+      bar: "#ca1f23",
+    },
+    {
+      border: "border-blue-500",
+      badge: "bg-blue-50 text-blue-600",
+      bar: "#3b82f6",
+    },
+    {
+      border: "border-[#00a651]",
+      badge: "bg-green-50 text-[#00a651]",
+      bar: "#00a651",
+    },
+    {
+      border: "border-purple-500",
+      badge: "bg-purple-50 text-purple-600",
+      bar: "#8b5cf6",
+    },
+  ];
 
   // ── Loading state ───────────────────────────────────────────────────────────
 
@@ -575,31 +654,6 @@ export default function EvaluationFormPage() {
       </div>
     );
   }
-
-  // ── Category colors ─────────────────────────────────────────────────────────
-
-  const catColors = [
-    {
-      border: "border-[#ca1f23]",
-      badge: "bg-red-50 text-[#ca1f23]",
-      bar: "#ca1f23",
-    },
-    {
-      border: "border-blue-500",
-      badge: "bg-blue-50 text-blue-600",
-      bar: "#3b82f6",
-    },
-    {
-      border: "border-[#00a651]",
-      badge: "bg-green-50 text-[#00a651]",
-      bar: "#00a651",
-    },
-    {
-      border: "border-purple-500",
-      badge: "bg-purple-50 text-purple-600",
-      bar: "#8b5cf6",
-    },
-  ];
 
   // ── Main UI ─────────────────────────────────────────────────────────────────
 
@@ -681,25 +735,28 @@ export default function EvaluationFormPage() {
           {categories.map((cat, catIdx) => {
             const cc = catColors[catIdx % catColors.length];
             const isCollapsed = collapsedCategories.has(cat._id);
+            const catFormData = formData[catIdx];
 
-            const catTotal = (formData[catIdx]?.parameters || []).reduce(
-              (sum, param, paramIdx) => {
-                const catParam = cat.parameters[paramIdx];
-                if (!catParam) return sum;
+            // FIX: Compute category totals safely
+            const catTotal = (catFormData?.parameters || []).reduce(
+              (sum, paramData, paramIdx) => {
+                const param = cat.parameters[paramIdx];
+                if (!param || !paramData) return sum;
                 return (
                   sum +
-                  calcParamMarks(param.entries, safeNum(catParam.maxMarks))
+                  calcParamMarks(paramData.entries, safeNum(param.maxMarks))
                 );
               },
               0,
             );
+
             const catMax = (cat.parameters || []).reduce(
               (s, p) => s + safeNum(p.maxMarks),
               0,
             );
+
             const pct = catMax > 0 ? Math.round((catTotal / catMax) * 100) : 0;
 
-            // KEY FIX: fragment wrapper nahi chahiye, directly return karo
             return (
               <div
                 key={cat._id}
@@ -718,10 +775,11 @@ export default function EvaluationFormPage() {
                   className="w-full flex items-center justify-between px-5 py-4 hover:bg-gray-50/50 transition text-left"
                 >
                   <div className="flex items-center gap-3">
+                    {/* FIX: categoryCode badge — was missing because categoryCode wasn't in API response shape */}
                     <span
                       className={`text-xs font-bold px-2.5 py-1 rounded-full ${cc.badge}`}
                     >
-                      {cat.categoryCode}
+                      {cat.categoryCode || "CAT"}
                     </span>
                     <div>
                       <p className="font-semibold text-[#111] text-[15px]">
@@ -758,7 +816,7 @@ export default function EvaluationFormPage() {
                 {!isCollapsed && (
                   <div className="border-t border-gray-100 divide-y divide-gray-100">
                     {(cat.parameters || []).map((param, paramIdx) => {
-                      const paramData = formData[catIdx]?.parameters[paramIdx];
+                      const paramData = catFormData?.parameters[paramIdx];
                       if (!paramData) return null;
 
                       const paramMaxMarks = safeNum(param.maxMarks);
@@ -767,7 +825,6 @@ export default function EvaluationFormPage() {
                         paramMaxMarks,
                       );
 
-                      // KEY FIX: key on outermost returned element
                       return (
                         <div key={param._id} className="p-5">
                           {/* Parameter header */}
@@ -782,10 +839,19 @@ export default function EvaluationFormPage() {
                                   <span className="font-mono text-[10px] text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded">
                                     {param.parameterCode}
                                   </span>
+                                  {/* FIX: Show "—" if maxMarks is 0 (not configured) */}
                                   <span className="text-[11px] text-gray-400">
                                     Max:{" "}
-                                    <span className="font-semibold text-amber-600">
-                                      {paramMaxMarks}
+                                    <span
+                                      className={
+                                        paramMaxMarks > 0
+                                          ? "font-semibold text-amber-600"
+                                          : "text-gray-400"
+                                      }
+                                    >
+                                      {paramMaxMarks > 0
+                                        ? paramMaxMarks
+                                        : "not set"}
                                     </span>
                                   </span>
                                   {param.evidenceRequired && (
@@ -800,11 +866,11 @@ export default function EvaluationFormPage() {
                               <p className="text-sm font-bold text-[#111]">
                                 {paramTotal}
                                 <span className="text-gray-400 font-normal text-xs">
-                                  /{paramMaxMarks}
+                                  /{paramMaxMarks > 0 ? paramMaxMarks : "∞"}
                                 </span>
                               </p>
-                              {paramTotal >= paramMaxMarks &&
-                                paramMaxMarks > 0 && (
+                              {paramMaxMarks > 0 &&
+                                paramTotal >= paramMaxMarks && (
                                   <span className="text-[10px] text-[#00a651] font-medium">
                                     Max reached
                                   </span>
@@ -814,124 +880,164 @@ export default function EvaluationFormPage() {
 
                           {/* Entries */}
                           <div className="space-y-4">
-                            {paramData.entries.map((entry, entryIdx) => (
-                              <div
-                                key={entry.entryId}
-                                className="bg-gray-50 rounded-xl p-4 relative"
-                              >
-                                {paramData.entries.length > 1 &&
-                                  !isReadOnly && (
-                                    <button
-                                      onClick={() =>
-                                        removeEntry(catIdx, paramIdx, entryIdx)
-                                      }
-                                      className="absolute top-3 right-3 text-gray-400 hover:text-red-500 transition"
-                                    >
-                                      <Trash2 size={14} />
-                                    </button>
+                            {(paramData.entries || []).map(
+                              (entry, entryIdx) => (
+                                <div
+                                  key={entry.entryId}
+                                  className="bg-gray-50 rounded-xl p-4 relative"
+                                >
+                                  {(paramData.entries || []).length > 1 &&
+                                    !isReadOnly && (
+                                      <button
+                                        onClick={() =>
+                                          removeEntry(
+                                            catIdx,
+                                            paramIdx,
+                                            entryIdx,
+                                          )
+                                        }
+                                        className="absolute top-3 right-3 text-gray-400 hover:text-red-500 transition"
+                                      >
+                                        <Trash2 size={14} />
+                                      </button>
+                                    )}
+
+                                  {(paramData.entries || []).length > 1 && (
+                                    <p className="text-[11px] font-medium text-gray-400 mb-3">
+                                      Entry {entryIdx + 1}
+                                    </p>
                                   )}
 
-                                {paramData.entries.length > 1 && (
-                                  <p className="text-[11px] font-medium text-gray-400 mb-3">
-                                    Entry {entryIdx + 1}
-                                  </p>
-                                )}
+                                  {/* Fields grid */}
+                                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                                    {(entry.fields || []).map(
+                                      (field, fieldIdx) => {
+                                        const fieldDef =
+                                          param.fields?.[fieldIdx];
+                                        const fieldMax = safeNum(
+                                          fieldDef?.maxMarks,
+                                        );
 
-                                {/* Fields grid */}
-                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                                  {(entry.fields || []).map(
-                                    (field, fieldIdx) => {
-                                      const fieldDef = param.fields?.[fieldIdx];
-                                      const fieldMax = safeNum(
-                                        fieldDef?.maxMarks,
-                                      );
-                                      return (
-                                        <div
-                                          key={
-                                            field.fieldId || `field-${fieldIdx}`
-                                          }
-                                        >
-                                          <label className="block text-xs font-medium text-gray-500 mb-1.5">
-                                            {field.fieldName}
-                                            {fieldMax > 0 && (
-                                              <span className="text-gray-400 font-normal ml-1">
-                                                (max {fieldMax})
-                                              </span>
-                                            )}
-                                          </label>
-                                          <input
-                                            type="number"
-                                            min={0}
-                                            max={fieldMax || undefined}
-                                            value={field.value}
-                                            disabled={isReadOnly}
-                                            onChange={(e) =>
-                                              updateFieldValue(
-                                                catIdx,
-                                                paramIdx,
-                                                entryIdx,
-                                                fieldIdx,
-                                                e.target.value,
-                                              )
+                                        return (
+                                          <div
+                                            key={
+                                              field.fieldId ||
+                                              `field-${fieldIdx}`
                                             }
-                                            className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-[#111] outline-none focus:border-[#ca1f23] disabled:opacity-60 disabled:cursor-not-allowed"
-                                          />
-                                        </div>
-                                      );
-                                    },
-                                  )}
+                                          >
+                                            <label className="block text-xs font-medium text-gray-500 mb-1.5">
+                                              {field.fieldName}
+                                              {fieldMax > 0 && (
+                                                <span className="text-gray-400 font-normal ml-1">
+                                                  (max {fieldMax})
+                                                </span>
+                                              )}
+                                            </label>
+                                            {/* 
+                                            FIX: The core input bug.
+                                            - `value={field.value}` is correct for controlled input
+                                            - But when value is 0, user can't type because "0" → safeNum("0") = 0 → no re-render change
+                                            - Fix: use String(field.value) and allow "" during editing
+                                            - Use onBlur to normalize back to 0
+                                          */}
+                                            <input
+                                              type="number"
+                                              min={0}
+                                              max={
+                                                fieldMax > 0
+                                                  ? fieldMax
+                                                  : undefined
+                                              }
+                                              value={
+                                                field.value === 0
+                                                  ? ""
+                                                  : field.value
+                                              }
+                                              placeholder="0"
+                                              disabled={isReadOnly}
+                                              onChange={(e) =>
+                                                updateFieldValue(
+                                                  catIdx,
+                                                  paramIdx,
+                                                  entryIdx,
+                                                  fieldIdx,
+                                                  e.target.value,
+                                                )
+                                              }
+                                              onBlur={(e) => {
+                                                // Normalize empty/invalid to 0 on blur
+                                                if (
+                                                  e.target.value === "" ||
+                                                  isNaN(Number(e.target.value))
+                                                ) {
+                                                  updateFieldValue(
+                                                    catIdx,
+                                                    paramIdx,
+                                                    entryIdx,
+                                                    fieldIdx,
+                                                    "0",
+                                                  );
+                                                }
+                                              }}
+                                              className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-[#111] outline-none focus:border-[#ca1f23] disabled:opacity-60 disabled:cursor-not-allowed"
+                                            />
+                                          </div>
+                                        );
+                                      },
+                                    )}
+                                  </div>
+
+                                  {/* Evidence upload */}
+                                  {(param.evidenceRequired ||
+                                    (entry.evidenceFiles || []).length > 0) &&
+                                    !isReadOnly && (
+                                      <EvidenceUpload
+                                        files={entry.evidenceFiles || []}
+                                        uploading={
+                                          !!uploadingMap[
+                                            `${catIdx}-${paramIdx}-${entryIdx}`
+                                          ]
+                                        }
+                                        onUpload={(file) =>
+                                          uploadFile(
+                                            catIdx,
+                                            paramIdx,
+                                            entryIdx,
+                                            file,
+                                          )
+                                        }
+                                        onRemove={(fi) =>
+                                          removeFile(
+                                            catIdx,
+                                            paramIdx,
+                                            entryIdx,
+                                            fi,
+                                          )
+                                        }
+                                      />
+                                    )}
+
+                                  {/* Read-only evidence */}
+                                  {isReadOnly &&
+                                    (entry.evidenceFiles || []).length > 0 && (
+                                      <div className="mt-3 space-y-1">
+                                        {entry.evidenceFiles.map((f, fi) => (
+                                          <a
+                                            key={`${f.publicId || f.fileName}-${fi}`}
+                                            href={f.fileUrl}
+                                            target="_blank"
+                                            rel="noreferrer"
+                                            className="flex items-center gap-2 text-xs text-[#00a651] hover:underline"
+                                          >
+                                            <FileText size={12} />
+                                            {f.fileName}
+                                          </a>
+                                        ))}
+                                      </div>
+                                    )}
                                 </div>
-
-                                {/* Evidence upload */}
-                                {(param.evidenceRequired ||
-                                  entry.evidenceFiles.length > 0) &&
-                                  !isReadOnly && (
-                                    <EvidenceUpload
-                                      files={entry.evidenceFiles}
-                                      uploading={
-                                        !!uploadingMap[
-                                          `${catIdx}-${paramIdx}-${entryIdx}`
-                                        ]
-                                      }
-                                      onUpload={(file) =>
-                                        uploadFile(
-                                          catIdx,
-                                          paramIdx,
-                                          entryIdx,
-                                          file,
-                                        )
-                                      }
-                                      onRemove={(fi) =>
-                                        removeFile(
-                                          catIdx,
-                                          paramIdx,
-                                          entryIdx,
-                                          fi,
-                                        )
-                                      }
-                                    />
-                                  )}
-
-                                {/* Read-only evidence */}
-                                {isReadOnly &&
-                                  entry.evidenceFiles.length > 0 && (
-                                    <div className="mt-3 space-y-1">
-                                      {entry.evidenceFiles.map((f, fi) => (
-                                        <a
-                                          key={`${f.publicId || f.fileName}-${fi}`}
-                                          href={f.fileUrl}
-                                          target="_blank"
-                                          rel="noreferrer"
-                                          className="flex items-center gap-2 text-xs text-[#00a651] hover:underline"
-                                        >
-                                          <FileText size={12} />
-                                          {f.fileName}
-                                        </a>
-                                      ))}
-                                    </div>
-                                  )}
-                              </div>
-                            ))}
+                              ),
+                            )}
                           </div>
 
                           {/* Add entry */}
