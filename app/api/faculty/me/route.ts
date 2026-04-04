@@ -5,6 +5,13 @@ import FacultyCategoryAssignment from "@/models/FacultyCategoryAssignment";
 import TeacherEvaluation from "@/models/TeacherEvaluation";
 import { cookies } from "next/headers";
 import { jwtVerify } from "jose";
+import Department from "@/models/Department";
+import School from "@/models/School";
+import EvaluationCategory from "@/models/EvaluationCategory";
+
+void Department;
+void School;
+void EvaluationCategory;
 
 const ACADEMIC_YEAR = "2025-26";
 
