@@ -43,16 +43,15 @@ type Category = {
   parameters: Parameter[];
 };
 
-// Entry = one row of filled data for a parameter
 type FieldValue = {
   fieldId: string;
   fieldName: string;
-  value: number | string;
+  value: number;
   marks: { faculty: number; hod: number; principal: number };
 };
 
 type Entry = {
-  entryId: string; // local uuid for UI
+  entryId: string;
   fields: FieldValue[];
   evidenceFiles: UploadedFile[];
 };
@@ -76,12 +75,18 @@ type UploadedFile = {
   resourceType: string;
 };
 
-// ─── Helper ──────────────────────────────────────────────────────────────────
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+
+// NaN fix: always return safe number
+function safeNum(val: unknown): number {
+  const n = Number(val);
+  return isNaN(n) ? 0 : n;
+}
 
 function makeEntry(param: Parameter): Entry {
   return {
     entryId: Math.random().toString(36).slice(2),
-    fields: param.fields.map((f) => ({
+    fields: (param.fields || []).map((f) => ({
       fieldId: f._id,
       fieldName: f.fieldName,
       value: 0,
@@ -95,7 +100,7 @@ function buildInitialData(categories: Category[]): CategoryData[] {
   return categories.map((cat) => ({
     categoryId: cat._id,
     categoryName: cat.categoryName,
-    parameters: cat.parameters.map((param) => ({
+    parameters: (cat.parameters || []).map((param) => ({
       parameterId: param._id,
       parameterName: param.parameterName,
       entries: [makeEntry(param)],
@@ -103,18 +108,19 @@ function buildInitialData(categories: Category[]): CategoryData[] {
   }));
 }
 
-function calcParamMarks(entries: Entry[], param: Parameter): number {
+// NaN fix: use safeNum everywhere
+function calcParamMarks(entries: Entry[], paramMaxMarks: number): number {
   const total = entries.reduce((sum, entry) => {
-    const entryTotal = entry.fields.reduce(
-      (s, f) => s + (Number(f.value) || 0),
+    const entryTotal = (entry.fields || []).reduce(
+      (s, f) => s + safeNum(f.value),
       0,
     );
     return sum + entryTotal;
   }, 0);
-  return Math.min(total, param.maxMarks);
+  return Math.min(total, safeNum(paramMaxMarks));
 }
 
-// ─── Upload Component ─────────────────────────────────────────────────────────
+// ─── Evidence Upload Component ────────────────────────────────────────────────
 
 function EvidenceUpload({
   files,
@@ -134,7 +140,7 @@ function EvidenceUpload({
         <div className="space-y-1 mb-2">
           {files.map((f, i) => (
             <div
-              key={i}
+              key={`${f.publicId || f.fileName}-${i}`}
               className="flex items-center gap-2 bg-green-50 border border-green-100 rounded-lg px-3 py-2"
             >
               <FileText size={13} className="text-[#00a651] shrink-0" />
@@ -152,7 +158,11 @@ function EvidenceUpload({
         </div>
       )}
       <label
-        className={`flex items-center gap-2 cursor-pointer border-2 border-dashed rounded-lg px-3 py-2 transition ${uploading ? "opacity-50 cursor-not-allowed border-gray-200" : "border-gray-200 hover:border-[#ca1f23] hover:bg-red-50/30"}`}
+        className={`flex items-center gap-2 cursor-pointer border-2 border-dashed rounded-lg px-3 py-2 transition ${
+          uploading
+            ? "opacity-50 cursor-not-allowed border-gray-200"
+            : "border-gray-200 hover:border-[#ca1f23] hover:bg-red-50/30"
+        }`}
       >
         {uploading ? (
           <Loader2 size={14} className="text-gray-400 animate-spin" />
@@ -242,7 +252,19 @@ export default function EvaluationFormPage() {
           return;
         }
 
-        const cats: Category[] = formJson.data;
+        // NaN fix: ensure all maxMarks are numbers
+        const cats: Category[] = (formJson.data || []).map((cat: Category) => ({
+          ...cat,
+          parameters: (cat.parameters || []).map((param) => ({
+            ...param,
+            maxMarks: safeNum(param.maxMarks),
+            fields: (param.fields || []).map((f) => ({
+              ...f,
+              maxMarks: safeNum(f.maxMarks),
+            })),
+          })),
+        }));
+
         setCategories(cats);
 
         // Check existing evaluation
@@ -252,12 +274,11 @@ export default function EvaluationFormPage() {
         const evalJson = await evalRes.json();
 
         if (evalJson.success && evalJson.data) {
-          // Restore saved data
           const existing = evalJson.data;
           setEvaluationId(existing._id);
           setEvalStatus(existing.status);
 
-          // Map saved data back to UI structure
+          // Restore saved data
           const restored: CategoryData[] = cats.map((cat) => {
             const savedCat = existing.categoriesData?.find(
               (c: { categoryId: string }) => c.categoryId === cat._id,
@@ -276,28 +297,13 @@ export default function EvaluationFormPage() {
                     entries: savedParam.entries.map(
                       (e: {
                         _id?: string;
-                        fields: {
-                          fieldId: string;
-                          fieldName: string;
-                          value: number | string;
-                          marks: {
-                            faculty: number;
-                            hod: number;
-                            principal: number;
-                          };
-                        }[];
+                        fields: FieldValue[];
                         evidenceFiles: UploadedFile[];
                       }) => ({
                         entryId: e._id || Math.random().toString(36).slice(2),
-                        fields: e.fields.map((f) => ({
-                          fieldId: f.fieldId,
-                          fieldName: f.fieldName,
-                          value: f.value ?? 0,
-                          marks: f.marks ?? {
-                            faculty: 0,
-                            hod: 0,
-                            principal: 0,
-                          },
+                        fields: (e.fields || []).map((f) => ({
+                          ...f,
+                          value: safeNum(f.value), // NaN fix
                         })),
                         evidenceFiles: e.evidenceFiles || [],
                       }),
@@ -340,7 +346,7 @@ export default function EvaluationFormPage() {
         const next = structuredClone(prev);
         next[catIdx].parameters[paramIdx].entries[entryIdx].fields[
           fieldIdx
-        ].value = Number(val) || 0;
+        ].value = safeNum(val); // NaN fix
         return next;
       });
     },
@@ -351,7 +357,8 @@ export default function EvaluationFormPage() {
 
   const addEntry = useCallback(
     (catIdx: number, paramIdx: number) => {
-      const param = categories[catIdx].parameters[paramIdx];
+      const param = categories[catIdx]?.parameters[paramIdx];
+      if (!param) return;
       setFormData((prev) => {
         const next = structuredClone(prev);
         next[catIdx].parameters[paramIdx].entries.push(makeEntry(param));
@@ -429,7 +436,6 @@ export default function EvaluationFormPage() {
 
   function buildPayload(status: string) {
     return {
-      facultyId: undefined, // server se fill hoga via cookie
       schoolId: facultyInfo?.schoolId,
       departmentId: facultyInfo?.departmentId,
       academicYear,
@@ -512,24 +518,28 @@ export default function EvaluationFormPage() {
     }
   }
 
-  // ── Totals ──────────────────────────────────────────────────────────────────
+  // ── Grand totals ────────────────────────────────────────────────────────────
 
   const grandTotal = formData.reduce((catSum, cat, catIdx) => {
     return (
       catSum +
-      cat.parameters.reduce((paramSum, param, paramIdx) => {
+      (cat.parameters || []).reduce((paramSum, param, paramIdx) => {
         const catParam = categories[catIdx]?.parameters[paramIdx];
         if (!catParam) return paramSum;
-        return paramSum + calcParamMarks(param.entries, catParam);
+        return (
+          paramSum + calcParamMarks(param.entries, safeNum(catParam.maxMarks))
+        );
       }, 0)
     );
   }, 0);
 
   const grandMax = categories.reduce((sum, cat) => {
-    return sum + cat.parameters.reduce((s, p) => s + p.maxMarks, 0);
+    return (
+      sum + (cat.parameters || []).reduce((s, p) => s + safeNum(p.maxMarks), 0)
+    );
   }, 0);
 
-  // ── UI ──────────────────────────────────────────────────────────────────────
+  // ── Loading state ───────────────────────────────────────────────────────────
 
   if (loading) {
     return (
@@ -558,14 +568,40 @@ export default function EvaluationFormPage() {
               No Categories Assigned
             </h3>
             <p className="text-sm text-gray-400">
-              Please contact your administrator to assign evaluation categories
-              to you.
+              Please contact your administrator to assign evaluation categories.
             </p>
           </div>
         </main>
       </div>
     );
   }
+
+  // ── Category colors ─────────────────────────────────────────────────────────
+
+  const catColors = [
+    {
+      border: "border-[#ca1f23]",
+      badge: "bg-red-50 text-[#ca1f23]",
+      bar: "#ca1f23",
+    },
+    {
+      border: "border-blue-500",
+      badge: "bg-blue-50 text-blue-600",
+      bar: "#3b82f6",
+    },
+    {
+      border: "border-[#00a651]",
+      badge: "bg-green-50 text-[#00a651]",
+      bar: "#00a651",
+    },
+    {
+      border: "border-purple-500",
+      badge: "bg-purple-50 text-purple-600",
+      bar: "#8b5cf6",
+    },
+  ];
+
+  // ── Main UI ─────────────────────────────────────────────────────────────────
 
   return (
     <div className="flex min-h-screen bg-[#f8f8f8] text-[#111]">
@@ -593,7 +629,6 @@ export default function EvaluationFormPage() {
               </span>
             </div>
 
-            {/* Status badge */}
             {isReadOnly ? (
               <span className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-blue-50 text-blue-600 text-xs font-medium">
                 <CheckCircle2 size={13} />
@@ -644,40 +679,27 @@ export default function EvaluationFormPage() {
         {/* FORM CONTENT */}
         <div className="p-6 space-y-5">
           {categories.map((cat, catIdx) => {
+            const cc = catColors[catIdx % catColors.length];
             const isCollapsed = collapsedCategories.has(cat._id);
-            const catTotal =
-              formData[catIdx]?.parameters.reduce((sum, param, paramIdx) => {
+
+            const catTotal = (formData[catIdx]?.parameters || []).reduce(
+              (sum, param, paramIdx) => {
                 const catParam = cat.parameters[paramIdx];
                 if (!catParam) return sum;
-                return sum + calcParamMarks(param.entries, catParam);
-              }, 0) || 0;
-            const catMax = cat.parameters.reduce((s, p) => s + p.maxMarks, 0);
+                return (
+                  sum +
+                  calcParamMarks(param.entries, safeNum(catParam.maxMarks))
+                );
+              },
+              0,
+            );
+            const catMax = (cat.parameters || []).reduce(
+              (s, p) => s + safeNum(p.maxMarks),
+              0,
+            );
             const pct = catMax > 0 ? Math.round((catTotal / catMax) * 100) : 0;
 
-            const catColors = [
-              {
-                border: "border-[#ca1f23]",
-                badge: "bg-red-50 text-[#ca1f23]",
-                bar: "#ca1f23",
-              },
-              {
-                border: "border-blue-500",
-                badge: "bg-blue-50 text-blue-600",
-                bar: "#3b82f6",
-              },
-              {
-                border: "border-[#00a651]",
-                badge: "bg-green-50 text-[#00a651]",
-                bar: "#00a651",
-              },
-              {
-                border: "border-purple-500",
-                badge: "bg-purple-50 text-purple-600",
-                bar: "#8b5cf6",
-              },
-            ];
-            const cc = catColors[catIdx % catColors.length];
-
+            // KEY FIX: fragment wrapper nahi chahiye, directly return karo
             return (
               <div
                 key={cat._id}
@@ -706,14 +728,13 @@ export default function EvaluationFormPage() {
                         {cat.categoryName}
                       </p>
                       <p className="text-xs text-gray-400 mt-0.5">
-                        {cat.parameters.length} parameter
-                        {cat.parameters.length !== 1 ? "s" : ""}
+                        {(cat.parameters || []).length} parameter
+                        {(cat.parameters || []).length !== 1 ? "s" : ""}
                       </p>
                     </div>
                   </div>
 
                   <div className="flex items-center gap-4 shrink-0">
-                    {/* Progress */}
                     <div className="hidden sm:flex flex-col items-end gap-1">
                       <span className="text-sm font-bold text-[#111]">
                         {catTotal}/{catMax}
@@ -736,14 +757,17 @@ export default function EvaluationFormPage() {
                 {/* Parameters */}
                 {!isCollapsed && (
                   <div className="border-t border-gray-100 divide-y divide-gray-100">
-                    {cat.parameters.map((param, paramIdx) => {
+                    {(cat.parameters || []).map((param, paramIdx) => {
                       const paramData = formData[catIdx]?.parameters[paramIdx];
                       if (!paramData) return null;
+
+                      const paramMaxMarks = safeNum(param.maxMarks);
                       const paramTotal = calcParamMarks(
                         paramData.entries,
-                        param,
+                        paramMaxMarks,
                       );
 
+                      // KEY FIX: key on outermost returned element
                       return (
                         <div key={param._id} className="p-5">
                           {/* Parameter header */}
@@ -761,7 +785,7 @@ export default function EvaluationFormPage() {
                                   <span className="text-[11px] text-gray-400">
                                     Max:{" "}
                                     <span className="font-semibold text-amber-600">
-                                      {param.maxMarks}
+                                      {paramMaxMarks}
                                     </span>
                                   </span>
                                   {param.evidenceRequired && (
@@ -776,14 +800,15 @@ export default function EvaluationFormPage() {
                               <p className="text-sm font-bold text-[#111]">
                                 {paramTotal}
                                 <span className="text-gray-400 font-normal text-xs">
-                                  /{param.maxMarks}
+                                  /{paramMaxMarks}
                                 </span>
                               </p>
-                              {paramTotal >= param.maxMarks && (
-                                <span className="text-[10px] text-[#00a651] font-medium">
-                                  Max reached
-                                </span>
-                              )}
+                              {paramTotal >= paramMaxMarks &&
+                                paramMaxMarks > 0 && (
+                                  <span className="text-[10px] text-[#00a651] font-medium">
+                                    Max reached
+                                  </span>
+                                )}
                             </div>
                           </div>
 
@@ -794,7 +819,6 @@ export default function EvaluationFormPage() {
                                 key={entry.entryId}
                                 className="bg-gray-50 rounded-xl p-4 relative"
                               >
-                                {/* Remove entry button */}
                                 {paramData.entries.length > 1 &&
                                   !isReadOnly && (
                                     <button
@@ -815,38 +839,47 @@ export default function EvaluationFormPage() {
 
                                 {/* Fields grid */}
                                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                                  {entry.fields.map((field, fieldIdx) => {
-                                    const fieldDef = param.fields[fieldIdx];
-                                    return (
-                                      <div key={field.fieldId}>
-                                        <label className="block text-xs font-medium text-gray-500 mb-1.5">
-                                          {field.fieldName}
-                                          {fieldDef && (
-                                            <span className="text-gray-400 font-normal ml-1">
-                                              (max {fieldDef.maxMarks})
-                                            </span>
-                                          )}
-                                        </label>
-                                        <input
-                                          type="number"
-                                          min={0}
-                                          max={fieldDef?.maxMarks}
-                                          value={field.value as number}
-                                          disabled={isReadOnly}
-                                          onChange={(e) =>
-                                            updateFieldValue(
-                                              catIdx,
-                                              paramIdx,
-                                              entryIdx,
-                                              fieldIdx,
-                                              e.target.value,
-                                            )
+                                  {(entry.fields || []).map(
+                                    (field, fieldIdx) => {
+                                      const fieldDef = param.fields?.[fieldIdx];
+                                      const fieldMax = safeNum(
+                                        fieldDef?.maxMarks,
+                                      );
+                                      return (
+                                        <div
+                                          key={
+                                            field.fieldId || `field-${fieldIdx}`
                                           }
-                                          className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-[#111] outline-none focus:border-[#ca1f23] disabled:opacity-60 disabled:cursor-not-allowed"
-                                        />
-                                      </div>
-                                    );
-                                  })}
+                                        >
+                                          <label className="block text-xs font-medium text-gray-500 mb-1.5">
+                                            {field.fieldName}
+                                            {fieldMax > 0 && (
+                                              <span className="text-gray-400 font-normal ml-1">
+                                                (max {fieldMax})
+                                              </span>
+                                            )}
+                                          </label>
+                                          <input
+                                            type="number"
+                                            min={0}
+                                            max={fieldMax || undefined}
+                                            value={field.value}
+                                            disabled={isReadOnly}
+                                            onChange={(e) =>
+                                              updateFieldValue(
+                                                catIdx,
+                                                paramIdx,
+                                                entryIdx,
+                                                fieldIdx,
+                                                e.target.value,
+                                              )
+                                            }
+                                            className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-[#111] outline-none focus:border-[#ca1f23] disabled:opacity-60 disabled:cursor-not-allowed"
+                                          />
+                                        </div>
+                                      );
+                                    },
+                                  )}
                                 </div>
 
                                 {/* Evidence upload */}
@@ -878,13 +911,14 @@ export default function EvaluationFormPage() {
                                       }
                                     />
                                   )}
-                                {/* Read-only evidence list */}
+
+                                {/* Read-only evidence */}
                                 {isReadOnly &&
                                   entry.evidenceFiles.length > 0 && (
                                     <div className="mt-3 space-y-1">
                                       {entry.evidenceFiles.map((f, fi) => (
                                         <a
-                                          key={fi}
+                                          key={`${f.publicId || f.fileName}-${fi}`}
                                           href={f.fileUrl}
                                           target="_blank"
                                           rel="noreferrer"
@@ -900,7 +934,7 @@ export default function EvaluationFormPage() {
                             ))}
                           </div>
 
-                          {/* Add entry button */}
+                          {/* Add entry */}
                           {param.allowMultipleEntries && !isReadOnly && (
                             <button
                               onClick={() => addEntry(catIdx, paramIdx)}
@@ -919,7 +953,7 @@ export default function EvaluationFormPage() {
             );
           })}
 
-          {/* GRAND TOTAL CARD */}
+          {/* GRAND TOTAL */}
           <div className="rounded-2xl border-2 border-[#00a651] bg-white p-5 shadow-sm">
             <div className="flex items-center justify-between">
               <div>
@@ -939,7 +973,11 @@ export default function EvaluationFormPage() {
                   <div
                     className="h-full rounded-full transition-all duration-700"
                     style={{
-                      width: `${grandMax > 0 ? Math.round((grandTotal / grandMax) * 100) : 0}%`,
+                      width: `${
+                        grandMax > 0
+                          ? Math.round((grandTotal / grandMax) * 100)
+                          : 0
+                      }%`,
                       background: "linear-gradient(90deg, #ca1f23, #00a651)",
                     }}
                   />
