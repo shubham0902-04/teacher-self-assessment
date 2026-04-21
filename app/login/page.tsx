@@ -16,8 +16,8 @@ export default function LoginPage() {
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault();
 
-    if (!form.email.trim()) return toast.error("Email daalo");
-    if (!form.password.trim()) return toast.error("Password daalo");
+    if (!form.email.trim()) return toast.error("Please enter your email address.");
+    if (!form.password.trim()) return toast.error("Please enter your password.");
 
     try {
       setLoading(true);
@@ -35,11 +35,8 @@ export default function LoginPage() {
         return;
       }
 
-      // Token cookie mein save karo (middleware isko read kar sakta hai)
-      document.cookie = `token=${data.token}; path=/; max-age=${7 * 24 * 60 * 60}; SameSite=Lax`;
-
-      // Backup ke liye localStorage mein bhi
-      localStorage.setItem("token", data.token);
+      // Token is set as an httpOnly cookie by the server — no need to store in localStorage.
+      // We only save non-sensitive user info (name, role) for UI display (e.g. sidebar).
       localStorage.setItem("role", data.user.role);
       localStorage.setItem("user", JSON.stringify(data.user));
 
@@ -60,7 +57,7 @@ export default function LoginPage() {
       else if (role === "Chairman") router.push("/director");
       else router.push("/admin/dashboard");
     } catch {
-      toast.error("Network error — dobara try karo");
+      toast.error("Network error — please try again.");
     } finally {
       setLoading(false);
     }

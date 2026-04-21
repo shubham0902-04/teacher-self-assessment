@@ -211,8 +211,9 @@ export default function FacultySidebar() {
   // ────────────────────────────────────────────────────────────────────────────
 
   async function handleLogout() {
+    // Clear the httpOnly session cookie server-side
     await fetch("/api/auth/logout", { method: "POST" });
-    localStorage.removeItem("token");
+    // Clear UI-only localStorage values (name, role — not the token)
     localStorage.removeItem("role");
     localStorage.removeItem("user");
     localStorage.removeItem("departmentName");

@@ -13,13 +13,26 @@ void Department;
 void School;
 void EvaluationCategory;
 
-const ACADEMIC_YEAR = "2025-26";
+/** Computes the current academic year dynamically (e.g. "2025-26").
+ *  Rule: if current month >= June (6) → new academic year begins. */
+function getCurrentAcademicYear(): string {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = now.getMonth() + 1; // 1-indexed
+  const startYear = month >= 6 ? year : year - 1;
+  return `${startYear}-${String(startYear + 1).slice(-2)}`;
+}
 
-export async function GET() {
+export async function GET(req: Request) {
   try {
     await connectDB();
 
-    // JWT se userId nikalo
+    // Read optional academicYear query param; fall back to dynamic current year
+    const { searchParams } = new URL(req.url);
+    const academicYear =
+      searchParams.get("academicYear") || getCurrentAcademicYear();
+
+    // Verify JWT from cookie
     const cookieStore = await cookies();
     const token = cookieStore.get("token")?.value;
 
@@ -34,7 +47,7 @@ export async function GET() {
     const { payload } = await jwtVerify(token, secret);
     const userId = payload.id as string;
 
-    // Faculty user fetch karo with department + school
+    // Fetch faculty user with department + school populated
     const user = await User.findById(userId)
       .select("-password")
       .populate("departmentId", "departmentName departmentCode")
@@ -47,23 +60,23 @@ export async function GET() {
       );
     }
 
-    // Assigned categories fetch karo
+    // Fetch category assignment for this academic year
     const assignment = await FacultyCategoryAssignment.findOne({
       facultyId: userId,
-      academicYear: ACADEMIC_YEAR,
+      academicYear,
     }).populate("assignedCategories", "categoryName categoryCode");
 
-    // Existing evaluation status check karo
+    // Check existing evaluation status
     const evaluation = await TeacherEvaluation.findOne({
       facultyId: userId,
-      academicYear: ACADEMIC_YEAR,
+      academicYear,
     }).select("status submittedToHODAt updatedAt");
 
     return NextResponse.json({
       success: true,
       data: {
         user,
-        academicYear: ACADEMIC_YEAR,
+        academicYear,
         assignedCategories: assignment?.assignedCategories || [],
         evaluationStatus: evaluation?.status || "NOT_STARTED",
         lastUpdated: evaluation?.updatedAt || null,
@@ -78,3 +91,4 @@ export async function GET() {
     );
   }
 }
+

@@ -208,13 +208,11 @@ export default function AdminSidebar() {
   }, []);
 
   async function handleLogout() {
-    // Server se httpOnly cookie delete karwao
+    // Clear the httpOnly session cookie server-side
     await fetch("/api/auth/logout", { method: "POST" });
-    // localStorage bhi clear karo
-    localStorage.removeItem("token");
+    // Clear UI-only localStorage values (name, role — not the token)
     localStorage.removeItem("role");
     localStorage.removeItem("user");
-    // Login pe bhejo
     router.push("/login");
   }
 

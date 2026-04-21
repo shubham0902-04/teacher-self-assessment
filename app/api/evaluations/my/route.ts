@@ -4,6 +4,14 @@ import TeacherEvaluation from "@/models/TeacherEvaluation";
 import { cookies } from "next/headers";
 import { jwtVerify } from "jose";
 
+function getCurrentAcademicYear(): string {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = now.getMonth() + 1;
+  const startYear = month >= 6 ? year : year - 1;
+  return `${startYear}-${String(startYear + 1).slice(-2)}`;
+}
+
 export async function GET(req: Request) {
   try {
     await connectDB();
@@ -22,7 +30,8 @@ export async function GET(req: Request) {
     const facultyId = payload.id as string;
 
     const { searchParams } = new URL(req.url);
-    const academicYear = searchParams.get("academicYear") || "2025-26";
+    const academicYear =
+      searchParams.get("academicYear") || getCurrentAcademicYear();
 
     const evaluation = await TeacherEvaluation.findOne({
       facultyId,

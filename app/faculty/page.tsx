@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import FacultySidebar from "@/app/components/faculty/FacultySidebar";
 import Link from "next/link";
+import { useAcademicYear } from "@/app/hooks/useAcademicYear";
 import {
   ClipboardList,
   CheckCircle2,
@@ -118,6 +119,7 @@ function AnimatedNumber({ value }: { value: number }) {
 export default function FacultyDashboard() {
   const [data, setData] = useState<FacultyData | null>(null);
   const [loading, setLoading] = useState(true);
+  const { academicYear } = useAcademicYear();
 
   const hour = new Date().getHours();
   const greeting =
@@ -126,7 +128,7 @@ export default function FacultyDashboard() {
   useEffect(() => {
     async function fetchData() {
       try {
-        const res = await fetch("/api/faculty/me");
+        const res = await fetch(`/api/faculty/me?academicYear=${academicYear}`);
         const json = await res.json();
         if (json.success) {
           setData(json.data);
@@ -145,7 +147,7 @@ export default function FacultyDashboard() {
       }
     }
     fetchData();
-  }, []);
+  }, [academicYear]);
 
   const statusInfo = data
     ? STATUS_CONFIG[data.evaluationStatus] || STATUS_CONFIG["NOT_STARTED"]

@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import FacultySidebar from "@/app/components/faculty/FacultySidebar";
+import { useAcademicYear } from "@/app/hooks/useAcademicYear";
 import {
   ChevronDown,
   ChevronUp,
@@ -206,7 +207,7 @@ export default function EvaluationFormPage() {
     schoolId?: string;
     departmentId?: string;
   } | null>(null);
-  const [academicYear] = useState("2025-26");
+  const { academicYear } = useAcademicYear();
 
   const isReadOnly =
     evalStatus === "SUBMITTED_TO_HOD" ||
