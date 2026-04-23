@@ -1,11 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { GraduationCap, Eye, EyeOff, LogIn, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
 
-export default function LoginPage() {
+function LoginContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -181,5 +181,17 @@ export default function LoginPage() {
         </p>
       </div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-[#f8fafc] flex items-center justify-center p-4">
+        <div className="w-8 h-8 border-4 border-[#ca1f23]/30 border-t-[#ca1f23] rounded-full animate-spin" />
+      </div>
+    }>
+      <LoginContent />
+    </Suspense>
   );
 }
