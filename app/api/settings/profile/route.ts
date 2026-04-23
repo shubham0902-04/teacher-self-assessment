@@ -77,7 +77,10 @@ export async function PATCH(req: Request) {
       });
       if (existing) {
         return NextResponse.json(
-          { success: false, message: "This email is already used by another account." },
+          {
+            success: false,
+            message: "This email is already used by another account.",
+          },
           { status: 409 },
         );
       }
@@ -87,11 +90,9 @@ export async function PATCH(req: Request) {
     if (name?.trim()) updateData.name = name.trim();
     if (email?.trim()) updateData.email = email.toLowerCase().trim();
 
-    const updated = await User.findByIdAndUpdate(
-      payload.id,
-      updateData,
-      { new: true },
-    ).select("-password");
+    const updated = await User.findByIdAndUpdate(payload.id, updateData, {
+      new: true,
+    }).select("-password");
 
     if (!updated) {
       return NextResponse.json(

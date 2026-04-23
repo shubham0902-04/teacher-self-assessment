@@ -4,6 +4,7 @@ import AdminSidebar from "@/app/components/admin/AdminSidebar";
 import { useEffect, useState } from "react";
 import { Search, X, Save, Users, CheckSquare, Building2 } from "lucide-react";
 import { toast } from "sonner";
+import { useAcademicYear } from "@/app/hooks/useAcademicYear";
 
 type Faculty = {
   _id: string;
@@ -28,9 +29,9 @@ type AssignmentResponse = {
   data: Assignment[];
 };
 
-const ACADEMIC_YEAR = "2025-26";
 
 export default function FacultyCategoryAssignmentPage() {
+  const { academicYear } = useAcademicYear();
   const [faculties, setFaculties] = useState<Faculty[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [selected, setSelected] = useState<Record<string, string[]>>({});
@@ -146,7 +147,7 @@ export default function FacultyCategoryAssignmentPage() {
     const payload = Object.keys(selected).map((facultyId) => ({
       facultyId,
       assignedCategories: selected[facultyId],
-      academicYear: ACADEMIC_YEAR,
+      academicYear: academicYear,
     }));
 
     try {
@@ -184,7 +185,7 @@ export default function FacultyCategoryAssignmentPage() {
               Faculty Category Assignment
             </h1>
             <p className="text-sm text-gray-400 mt-0.5">
-              Academic Year: {ACADEMIC_YEAR}
+              Academic Year: {academicYear}
             </p>
           </div>
           <button

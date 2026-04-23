@@ -207,7 +207,7 @@ export default function EvaluationFormPage() {
     schoolId?: string;
     departmentId?: string;
   } | null>(null);
-  const { academicYear } = useAcademicYear();
+  const { academicYear, loaded } = useAcademicYear();
 
   const isReadOnly =
     evalStatus === "SUBMITTED_TO_HOD" ||
@@ -217,6 +217,8 @@ export default function EvaluationFormPage() {
   // ── Load form data ──────────────────────────────────────────────────────────
 
   useEffect(() => {
+    // Wait for localStorage preference to be read before fetching
+    if (!loaded) return;
     async function load() {
       try {
         setLoading(true);
@@ -367,7 +369,7 @@ export default function EvaluationFormPage() {
       }
     }
     load();
-  }, [academicYear]);
+  }, [academicYear, loaded]);
 
   // ── Update field value ──────────────────────────────────────────────────────
   // FIX: Use functional update with immer-style clone for correctness

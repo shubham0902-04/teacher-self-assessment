@@ -20,16 +20,35 @@ async function request<T>(
 
 /**
  * Returns the current academic year in "YYYY-YY" format.
- * Rule: if current month is June (6) or later → new year, else same year.
- * e.g. April 2025 → "2024-25", July 2025 → "2025-26"
+ *
+ * College calendar: August → July
+ *   ODD  semester: Aug – Dec  (month 8–12)  → new year starts
+ *   EVEN semester: Jan – Jul  (month 1–7)   → still the previous year
+ *
+ * Examples (today = April 2026):
+ *   month 4 (Apr) < 8  →  startYear = 2026 - 1 = 2025  →  "2025-26"  ✅
+ *
+ * Examples (today = September 2025):
+ *   month 9 (Sep) >= 8 →  startYear = 2025              →  "2025-26"  ✅
  */
 export function getCurrentAcademicYear(): string {
   const now = new Date();
   const year = now.getFullYear();
   const month = now.getMonth() + 1; // 1-indexed
-  const startYear = month >= 6 ? year : year - 1;
+  // Academic year starts in August (month 8)
+  const startYear = month >= 8 ? year : year - 1;
   const endYY = String(startYear + 1).slice(-2);
   return `${startYear}-${endYY}`;
+}
+
+/**
+ * Returns current semester based on month.
+ *   ODD  → Aug (8) to Dec (12)
+ *   EVEN → Jan (1) to Jul (7)
+ */
+export function getCurrentSemester(): "ODD" | "EVEN" {
+  const month = new Date().getMonth() + 1;
+  return month >= 8 ? "ODD" : "EVEN";
 }
 
 // ── Auth ──────────────────────────────────────────────────────────────────────

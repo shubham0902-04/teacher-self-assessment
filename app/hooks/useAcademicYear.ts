@@ -6,7 +6,9 @@ import { getCurrentAcademicYear } from "@/app/services/api";
 // ─────────────────────────────────────────────────────────────────────────────
 // useAcademicYear
 // Returns the current academic year string computed dynamically.
-// Optionally accepts an override (e.g. from user preference stored in localStorage).
+// `loaded` becomes true once localStorage has been checked — consumers should
+// wait for `loaded` before making API calls to avoid a double-fetch race where
+// the auto-detected year (e.g. "2025-26") overrides the stored preference.
 // ─────────────────────────────────────────────────────────────────────────────
 
 const STORAGE_KEY = "preferredAcademicYear";
@@ -15,8 +17,9 @@ export function useAcademicYear() {
   const [academicYear, setAcademicYear] = useState<string>(
     getCurrentAcademicYear,
   );
+  // `loaded` = false until localStorage has been read client-side
+  const [loaded, setLoaded] = useState(false);
 
-  // Load user-preferred year from localStorage (if set)
   useEffect(() => {
     try {
       const stored = localStorage.getItem(STORAGE_KEY);
@@ -25,6 +28,9 @@ export function useAcademicYear() {
       }
     } catch {
       // ignore — SSR or private browsing
+    } finally {
+      // Always mark as loaded, even if no stored preference exists
+      setLoaded(true);
     }
   }, []);
 
@@ -65,5 +71,6 @@ export function useAcademicYear() {
     });
   })();
 
-  return { academicYear, setYear, resetToCurrentYear, yearOptions };
+  return { academicYear, setYear, resetToCurrentYear, yearOptions, loaded };
 }
+

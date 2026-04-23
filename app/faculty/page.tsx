@@ -119,20 +119,26 @@ function AnimatedNumber({ value }: { value: number }) {
 export default function FacultyDashboard() {
   const [data, setData] = useState<FacultyData | null>(null);
   const [loading, setLoading] = useState(true);
-  const { academicYear } = useAcademicYear();
+  const { academicYear, loaded } = useAcademicYear();
 
   const hour = new Date().getHours();
   const greeting =
     hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
 
   useEffect(() => {
+    // Wait until localStorage preference has been read before fetching.
+    // Without this guard the first render fires with the auto-detected year
+    // (e.g. "2025-26") before the stored preference (e.g. "2023-24") is applied,
+    // causing a race condition where the wrong year is displayed.
+    if (!loaded) return;
+
     async function fetchData() {
       try {
         const res = await fetch(`/api/faculty/me?academicYear=${academicYear}`);
         const json = await res.json();
         if (json.success) {
           setData(json.data);
-          // Department name localStorage mein save karo sidebar ke liye
+          // Save department name to localStorage for sidebar display
           if (json.data.user.departmentId?.departmentName) {
             localStorage.setItem(
               "departmentName",
@@ -147,7 +153,7 @@ export default function FacultyDashboard() {
       }
     }
     fetchData();
-  }, [academicYear]);
+  }, [academicYear, loaded]);
 
   const statusInfo = data
     ? STATUS_CONFIG[data.evaluationStatus] || STATUS_CONFIG["NOT_STARTED"]
@@ -205,7 +211,7 @@ export default function FacultyDashboard() {
               <p className="text-white/30 text-xs">
                 Academic Year:{" "}
                 <span className="text-white/50 font-medium">
-                  {data?.academicYear || "2025-26"}
+                  {academicYear}
                 </span>
               </p>
             </div>
@@ -298,7 +304,7 @@ export default function FacultyDashboard() {
                   Self Assessment Form
                 </h3>
                 <p className="text-xs text-gray-400 mt-1">
-                  Academic Year: {data?.academicYear || "2025-26"}
+                  Academic Year: {academicYear}
                 </p>
               </div>
               {data?.lastUpdated && (

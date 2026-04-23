@@ -163,7 +163,7 @@ function CustomBarTooltip({
 export default function DirectorDashboard() {
   const router = useRouter();
   const { userName } = useAuth();
-  const { academicYear, setYear, yearOptions } = useAcademicYear();
+  const { academicYear, setYear, yearOptions, loaded } = useAcademicYear();
 
   const [stats, setStats] = useState<EvaluationStats | null>(null);
   const [loading, setLoading] = useState(true);
@@ -175,6 +175,9 @@ export default function DirectorDashboard() {
 
   // ── Fetch stats ─────────────────────────────────────────────────────────────
   useEffect(() => {
+    // Wait for localStorage preference before fetching
+    if (!loaded) return;
+
     async function load() {
       setLoading(true);
       try {
@@ -190,7 +193,7 @@ export default function DirectorDashboard() {
       }
     }
     load();
-  }, [academicYear]);
+  }, [academicYear, loaded]);
 
   async function handleLogout() {
     await fetch("/api/auth/logout", { method: "POST" });

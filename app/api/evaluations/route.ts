@@ -40,7 +40,7 @@ export async function POST(req: Request) {
   }
 }
 
-export async function GET() {
+export async function GET(req: Request) {
   try {
     await connectDB();
 
@@ -59,6 +59,10 @@ export async function GET() {
     const role = payload.role as string;
     const userId = payload.id as string;
 
+    // ── Academic year from query string ───────────────────────────────────────
+    const { searchParams } = new URL(req.url);
+    const academicYear = searchParams.get("academicYear");
+
     // ── Role-based filter ─────────────────────────────────────────────────────
     // Admin / Chairman → all evaluations
     // HOD              → only evaluations from their department
@@ -66,7 +70,7 @@ export async function GET() {
     // Faculty / others → 403 Forbidden
     let filter: Record<string, unknown> = {};
 
-    if (role === "Admin" || role === "Chairman") {
+    if (role === "Admin" || role === "Chairman" || role === "Director") {
       // No additional filter — see everything
     } else if (role === "HOD") {
       const User = (await import("@/models/User")).default;
@@ -93,6 +97,11 @@ export async function GET() {
         { success: false, message: "Forbidden — insufficient permissions" },
         { status: 403 },
       );
+    }
+
+    // ── Apply academic year filter ─────────────────────────────────────────────
+    if (academicYear) {
+      filter = { ...filter, academicYear };
     }
 
     const data = await TeacherEvaluation.find(filter)
