@@ -14,8 +14,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Teacher Self-Assessment System",
-  description: "Manage teacher performance evaluations",
+  title: "FacultyEvaluate",
+  description: "Modern Teacher Self-Assessment and Evaluation Platform",
 };
 
 export default function RootLayout({

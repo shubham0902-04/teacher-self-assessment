@@ -29,6 +29,12 @@ const NAV = [
     ],
   },
   {
+    group: "Management",
+    items: [
+      { label: "Manage Faculty", href: "/hod/users", icon: User },
+    ],
+  },
+  {
     group: "Account",
     items: [
       { label: "My Profile", href: "/hod/profile", icon: User },

@@ -32,6 +32,31 @@ export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const token = request.cookies.get("token")?.value;
 
+  // ── API routes ──────────────────────────────────────────────────────────────
+  if (pathname.startsWith("/api/")) {
+    if (pathname.startsWith("/api/auth/login") || pathname.startsWith("/api/auth/logout")) {
+      return NextResponse.next();
+    }
+    
+    if (!token) {
+      return NextResponse.json(
+        { success: false, message: "Unauthorized Access. Authentication token is missing." },
+        { status: 401 }
+      );
+    }
+    
+    try {
+      const secret = new TextEncoder().encode(process.env.JWT_SECRET);
+      await jwtVerify(token, secret, { clockTolerance: "5s" });
+      return NextResponse.next();
+    } catch {
+      return NextResponse.json(
+        { success: false, message: "Unauthorized Access. Authentication token is invalid or expired." },
+        { status: 401 }
+      );
+    }
+  }
+
   // ── Login page ──────────────────────────────────────────────────────────────
   if (pathname === "/login") {
     if (!token) return noCache(NextResponse.next());
@@ -89,6 +114,7 @@ export async function proxy(request: NextRequest) {
 
 export const config = {
   matcher: [
+    "/api/:path*",
     "/login",
     "/admin/:path*",
     "/faculty/:path*",

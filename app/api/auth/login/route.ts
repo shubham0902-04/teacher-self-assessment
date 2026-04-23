@@ -70,6 +70,8 @@ export async function POST(req: Request) {
       email: user.email,
       role: user.role,
       employeeId: user.employeeId,
+      schoolId: user.schoolId,
+      departmentId: user.departmentId,
     };
 
     const response = NextResponse.json({

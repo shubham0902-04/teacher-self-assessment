@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server";
 import { connectDB } from "@/lib/db/connect";
 import TeacherEvaluation from "@/models/TeacherEvaluation";
+import User from "@/models/User";
+import "@/models/Department";
+import "@/models/School";
 import { cookies } from "next/headers";
 import { jwtVerify } from "jose";
 
@@ -73,7 +76,6 @@ export async function GET(req: Request) {
     if (role === "Admin" || role === "Chairman" || role === "Director") {
       // No additional filter — see everything
     } else if (role === "HOD") {
-      const User = (await import("@/models/User")).default;
       const hod = await User.findById(userId).select("departmentId");
       if (!hod?.departmentId) {
         return NextResponse.json(
@@ -83,7 +85,6 @@ export async function GET(req: Request) {
       }
       filter = { departmentId: hod.departmentId };
     } else if (role === "Principal") {
-      const User = (await import("@/models/User")).default;
       const principal = await User.findById(userId).select("schoolId");
       if (!principal?.schoolId) {
         return NextResponse.json(
