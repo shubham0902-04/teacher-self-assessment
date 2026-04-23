@@ -56,7 +56,7 @@ function AnimatedNumber({ value }: { value: number }) {
 function Skeleton({ w = "w-12", h = "h-7" }: { w?: string; h?: string }) {
   return (
     <span
-      className={`inline-block ${w} ${h} rounded-lg bg-gray-100 animate-pulse`}
+      className={`inline-block ${w} ${h} rounded-lg bg-slate-100 animate-pulse`}
     />
   );
 }
@@ -195,8 +195,8 @@ export default function AdminDashboard() {
       value: stats.totalUsers,
       sub: `${stats.totalFaculty} faculty members`,
       icon: Users,
-      color: "#ca1f23",
-      bg: "rgba(202,31,35,0.08)",
+      color: "text-blue-500",
+      bg: "bg-blue-50",
       href: "/admin/users",
     },
     {
@@ -204,8 +204,8 @@ export default function AdminDashboard() {
       value: stats.totalCategories,
       sub: `${stats.activeCategories} active`,
       icon: FolderKanban,
-      color: "#2563eb",
-      bg: "rgba(37,99,235,0.08)",
+      color: "text-[#00a859]",
+      bg: "bg-[#00a859]/10",
       href: "/admin/categories",
     },
     {
@@ -213,8 +213,8 @@ export default function AdminDashboard() {
       value: stats.totalParameters,
       sub: `${stats.totalFields} criteria defined`,
       icon: ListChecks,
-      color: "#059669",
-      bg: "rgba(5,150,105,0.08)",
+      color: "text-amber-500",
+      bg: "bg-amber-50",
       href: "/admin/parameters",
     },
     {
@@ -222,8 +222,8 @@ export default function AdminDashboard() {
       value: stats.totalAssignments,
       sub: "faculty-category links",
       icon: UserCheck,
-      color: "#d97706",
-      bg: "rgba(217,119,6,0.08)",
+      color: "text-purple-500",
+      bg: "bg-purple-50",
       href: "/admin/faculty-category-assignment",
     },
   ];
@@ -234,32 +234,32 @@ export default function AdminDashboard() {
       label: "Schools",
       value: stats.totalSchools,
       icon: School,
-      color: "#7c3aed",
-      bg: "rgba(124,58,237,0.1)",
+      color: "text-indigo-500",
+      bg: "bg-indigo-50",
       href: "/admin/schools",
     },
     {
       label: "Departments",
       value: stats.totalDepartments,
       icon: Building2,
-      color: "#0891b2",
-      bg: "rgba(8,145,178,0.1)",
+      color: "text-cyan-500",
+      bg: "bg-cyan-50",
       href: "/admin/departments",
     },
     {
       label: "Criteria Fields",
       value: stats.totalFields,
       icon: SlidersHorizontal,
-      color: "#059669",
-      bg: "rgba(5,150,105,0.1)",
+      color: "text-emerald-500",
+      bg: "bg-emerald-50",
       href: "/admin/parameter-fields",
     },
     {
       label: "Active Categories",
       value: stats.activeCategories,
       icon: CheckCircle2,
-      color: "#ca1f23",
-      bg: "rgba(202,31,35,0.08)",
+      color: "text-[#00a859]",
+      bg: "bg-[#00a859]/10",
       href: "/admin/categories",
     },
   ];
@@ -283,72 +283,46 @@ export default function AdminDashboard() {
   ];
 
   return (
-    <div className="flex min-h-screen bg-[#f8f8f8] text-[#111]">
+    <div className="flex min-h-screen bg-[#f8fafc] text-slate-800 font-sans">
       <AdminSidebar />
 
-      <main className="flex-1 overflow-y-auto p-6 space-y-5">
+      <main className="flex-1 overflow-y-auto px-5 sm:px-8 py-8 space-y-6 max-w-[1400px] mx-auto w-full">
         {/* ── GREETING BANNER ─────────────────────────────────── */}
-        <div
-          className="rounded-2xl p-6 relative overflow-hidden"
-          style={{
-            background:
-              "linear-gradient(135deg, #0f0f0f 0%, #1c0405 60%, #2d0b0c 100%)",
-          }}
-        >
-          <div
-            style={{
-              position: "absolute",
-              right: -30,
-              top: -30,
-              width: 160,
-              height: 160,
-              borderRadius: "50%",
-              background: "rgba(202,31,35,0.15)",
-            }}
-          />
-          <div
-            style={{
-              position: "absolute",
-              right: 60,
-              bottom: -50,
-              width: 110,
-              height: 110,
-              borderRadius: "50%",
-              background: "rgba(202,31,35,0.08)",
-            }}
-          />
+        <div className="bg-white rounded-2xl border border-slate-200/60 shadow-sm p-6 sm:p-8 relative overflow-hidden">
+          <div className="absolute right-0 top-0 w-64 h-64 bg-[#00a859]/5 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none" />
+          <div className="absolute left-0 bottom-0 w-48 h-48 bg-[#e31e24]/5 rounded-full blur-3xl -ml-20 -mb-20 pointer-events-none" />
 
-          <div className="relative z-10 flex items-center justify-between gap-4">
+          <div className="relative z-10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
             <div>
-              <p className="text-white/40 text-xs mb-1">{greeting}</p>
-              <h1 className="text-xl font-semibold text-white mb-1">
-                {userName} 👋
+              <p className="text-[13px] text-slate-400 font-medium tracking-wide uppercase mb-1.5">{greeting}</p>
+              <h1 className="text-3xl font-bold text-slate-800 mb-2 tracking-tight">
+                {userName} <span className="inline-block animate-wave">👋</span>
               </h1>
-              <p className="text-white/30 text-xs">
-                Teacher Self-Assessment System — Admin Panel
+              <p className="text-[14px] text-slate-500">
+                Teacher Self-Assessment System — <span className="font-semibold text-slate-700">Admin Portal</span>
               </p>
             </div>
 
-            <div className="hidden sm:flex flex-col items-end gap-2 shrink-0">
-              <div className="flex items-center gap-2">
-                <span className="text-white/40 text-xs">System Setup</span>
-                <span className="text-white text-sm font-semibold">
+            <div className="w-full sm:w-auto bg-slate-50 rounded-xl border border-slate-100 p-4 shrink-0 flex flex-col gap-2">
+              <div className="flex items-center justify-between gap-6">
+                <span className="text-[12px] font-bold text-slate-500 uppercase tracking-wider">System Setup</span>
+                <span className="text-[14px] font-bold text-slate-800">
                   {setupPct}%
                 </span>
               </div>
-              <div className="w-36 h-1.5 rounded-full bg-white/10 overflow-hidden">
+              <div className="w-full sm:w-48 h-2 rounded-full bg-slate-200 overflow-hidden">
                 <div
                   className="h-full rounded-full transition-all duration-1000"
                   style={{
                     width: `${setupPct}%`,
                     background:
                       setupPct === 100
-                        ? "#00a651"
-                        : "linear-gradient(90deg,#ca1f23,#ff5555)",
+                        ? "#00a859"
+                        : "linear-gradient(90deg, #00a859, #e31e24)",
                   }}
                 />
               </div>
-              <span className="text-white/25 text-xs">
+              <span className="text-[11px] font-medium text-slate-400">
                 {setupDone}/{setupSteps.length} steps complete
               </span>
             </div>
@@ -356,118 +330,113 @@ export default function AdminDashboard() {
         </div>
 
         {/* ── PRIMARY STAT CARDS ─────────────────────────────── */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
           {primaryCards.map((card) => {
             const Icon = card.icon;
             return (
               <Link key={card.label} href={card.href}>
-                <div className="relative rounded-2xl border border-gray-200 bg-white p-5 shadow-sm hover:shadow-md transition-all duration-200 hover:-translate-y-0.5 cursor-pointer group overflow-hidden">
+                <div className="relative rounded-2xl border border-slate-200/60 bg-white p-6 shadow-sm hover:shadow-md transition-all duration-200 hover:-translate-y-0.5 cursor-pointer group overflow-hidden">
                   <ArrowUpRight
-                    size={13}
-                    className="absolute top-4 right-4 text-gray-300 group-hover:text-gray-400 transition"
+                    size={15}
+                    className="absolute top-5 right-5 text-slate-300 group-hover:text-slate-500 transition"
                   />
                   <div
-                    className="w-9 h-9 rounded-xl flex items-center justify-center mb-4"
-                    style={{ background: card.bg }}
+                    className={`w-10 h-10 rounded-xl flex items-center justify-center mb-5 transition-colors ${card.bg}`}
                   >
-                    <Icon size={16} style={{ color: card.color }} />
+                    <Icon size={18} className={card.color} />
                   </div>
-                  <p className="text-2xl font-bold text-[#111] mb-0.5">
+                  <p className="text-3xl font-bold text-slate-800 tracking-tight mb-1">
                     {loading ? (
                       <Skeleton />
                     ) : (
                       <AnimatedNumber value={card.value} />
                     )}
                   </p>
-                  <p className="text-[13px] font-medium text-[#111]">
+                  <p className="text-[14px] font-bold text-slate-600">
                     {card.label}
                   </p>
-                  <p className="text-xs text-gray-400 mt-0.5">{card.sub}</p>
+                  <p className="text-[12px] text-slate-400 mt-1 font-medium">{card.sub}</p>
                 </div>
               </Link>
             );
           })}
         </div>
 
-        {/* ── MINI CARDS + SETUP CHECKLIST ─────────────────── */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-          {/* 2×2 mini grid */}
-          <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* ── MINI CARDS ───────────────────────────────────── */}
+          <div className="grid grid-cols-2 gap-4">
             {miniCards.map((card) => {
               const Icon = card.icon;
               return (
                 <Link key={card.label} href={card.href}>
-                  <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 cursor-pointer">
+                  <div className="rounded-2xl border border-slate-200/60 bg-white p-5 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer group hover:-translate-y-0.5">
                     <div
-                      className="w-8 h-8 rounded-lg flex items-center justify-center mb-3"
-                      style={{ background: card.bg }}
+                      className={`w-8 h-8 rounded-lg flex items-center justify-center mb-3 transition-colors ${card.bg}`}
                     >
-                      <Icon size={14} style={{ color: card.color }} />
+                      <Icon size={14} className={card.color} />
                     </div>
-                    <p className="text-xl font-bold text-[#111]">
+                    <p className="text-2xl font-bold text-slate-800 tracking-tight">
                       {loading ? (
                         <Skeleton w="w-8" h="h-6" />
                       ) : (
                         <AnimatedNumber value={card.value} />
                       )}
                     </p>
-                    <p className="text-xs text-gray-500 mt-0.5">{card.label}</p>
+                    <p className="text-[12px] font-bold text-slate-500 mt-1">{card.label}</p>
                   </div>
                 </Link>
               );
             })}
           </div>
 
-          {/* Checklist */}
-          <div className="lg:col-span-2 rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
-            <div className="flex items-center justify-between mb-4">
+          {/* ── SETUP CHECKLIST ─────────────────────────────── */}
+          <div className="lg:col-span-2 rounded-2xl border border-slate-200/60 bg-white p-6 shadow-sm">
+            <div className="flex items-center justify-between mb-5">
               <div>
-                <h3 className="font-semibold text-[#111] text-[14px]">
+                <h3 className="text-[15px] font-bold text-slate-800">
                   System Setup Checklist
                 </h3>
-                <p className="text-xs text-gray-400 mt-0.5">
+                <p className="text-[12px] font-medium text-slate-500 mt-0.5">
                   Complete all steps to activate evaluations
                 </p>
               </div>
               <div
-                className="w-10 h-10 rounded-full flex items-center justify-center text-xs font-bold border-2 transition-all"
-                style={{
-                  borderColor: setupPct === 100 ? "#00a651" : "#ca1f23",
-                  color: setupPct === 100 ? "#00a651" : "#ca1f23",
-                }}
+                className={`w-10 h-10 rounded-xl flex items-center justify-center text-[12px] font-bold border-2 transition-all ${
+                  setupPct === 100 ? "border-[#00a859] text-[#00a859] bg-[#00a859]/5" : "border-slate-200 text-slate-500"
+                }`}
               >
                 {setupPct === 100 ? "✓" : `${setupPct}%`}
               </div>
             </div>
 
-            <div className="space-y-1.5">
+            <div className="space-y-2">
               {setupSteps.map((step, i) => (
                 <Link key={i} href={step.href}>
                   <div
-                    className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition cursor-pointer ${
+                    className={`flex items-center gap-3 px-4 py-3 rounded-xl transition cursor-pointer border ${
                       step.done
-                        ? "bg-green-50/70 hover:bg-green-50"
-                        : "bg-gray-50 hover:bg-gray-100"
+                        ? "bg-[#00a859]/5 border-[#00a859]/10 hover:bg-[#00a859]/10"
+                        : "bg-slate-50 border-slate-100 hover:bg-slate-100/80"
                     }`}
                   >
                     {step.done ? (
                       <CheckCircle2
-                        size={15}
-                        className="text-[#00a651] shrink-0"
+                        size={16}
+                        className="text-[#00a859] shrink-0"
                       />
                     ) : (
-                      <Clock size={15} className="text-gray-300 shrink-0" />
+                      <Clock size={16} className="text-slate-300 shrink-0" />
                     )}
                     <span
-                      className={`text-sm flex-1 ${step.done ? "text-[#111]" : "text-gray-400"}`}
+                      className={`text-[13px] font-semibold flex-1 ${step.done ? "text-slate-800" : "text-slate-500"}`}
                     >
                       {step.label}
                     </span>
                     <span
-                      className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${
+                      className={`text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-md border ${
                         step.done
-                          ? "bg-green-100 text-green-700"
-                          : "bg-red-50 text-[#ca1f23]"
+                          ? "bg-white border-[#00a859]/20 text-[#00a859]"
+                          : "bg-white border-slate-200 text-slate-400"
                       }`}
                     >
                       {step.done ? "Done" : "Pending"}
@@ -480,26 +449,26 @@ export default function AdminDashboard() {
         </div>
 
         {/* ── QUICK ACTIONS ──────────────────────────────────── */}
-        <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
-          <div className="flex items-center gap-2 mb-4">
-            <Zap size={14} className="text-[#ca1f23]" />
-            <h3 className="font-semibold text-[#111] text-[14px]">
-              Quick actions
+        <div className="rounded-2xl border border-slate-200/60 bg-white p-6 shadow-sm">
+          <div className="flex items-center gap-2.5 mb-5">
+            <Zap size={16} className="text-[#00a859]" />
+            <h3 className="text-[15px] font-bold text-slate-800">
+              Quick Actions
             </h3>
           </div>
-          <div className="grid grid-cols-3 sm:grid-cols-6 gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
             {quickLinks.map((link) => {
               const Icon = link.icon;
               return (
                 <Link key={link.label} href={link.href}>
-                  <div className="flex flex-col items-center gap-2 p-3 rounded-xl border border-gray-100 hover:border-[#ca1f23]/30 hover:bg-red-50/30 transition-all cursor-pointer group text-center">
-                    <div className="w-9 h-9 rounded-xl bg-gray-50 group-hover:bg-[#ca1f23]/10 flex items-center justify-center transition-colors">
+                  <div className="flex flex-col items-center gap-2.5 p-4 rounded-xl border border-slate-100 bg-slate-50 hover:border-[#00a859]/30 hover:bg-[#00a859]/5 hover:shadow-sm transition-all duration-200 cursor-pointer group text-center h-full">
+                    <div className="w-10 h-10 rounded-lg bg-white border border-slate-200 group-hover:border-[#00a859]/30 flex items-center justify-center transition-colors shadow-sm">
                       <Icon
-                        size={15}
-                        className="text-gray-400 group-hover:text-[#ca1f23] transition-colors"
+                        size={16}
+                        className="text-slate-400 group-hover:text-[#00a859] transition-colors"
                       />
                     </div>
-                    <span className="text-[10px] font-medium text-gray-500 group-hover:text-[#111] leading-tight transition-colors">
+                    <span className="text-[11px] font-bold text-slate-600 group-hover:text-slate-800 leading-tight transition-colors">
                       {link.label}
                     </span>
                   </div>
@@ -511,13 +480,15 @@ export default function AdminDashboard() {
 
         {/* ── STATUS NOTICE ───────────────────────────────────── */}
         {!loading && setupPct < 100 && (
-          <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 flex items-start gap-3">
-            <AlertCircle size={15} className="text-amber-500 shrink-0 mt-0.5" />
+          <div className="rounded-2xl border border-amber-200 bg-amber-50 p-5 flex items-start gap-4 shadow-sm">
+            <div className="w-8 h-8 rounded-lg bg-amber-100 flex items-center justify-center shrink-0">
+              <AlertCircle size={16} className="text-amber-600" />
+            </div>
             <div>
-              <p className="text-sm font-medium text-amber-800">
+              <p className="text-[14px] font-bold text-amber-900 mb-1">
                 System setup is incomplete ({setupPct}% done)
               </p>
-              <p className="text-xs text-amber-600 mt-0.5">
+              <p className="text-[13px] font-medium text-amber-700">
                 Complete all checklist items above before faculty can submit
                 evaluations.
               </p>
@@ -526,16 +497,15 @@ export default function AdminDashboard() {
         )}
 
         {!loading && setupPct === 100 && (
-          <div className="rounded-2xl border border-green-200 bg-green-50 p-4 flex items-start gap-3">
-            <CheckCircle2
-              size={15}
-              className="text-[#00a651] shrink-0 mt-0.5"
-            />
+          <div className="rounded-2xl border border-[#00a859]/20 bg-[#00a859]/5 p-5 flex items-start gap-4 shadow-sm">
+            <div className="w-8 h-8 rounded-lg bg-[#00a859]/20 flex items-center justify-center shrink-0">
+              <CheckCircle2 size={16} className="text-[#00a859]" />
+            </div>
             <div>
-              <p className="text-sm font-medium text-green-800">
+              <p className="text-[14px] font-bold text-emerald-900 mb-1">
                 System is fully configured and ready
               </p>
-              <p className="text-xs text-green-600 mt-0.5">
+              <p className="text-[13px] font-medium text-emerald-700">
                 Faculty can now log in and submit their self-assessments.
               </p>
             </div>

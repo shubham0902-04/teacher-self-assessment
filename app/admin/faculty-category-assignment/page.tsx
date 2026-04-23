@@ -29,7 +29,6 @@ type AssignmentResponse = {
   data: Assignment[];
 };
 
-
 export default function FacultyCategoryAssignmentPage() {
   const { academicYear } = useAcademicYear();
   const [faculties, setFaculties] = useState<Faculty[]>([]);
@@ -174,24 +173,25 @@ export default function FacultyCategoryAssignmentPage() {
   // ---------------- UI ----------------
 
   return (
-    <div className="flex min-h-screen bg-[#f8f8f8] text-[#111]">
+    <div className="flex min-h-screen bg-[#f8fafc] text-slate-800 font-sans">
       <AdminSidebar />
 
-      <main className="flex-1 overflow-y-auto p-6">
+      <main className="flex-1 overflow-y-auto px-5 sm:px-8 py-8 space-y-6 max-w-[1400px] mx-auto w-full">
         {/* HEADER */}
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h1 className="text-3xl font-bold text-[#111]">
-              Faculty Category Assignment
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-6 rounded-2xl border border-slate-200/60 shadow-sm relative overflow-hidden">
+          <div className="absolute right-0 top-0 w-64 h-64 bg-[#00a859]/5 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none" />
+          <div className="relative z-10">
+            <h1 className="text-2xl font-bold text-slate-800 tracking-tight mb-1">
+              Category Assignment
             </h1>
-            <p className="text-sm text-gray-400 mt-0.5">
-              Academic Year: {academicYear}
+            <p className="text-[13px] text-slate-500 font-medium">
+              Academic Year: <span className="text-slate-700 font-bold">{academicYear}</span>
             </p>
           </div>
           <button
             onClick={saveAll}
             disabled={saving}
-            className="inline-flex items-center gap-2 rounded-xl bg-[#ca1f23] px-5 py-3 font-medium text-white shadow-md transition hover:opacity-95 disabled:opacity-50"
+            className="relative z-10 inline-flex items-center gap-2 rounded-xl bg-[#00a859] px-5 py-2.5 text-[14px] font-bold text-white shadow-sm shadow-[#00a859]/20 transition-all hover:bg-[#008f4c] hover:-translate-y-0.5 disabled:opacity-50 disabled:hover:translate-y-0"
           >
             {saving ? (
               <>
@@ -209,115 +209,123 @@ export default function FacultyCategoryAssignmentPage() {
 
         {/* STAT PILLS */}
         {!loading && (
-          <div className="flex flex-wrap gap-2 mb-5">
-            <span className="text-xs font-medium bg-blue-50 text-blue-700 px-3 py-1.5 rounded-full border border-blue-100">
-              {faculties.length} faculty members
+          <div className="flex flex-wrap gap-3">
+            <span className="text-[11px] font-bold uppercase tracking-wider bg-blue-50 text-blue-600 px-3 py-1.5 rounded-lg border border-blue-100/50">
+              {faculties.length} faculty
             </span>
-            <span className="text-xs font-medium bg-red-50 text-red-700 px-3 py-1.5 rounded-full border border-red-100">
+            <span className="text-[11px] font-bold uppercase tracking-wider bg-indigo-50 text-indigo-600 px-3 py-1.5 rounded-lg border border-indigo-100/50">
               {categories.length} categories
             </span>
-            <span className="text-xs font-medium bg-green-50 text-green-700 px-3 py-1.5 rounded-full border border-green-100">
+            <span className="text-[11px] font-bold uppercase tracking-wider bg-[#00a859]/10 text-[#00a859] px-3 py-1.5 rounded-lg border border-[#00a859]/20">
               {fullyAssigned} fully assigned
             </span>
           </div>
         )}
 
-        {/* BULK SELECT */}
-        {!loading && categories.length > 0 && (
-          <div className="mb-4">
-            <p className="text-xs font-medium text-gray-400 uppercase tracking-wider mb-2">
-              Assign category to all faculty
-            </p>
-            <div className="flex flex-wrap gap-2">
-              {categories.map((cat) => (
+        {/* BULK SELECT & FILTERS */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+          {/* Filters */}
+          <div className="flex flex-col sm:flex-row gap-3">
+            <div className="flex items-center gap-2 flex-1 bg-white border border-slate-200/60 rounded-xl px-4 py-2.5 shadow-sm focus-within:border-[#00a859] focus-within:ring-2 focus-within:ring-[#00a859]/20 transition-all">
+              <Search size={16} className="text-slate-400 shrink-0" />
+              <input
+                type="text"
+                placeholder="Search faculty..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="flex-1 text-[13px] font-medium text-slate-800 placeholder:text-slate-400 outline-none bg-transparent"
+              />
+              {search && (
                 <button
-                  key={cat._id}
-                  onClick={() => bulkSelectCategory(cat._id)}
-                  className="inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg bg-white border border-gray-200 text-gray-600 hover:border-[#ca1f23] hover:text-[#ca1f23] transition shadow-sm"
+                  onClick={() => setSearch("")}
+                  className="text-slate-400 hover:text-slate-600 transition p-1 rounded-lg hover:bg-slate-100"
                 >
-                  <CheckSquare size={12} />
-                  All — {cat.categoryName}
+                  <X size={14} />
                 </button>
-              ))}
+              )}
             </div>
-          </div>
-        )}
 
-        {/* FILTERS */}
-        <div className="flex flex-col sm:flex-row gap-3 mb-5">
-          <div className="flex items-center gap-2 flex-1 bg-white border border-gray-200 rounded-xl px-4 py-3 shadow-sm">
-            <Search size={15} className="text-gray-400 shrink-0" />
-            <input
-              type="text"
-              placeholder="Search faculty by name..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="flex-1 text-sm text-[#111] placeholder:text-gray-400 outline-none bg-transparent"
-            />
-            {search && (
-              <button
-                onClick={() => setSearch("")}
-                className="text-gray-400 hover:text-gray-600 transition"
-              >
-                <X size={14} />
-              </button>
-            )}
+            <select
+              value={departmentFilter}
+              onChange={(e) => setDepartmentFilter(e.target.value)}
+              className="bg-white border border-slate-200/60 rounded-xl px-4 py-2.5 text-[13px] font-medium text-slate-700 outline-none focus:border-[#00a859] focus:ring-2 focus:ring-[#00a859]/20 shadow-sm transition-all"
+            >
+              <option value="">All Departments</option>
+              {departments.map((dept) => (
+                <option key={dept._id} value={dept._id}>
+                  {dept.departmentName}
+                </option>
+              ))}
+            </select>
           </div>
 
-          <select
-            value={departmentFilter}
-            onChange={(e) => setDepartmentFilter(e.target.value)}
-            className="bg-white border border-gray-200 rounded-xl px-4 py-3 text-sm text-[#111] outline-none focus:border-[#ca1f23] shadow-sm"
-          >
-            <option value="">All Departments</option>
-            {departments.map((dept) => (
-              <option key={dept._id} value={dept._id}>
-                {dept.departmentName}
-              </option>
-            ))}
-          </select>
+          {/* Bulk Select */}
+          {!loading && categories.length > 0 && (
+            <div className="flex flex-col gap-2">
+              <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+                Assign category to all faculty
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {categories.map((cat) => (
+                  <button
+                    key={cat._id}
+                    onClick={() => bulkSelectCategory(cat._id)}
+                    className="inline-flex items-center gap-1.5 text-[11px] font-bold px-3 py-1.5 rounded-lg bg-white border border-slate-200/60 text-slate-600 hover:border-[#00a859] hover:text-[#00a859] hover:bg-[#00a859]/5 transition-all shadow-sm"
+                  >
+                    <CheckSquare size={14} />
+                    {cat.categoryName}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
 
         {/* TABLE */}
-        <div className="rounded-2xl border border-gray-200 bg-white shadow-sm overflow-hidden">
+        <div className="rounded-2xl border border-slate-200/60 bg-white shadow-sm overflow-hidden">
           {loading ? (
-            <div className="py-16 text-center text-gray-400 text-sm">
-              Loading assignments...
+            <div className="py-16 flex flex-col items-center gap-3 text-slate-400">
+              <div className="w-6 h-6 border-2 border-[#00a859]/20 border-t-[#00a859] rounded-full animate-spin" />
+              <span className="text-[13px] font-medium">Loading assignments...</span>
             </div>
           ) : faculties.length === 0 ? (
-            <div className="py-16 text-center text-gray-400 text-sm">
+            <div className="py-16 text-center text-slate-400 text-[13px] font-medium">
               No faculty members found — create faculty users first
             </div>
           ) : (
             <div className="overflow-x-auto">
-              <table className="min-w-full text-sm">
-                <thead className="bg-[#f5f5f7]">
-                  <tr className="text-left text-sm font-semibold text-gray-600">
-                    <th className="px-5 py-4 sticky left-0 bg-[#f5f5f7] z-10">
+              <table className="min-w-full text-left">
+                <thead className="bg-slate-50 border-b border-slate-100">
+                  <tr>
+                    <th className="px-6 py-4 sticky left-0 bg-slate-50 z-10 text-[11px] font-bold text-slate-400 uppercase tracking-wider border-r border-slate-100 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.05)]">
                       <div className="flex items-center gap-2">
                         <Users size={14} />
                         Faculty
                       </div>
                     </th>
-                    <th className="px-5 py-4">Department</th>
+                    <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+                      Department
+                    </th>
                     {categories.map((cat) => (
                       <th
                         key={cat._id}
-                        className="px-5 py-4 text-center whitespace-nowrap"
+                        className="px-6 py-4 text-center whitespace-nowrap text-[11px] font-bold text-slate-400 uppercase tracking-wider"
                       >
                         {cat.categoryName}
                       </th>
                     ))}
-                    <th className="px-5 py-4 text-center">All</th>
+                    <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider text-center bg-slate-100/50">
+                      All
+                    </th>
                   </tr>
                 </thead>
 
-                <tbody className="divide-y divide-gray-100">
+                <tbody className="divide-y divide-slate-100 bg-white">
                   {filteredFaculties.length === 0 ? (
                     <tr>
                       <td
                         colSpan={categories.length + 3}
-                        className="px-5 py-10 text-center text-gray-400"
+                        className="px-6 py-12 text-center text-slate-400 text-[13px] font-medium bg-slate-50/50"
                       >
                         No faculty match your search
                       </td>
@@ -336,32 +344,32 @@ export default function FacultyCategoryAssignmentPage() {
                       return (
                         <tr
                           key={fac._id}
-                          className="hover:bg-gray-50/60 transition"
+                          className="hover:bg-slate-50/50 transition-colors group"
                         >
-                          <td className="px-5 py-3.5 sticky left-0 bg-white hover:bg-gray-50/60 z-10">
-                            <div className="flex items-center gap-2.5">
-                              <div className="w-7 h-7 rounded-full bg-[#ca1f23]/10 flex items-center justify-center text-[11px] font-bold text-[#ca1f23] shrink-0">
+                          <td className="px-6 py-4 sticky left-0 bg-white group-hover:bg-slate-50/50 z-10 border-r border-slate-100 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.05)] transition-colors">
+                            <div className="flex items-center gap-3">
+                              <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-[12px] font-bold text-slate-600 shrink-0 border border-slate-200">
                                 {fac.name.charAt(0).toUpperCase()}
                               </div>
                               <div>
-                                <p className="font-medium text-[#111] text-[13px]">
+                                <p className="font-bold text-slate-700 text-[13px] leading-tight">
                                   {fac.name}
                                 </p>
-                                <p className="text-[11px] text-gray-400">
+                                <p className="text-[11px] font-medium text-slate-400 mt-0.5">
                                   {assignedCount}/{categories.length} assigned
                                 </p>
                               </div>
                             </div>
                           </td>
 
-                          <td className="px-5 py-3.5">
+                          <td className="px-6 py-4">
                             {deptName ? (
-                              <span className="inline-flex items-center gap-1.5 text-xs font-medium bg-blue-50 text-blue-700 px-2.5 py-1 rounded-full">
-                                <Building2 size={11} />
+                              <span className="inline-flex items-center gap-1.5 text-[11px] font-bold bg-blue-50 text-blue-600 px-2.5 py-1 rounded-md border border-blue-100/50">
+                                <Building2 size={12} />
                                 {deptName}
                               </span>
                             ) : (
-                              <span className="text-gray-300 text-xs">—</span>
+                              <span className="text-slate-300 text-[13px]">—</span>
                             )}
                           </td>
 
@@ -371,31 +379,33 @@ export default function FacultyCategoryAssignmentPage() {
                             return (
                               <td
                                 key={cat._id}
-                                className="px-5 py-3.5 text-center"
+                                className="px-6 py-4 text-center bg-slate-50/10"
                               >
-                                <input
-                                  type="checkbox"
-                                  checked={checked}
-                                  onChange={() =>
-                                    toggleCategory(fac._id, cat._id)
-                                  }
-                                  className="w-4 h-4 accent-[#ca1f23] cursor-pointer"
-                                />
+                                <div className="flex items-center justify-center">
+                                  <input
+                                    type="checkbox"
+                                    checked={checked}
+                                    onChange={() =>
+                                      toggleCategory(fac._id, cat._id)
+                                    }
+                                    className="w-4 h-4 rounded border-slate-300 text-[#00a859] focus:ring-[#00a859] cursor-pointer"
+                                  />
+                                </div>
                               </td>
                             );
                           })}
 
-                          <td className="px-5 py-3.5 text-center">
+                          <td className="px-6 py-4 text-center bg-slate-50/30">
                             <button
                               onClick={() => bulkSelectFaculty(fac._id)}
                               disabled={allAssigned}
-                              className={`text-xs font-medium px-2.5 py-1 rounded-lg transition ${
+                              className={`text-[11px] font-bold px-3 py-1.5 rounded-lg transition-colors ${
                                 allAssigned
-                                  ? "bg-green-50 text-green-600 cursor-default"
-                                  : "bg-gray-100 text-gray-500 hover:bg-[#ca1f23]/10 hover:text-[#ca1f23]"
+                                  ? "bg-[#00a859]/10 text-[#00a859] cursor-default border border-[#00a859]/20"
+                                  : "bg-slate-100 text-slate-500 border border-slate-200 hover:bg-[#00a859] hover:text-white hover:border-[#00a859]"
                               }`}
                             >
-                              {allAssigned ? "All" : "Select all"}
+                              {allAssigned ? "All Selected" : "Select All"}
                             </button>
                           </td>
                         </tr>
@@ -408,9 +418,8 @@ export default function FacultyCategoryAssignmentPage() {
           )}
 
           {!loading && filteredFaculties.length > 0 && (
-            <div className="px-6 py-3 border-t border-gray-100 text-xs text-gray-400">
-              Showing {filteredFaculties.length} of {faculties.length} faculty
-              members
+            <div className="px-6 py-3 border-t border-slate-100 text-[11px] font-bold text-slate-400 bg-slate-50 uppercase tracking-wider">
+              Showing {filteredFaculties.length} of {faculties.length} faculty members
             </div>
           )}
         </div>

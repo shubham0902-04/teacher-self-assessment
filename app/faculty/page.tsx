@@ -15,6 +15,8 @@ import {
   RotateCcw,
   FileCheck,
   Award,
+  CircleDashed,
+  Building2,
 } from "lucide-react";
 
 type FacultyData = {
@@ -36,65 +38,14 @@ type FacultyData = {
   submittedAt: string | null;
 };
 
-const STATUS_CONFIG: Record<
-  string,
-  {
-    label: string;
-    color: string;
-    bg: string;
-    icon: React.ReactNode;
-    description: string;
-  }
-> = {
-  NOT_STARTED: {
-    label: "Not Started",
-    color: "text-gray-500",
-    bg: "bg-gray-100",
-    icon: <Clock size={16} />,
-    description: "You haven't started your evaluation yet.",
-  },
-  DRAFT: {
-    label: "Draft",
-    color: "text-amber-600",
-    bg: "bg-amber-100",
-    icon: <ClipboardList size={16} />,
-    description: "Your evaluation is saved as draft.",
-  },
-  SUBMITTED_TO_HOD: {
-    label: "Submitted to HOD",
-    color: "text-blue-600",
-    bg: "bg-blue-100",
-    icon: <Send size={16} />,
-    description: "Awaiting review from your HOD.",
-  },
-  RETURNED_BY_HOD: {
-    label: "Returned by HOD",
-    color: "text-orange-600",
-    bg: "bg-orange-100",
-    icon: <RotateCcw size={16} />,
-    description: "HOD has returned your evaluation with remarks.",
-  },
-  SUBMITTED_TO_PRINCIPAL: {
-    label: "Submitted to Principal",
-    color: "text-purple-600",
-    bg: "bg-purple-100",
-    icon: <FileCheck size={16} />,
-    description: "Awaiting final approval from Principal.",
-  },
-  RETURNED_BY_PRINCIPAL: {
-    label: "Returned by Principal",
-    color: "text-red-600",
-    bg: "bg-red-100",
-    icon: <RotateCcw size={16} />,
-    description: "Principal has returned your evaluation.",
-  },
-  FINALIZED: {
-    label: "Finalized",
-    color: "text-[#00a651]",
-    bg: "bg-green-100",
-    icon: <CheckCircle2 size={16} />,
-    description: "Your evaluation has been finalized and approved.",
-  },
+const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string; icon: React.ReactNode; description: string }> = {
+  NOT_STARTED:            { label: "Not Started",            color: "text-slate-500", bg: "bg-slate-100",        icon: <CircleDashed size={16} />, description: "You haven't started your evaluation yet." },
+  DRAFT:                  { label: "Draft",                  color: "text-amber-600", bg: "bg-amber-50",         icon: <ClipboardList size={16} />, description: "Your evaluation is saved as draft." },
+  SUBMITTED_TO_HOD:       { label: "Pending HOD Review",     color: "text-[#00a859]", bg: "bg-[#00a859]/10",     icon: <Send size={16} />,          description: "Awaiting review from your HOD." },
+  RETURNED_BY_HOD:        { label: "Returned by HOD",        color: "text-amber-600", bg: "bg-amber-50",         icon: <RotateCcw size={16} />,     description: "HOD has returned your evaluation." },
+  SUBMITTED_TO_PRINCIPAL: { label: "Pending Principal",      color: "text-[#00a859]", bg: "bg-[#00a859]/10",     icon: <FileCheck size={16} />,     description: "Awaiting final approval from Principal." },
+  RETURNED_BY_PRINCIPAL:  { label: "Returned by Principal",  color: "text-[#e31e24]", bg: "bg-[#e31e24]/10",     icon: <RotateCcw size={16} />,     description: "Principal has returned your evaluation." },
+  FINALIZED:              { label: "Finalized",              color: "text-[#00a859]", bg: "bg-[#00a859]/10",     icon: <CheckCircle2 size={16} />,  description: "Your evaluation has been finalized." },
 };
 
 function AnimatedNumber({ value }: { value: number }) {
@@ -122,14 +73,9 @@ export default function FacultyDashboard() {
   const { academicYear, loaded } = useAcademicYear();
 
   const hour = new Date().getHours();
-  const greeting =
-    hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
+  const greeting = hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
 
   useEffect(() => {
-    // Wait until localStorage preference has been read before fetching.
-    // Without this guard the first render fires with the auto-detected year
-    // (e.g. "2025-26") before the stored preference (e.g. "2023-24") is applied,
-    // causing a race condition where the wrong year is displayed.
     if (!loaded) return;
 
     async function fetchData() {
@@ -138,16 +84,12 @@ export default function FacultyDashboard() {
         const json = await res.json();
         if (json.success) {
           setData(json.data);
-          // Save department name to localStorage for sidebar display
           if (json.data.user.departmentId?.departmentName) {
-            localStorage.setItem(
-              "departmentName",
-              json.data.user.departmentId.departmentName,
-            );
+            localStorage.setItem("departmentName", json.data.user.departmentId.departmentName);
           }
         }
       } catch {
-        // silent
+        /* silent */
       } finally {
         setLoading(false);
       }
@@ -155,323 +97,206 @@ export default function FacultyDashboard() {
     fetchData();
   }, [academicYear, loaded]);
 
-  const statusInfo = data
-    ? STATUS_CONFIG[data.evaluationStatus] || STATUS_CONFIG["NOT_STARTED"]
-    : STATUS_CONFIG["NOT_STARTED"];
+  const statusInfo = data ? STATUS_CONFIG[data.evaluationStatus] || STATUS_CONFIG["NOT_STARTED"] : STATUS_CONFIG["NOT_STARTED"];
 
-  const canEdit =
-    !data?.evaluationStatus ||
-    data.evaluationStatus === "NOT_STARTED" ||
-    data.evaluationStatus === "DRAFT" ||
-    data.evaluationStatus === "RETURNED_BY_HOD" ||
-    data.evaluationStatus === "RETURNED_BY_PRINCIPAL";
+  const canEdit = !data?.evaluationStatus || ["NOT_STARTED", "DRAFT", "RETURNED_BY_HOD", "RETURNED_BY_PRINCIPAL"].includes(data.evaluationStatus);
 
   return (
-    <div className="flex min-h-screen bg-[#f8f8f8] text-[#111]">
+    <div className="flex min-h-screen bg-[#f8fafc] text-slate-800 font-sans">
       <FacultySidebar />
 
-      <main className="flex-1 overflow-y-auto p-6 space-y-5">
-        {/* ── GREETING BANNER ─────────────────────────────── */}
-        <div
-          className="rounded-2xl p-6 relative overflow-hidden"
-          style={{
-            background:
-              "linear-gradient(135deg, #0f0f0f 0%, #1c0405 60%, #2d0b0c 100%)",
-          }}
-        >
-          <div
-            style={{
-              position: "absolute",
-              right: -30,
-              top: -30,
-              width: 160,
-              height: 160,
-              borderRadius: "50%",
-              background: "rgba(202,31,35,0.15)",
-            }}
-          />
-          <div
-            style={{
-              position: "absolute",
-              right: 60,
-              bottom: -50,
-              width: 110,
-              height: 110,
-              borderRadius: "50%",
-              background: "rgba(202,31,35,0.08)",
-            }}
-          />
+      <main className="flex-1 overflow-y-auto px-5 sm:px-8 py-8 space-y-6 max-w-[1200px] mx-auto w-full">
+        {/* Hero Banner */}
+        <div className="rounded-3xl p-6 sm:p-8 relative overflow-hidden bg-slate-900 shadow-lg shadow-slate-900/10">
+          <div className="absolute right-0 top-0 w-64 h-64 bg-[#00a859]/20 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none" />
+          <div className="absolute right-40 bottom-0 w-40 h-40 bg-[#e31e24]/10 rounded-full blur-3xl -mb-10 pointer-events-none" />
 
-          <div className="relative z-10 flex items-center justify-between gap-4 flex-wrap">
+          <div className="relative z-10 flex flex-col md:flex-row md:items-end justify-between gap-6">
             <div>
-              <p className="text-white/40 text-xs mb-1">{greeting}</p>
-              <h1 className="text-xl font-semibold text-white mb-1">
-                {loading ? "Loading..." : `${data?.user.name} 👋`}
+              <p className="text-slate-400 font-medium text-[13px] mb-1">{greeting},</p>
+              <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight leading-tight mb-2">
+                {loading ? "Loading..." : `${data?.user.name}`}
               </h1>
-              <p className="text-white/30 text-xs">
-                Academic Year:{" "}
-                <span className="text-white/50 font-medium">
-                  {academicYear}
-                </span>
-              </p>
+              <div className="flex flex-wrap items-center gap-3 text-sm text-slate-300 font-medium">
+                <span className="flex items-center gap-1.5"><Clock size={14} className="text-[#00a859]" /> Academic Year {academicYear}</span>
+                {data?.user.departmentId && (
+                  <>
+                    <span className="text-slate-700">•</span>
+                    <span className="flex items-center gap-1.5"><Building2 size={14} className="text-[#e31e24]" /> {data.user.departmentId.departmentName}</span>
+                  </>
+                )}
+              </div>
             </div>
 
-            {/* Status pill */}
             {!loading && data && (
-              <div
-                className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium ${statusInfo.bg} ${statusInfo.color}`}
-              >
-                {statusInfo.icon}
-                {statusInfo.label}
+              <div className="flex items-center gap-4 bg-white/10 backdrop-blur-md rounded-2xl p-4 border border-white/10 shadow-inner">
+                <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 ${statusInfo.bg.replace('bg-', 'bg-white/')} border border-white/20`}>
+                  <span className={statusInfo.color}>{statusInfo.icon}</span>
+                </div>
+                <div>
+                  <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Current Status</p>
+                  <p className={`text-[15px] font-bold leading-tight ${statusInfo.color === 'text-slate-500' ? 'text-white' : statusInfo.color}`}>
+                    {statusInfo.label}
+                  </p>
+                </div>
               </div>
             )}
           </div>
         </div>
 
-        {/* ── STAT CARDS ─────────────────────────────────── */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          {/* Assigned Categories */}
-          <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
-            <div className="w-9 h-9 rounded-xl bg-red-50 flex items-center justify-center mb-4">
-              <BookOpen size={16} className="text-[#ca1f23]" />
+        {/* Info Grid */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
+          <div className="rounded-2xl border border-slate-200/60 bg-white p-5 shadow-sm hover:shadow-md transition duration-300">
+            <div className="flex items-center justify-between mb-4">
+              <div className="w-10 h-10 rounded-xl bg-[#00a859]/10 flex items-center justify-center border border-[#00a859]/20">
+                <BookOpen size={18} className="text-[#00a859]" />
+              </div>
             </div>
-            <p className="text-2xl font-bold text-[#111] mb-0.5">
-              {loading ? (
-                "—"
-              ) : (
-                <AnimatedNumber value={data?.assignedCategories.length || 0} />
-              )}
+            <p className="text-2xl font-bold text-slate-800 leading-none mb-1">
+              {loading ? "—" : <AnimatedNumber value={data?.assignedCategories.length || 0} />}
             </p>
-            <p className="text-[13px] font-medium text-[#111]">Categories</p>
-            <p className="text-xs text-gray-400 mt-0.5">Assigned to you</p>
+            <p className="text-[12px] font-semibold text-slate-500 uppercase tracking-wider">Assigned Categories</p>
           </div>
 
-          {/* Evaluation Status */}
-          <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
-            <div
-              className={`w-9 h-9 rounded-xl flex items-center justify-center mb-4 ${statusInfo.bg}`}
-            >
-              <span className={statusInfo.color}>{statusInfo.icon}</span>
+          <div className="rounded-2xl border border-slate-200/60 bg-white p-5 shadow-sm hover:shadow-md transition duration-300">
+            <div className="flex items-center justify-between mb-4">
+              <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${statusInfo.bg} border`} style={{ borderColor: `${statusInfo.color.replace('text-', '')}30` }}>
+                <span className={statusInfo.color}>{statusInfo.icon}</span>
+              </div>
             </div>
-            <p className="text-[13px] font-bold text-[#111] mb-0.5 leading-tight">
+            <p className="text-[15px] font-bold text-slate-800 leading-tight mb-1 truncate">
               {statusInfo.label}
             </p>
-            <p className="text-[13px] font-medium text-[#111]">Status</p>
-            <p className="text-xs text-gray-400 mt-0.5">Current evaluation</p>
+            <p className="text-[12px] font-semibold text-slate-500 uppercase tracking-wider truncate">Evaluation Status</p>
           </div>
 
-          {/* Department */}
-          <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
-            <div className="w-9 h-9 rounded-xl bg-blue-50 flex items-center justify-center mb-4">
-              <Award size={16} className="text-blue-600" />
+          <div className="rounded-2xl border border-slate-200/60 bg-white p-5 shadow-sm hover:shadow-md transition duration-300">
+            <div className="flex items-center justify-between mb-4">
+              <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center border border-slate-200">
+                <Award size={18} className="text-slate-600" />
+              </div>
             </div>
-            <p className="text-[13px] font-bold text-[#111] mb-0.5 leading-tight truncate">
+            <p className="text-[15px] font-bold text-slate-800 leading-tight mb-1 truncate">
               {loading ? "—" : data?.user.departmentId?.departmentCode || "N/A"}
             </p>
-            <p className="text-[13px] font-medium text-[#111]">Department</p>
-            <p className="text-xs text-gray-400 mt-0.5 truncate">
-              {data?.user.departmentId?.departmentName || "—"}
-            </p>
+            <p className="text-[12px] font-semibold text-slate-500 uppercase tracking-wider truncate">Department</p>
           </div>
 
-          {/* Last Updated */}
-          <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
-            <div className="w-9 h-9 rounded-xl bg-green-50 flex items-center justify-center mb-4">
-              <CheckCircle2 size={16} className="text-[#00a651]" />
+          <div className="rounded-2xl border border-slate-200/60 bg-white p-5 shadow-sm hover:shadow-md transition duration-300">
+            <div className="flex items-center justify-between mb-4">
+              <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center border border-slate-200">
+                <Clock size={18} className="text-slate-600" />
+              </div>
             </div>
-            <p className="text-[13px] font-bold text-[#111] mb-0.5 leading-tight">
-              {loading
-                ? "—"
-                : data?.lastUpdated
-                  ? new Date(data.lastUpdated).toLocaleDateString("en-IN", {
-                      day: "2-digit",
-                      month: "short",
-                    })
-                  : "—"}
+            <p className="text-[15px] font-bold text-slate-800 leading-tight mb-1 truncate">
+              {loading ? "—" : data?.lastUpdated ? new Date(data.lastUpdated).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" }) : "—"}
             </p>
-            <p className="text-[13px] font-medium text-[#111]">Last Saved</p>
-            <p className="text-xs text-gray-400 mt-0.5">Evaluation data</p>
+            <p className="text-[12px] font-semibold text-slate-500 uppercase tracking-wider truncate">Last Saved</p>
           </div>
         </div>
 
-        {/* ── MAIN CONTENT AREA ──────────────────────────── */}
+        {/* Main Content Area */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-          {/* Evaluation CTA Card */}
-          <div className="lg:col-span-2 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
-            <div className="flex items-start justify-between mb-5">
+          {/* Action Card */}
+          <div className="lg:col-span-2 rounded-2xl border border-slate-200/60 bg-white p-6 sm:p-8 shadow-sm">
+            <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 mb-6">
               <div>
-                <h3 className="font-semibold text-[#111] text-[15px]">
-                  Self Assessment Form
-                </h3>
-                <p className="text-xs text-gray-400 mt-1">
-                  Academic Year: {academicYear}
-                </p>
+                <h3 className="font-bold text-slate-800 text-[18px] leading-tight mb-1">Self Assessment Form</h3>
+                <p className="text-[13px] text-slate-500 font-medium">Complete your evaluation for {academicYear}</p>
               </div>
               {data?.lastUpdated && (
-                <span className="text-xs text-gray-400">
-                  Updated{" "}
-                  {new Date(data.lastUpdated).toLocaleDateString("en-IN", {
-                    day: "2-digit",
-                    month: "short",
-                    year: "numeric",
-                  })}
+                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-50 border border-slate-100 text-[11px] font-semibold text-slate-500 shadow-sm shrink-0">
+                  <Clock size={12} /> Updated {new Date(data.lastUpdated).toLocaleDateString("en-IN", { day: "2-digit", month: "short" })}
                 </span>
               )}
             </div>
 
-            {/* Status description */}
-            <div
-              className={`flex items-start gap-3 p-4 rounded-xl mb-5 ${statusInfo.bg}`}
-            >
+            <div className={`flex items-start gap-3 p-4 rounded-xl mb-6 border ${statusInfo.bg}`} style={{ borderColor: `${statusInfo.color.replace('text-', '')}30` }}>
               <span className={`${statusInfo.color} shrink-0 mt-0.5`}>
-                {data?.evaluationStatus === "RETURNED_BY_HOD" ||
-                data?.evaluationStatus === "RETURNED_BY_PRINCIPAL" ? (
-                  <AlertCircle size={16} />
-                ) : (
-                  statusInfo.icon
-                )}
+                {["RETURNED_BY_HOD", "RETURNED_BY_PRINCIPAL"].includes(data?.evaluationStatus || "") ? <AlertCircle size={16} /> : statusInfo.icon}
               </span>
               <div>
-                <p className={`text-sm font-medium ${statusInfo.color}`}>
-                  {statusInfo.label}
-                </p>
-                <p className="text-xs text-gray-500 mt-0.5">
-                  {statusInfo.description}
-                </p>
+                <p className={`text-[13px] font-bold ${statusInfo.color}`}>{statusInfo.label}</p>
+                <p className="text-[12px] text-slate-600 font-medium mt-0.5 leading-relaxed">{statusInfo.description}</p>
               </div>
             </div>
 
-            {/* CTA Button */}
             {data?.assignedCategories && data.assignedCategories.length > 0 ? (
               canEdit ? (
                 <Link href="/faculty/evaluation">
-                  <button className="w-full bg-[#ca1f23] text-white py-3 rounded-xl font-medium text-sm flex items-center justify-center gap-2 hover:opacity-95 transition">
-                    <ClipboardList size={16} />
-                    {data?.evaluationStatus === "NOT_STARTED" ||
-                    !data?.evaluationStatus
-                      ? "Start Evaluation"
-                      : "Continue Evaluation"}
-                    <ArrowUpRight size={14} />
+                  <button className="w-full bg-[#00a859] text-white py-3.5 rounded-xl font-bold text-[14px] flex items-center justify-center gap-2 hover:bg-[#008f4c] transition shadow-sm shadow-[#00a859]/20">
+                    <ClipboardList size={18} />
+                    {data?.evaluationStatus === "NOT_STARTED" || !data?.evaluationStatus ? "Start Evaluation" : "Continue Evaluation"}
+                    <ArrowUpRight size={16} />
                   </button>
                 </Link>
               ) : (
                 <Link href="/faculty/evaluation">
-                  <button className="w-full bg-gray-100 text-gray-600 py-3 rounded-xl font-medium text-sm flex items-center justify-center gap-2 hover:bg-gray-200 transition">
-                    <ClipboardList size={16} />
-                    View Evaluation
-                    <ArrowUpRight size={14} />
+                  <button className="w-full bg-white border-2 border-slate-200 text-slate-600 py-3.5 rounded-xl font-bold text-[14px] flex items-center justify-center gap-2 hover:bg-slate-50 hover:border-slate-300 transition shadow-sm">
+                    <ClipboardList size={18} /> View Submitted Evaluation <ArrowUpRight size={16} />
                   </button>
                 </Link>
               )
             ) : (
-              <div className="w-full bg-amber-50 border border-amber-200 text-amber-700 py-3 rounded-xl text-sm text-center">
+              <div className="w-full bg-slate-50 border border-slate-200 text-slate-500 py-3.5 rounded-xl text-[13px] font-bold text-center">
                 No categories assigned yet — contact your admin
               </div>
             )}
           </div>
 
           {/* Assigned Categories List */}
-          <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
-            <h3 className="font-semibold text-[#111] text-[14px] mb-4">
-              Assigned Categories
-            </h3>
-
+          <div className="rounded-2xl border border-slate-200/60 bg-white p-6 shadow-sm">
+            <h3 className="font-bold text-slate-800 text-[15px] mb-5">Assigned Categories</h3>
             {loading ? (
-              <div className="space-y-2">
-                {[1, 2, 3].map((i) => (
-                  <div
-                    key={i}
-                    className="h-12 rounded-xl bg-gray-100 animate-pulse"
-                  />
-                ))}
+              <div className="space-y-3">
+                {[1, 2, 3].map((i) => <div key={i} className="h-14 rounded-xl bg-slate-50 animate-pulse" />)}
               </div>
             ) : data?.assignedCategories.length === 0 ? (
-              <div className="py-8 text-center text-gray-400 text-sm">
+              <div className="py-8 text-center text-slate-400 text-[13px] font-medium bg-slate-50 rounded-xl border border-slate-100">
                 No categories assigned
               </div>
             ) : (
-              <div className="space-y-2">
-                {data?.assignedCategories.map((cat, i) => {
-                  const colors = [
-                    {
-                      bg: "bg-red-50",
-                      text: "text-[#ca1f23]",
-                      badge: "bg-red-100 text-red-700",
-                    },
-                    {
-                      bg: "bg-blue-50",
-                      text: "text-blue-600",
-                      badge: "bg-blue-100 text-blue-700",
-                    },
-                    {
-                      bg: "bg-green-50",
-                      text: "text-[#00a651]",
-                      badge: "bg-green-100 text-green-700",
-                    },
-                    {
-                      bg: "bg-purple-50",
-                      text: "text-purple-600",
-                      badge: "bg-purple-100 text-purple-700",
-                    },
-                  ];
-                  const c = colors[i % colors.length];
-                  return (
-                    <div
-                      key={cat._id}
-                      className={`flex items-center gap-3 p-3 rounded-xl ${c.bg}`}
-                    >
-                      <div
-                        className={`w-7 h-7 rounded-lg flex items-center justify-center text-[11px] font-bold ${c.badge} shrink-0`}
-                      >
-                        {i + 1}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-[13px] font-medium text-[#111] truncate">
-                          {cat.categoryName}
-                        </p>
-                        <p className={`text-[11px] font-mono ${c.text}`}>
-                          {cat.categoryCode}
-                        </p>
-                      </div>
+              <div className="space-y-3">
+                {data?.assignedCategories.map((cat, i) => (
+                  <div key={cat._id} className="group flex items-center gap-3 p-3 rounded-xl border border-slate-100 hover:border-[#00a859]/30 hover:bg-[#00a859]/5 transition-colors duration-200">
+                    <div className="w-8 h-8 rounded-lg bg-slate-50 border border-slate-200 group-hover:border-[#00a859]/30 group-hover:bg-white flex items-center justify-center text-[11px] font-bold text-slate-500 group-hover:text-[#00a859] shrink-0 transition-colors">
+                      {i + 1}
                     </div>
-                  );
-                })}
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[13px] font-bold text-slate-700 truncate group-hover:text-slate-900">{cat.categoryName}</p>
+                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mt-0.5">{cat.categoryCode}</p>
+                    </div>
+                  </div>
+                ))}
               </div>
             )}
           </div>
         </div>
 
-        {/* ── INFO NOTICE ──────────────────────────────────── */}
+        {/* Notices */}
         {!loading && data?.evaluationStatus === "RETURNED_BY_HOD" && (
-          <div className="rounded-2xl border border-orange-200 bg-orange-50 p-4 flex items-start gap-3">
-            <AlertCircle
-              size={15}
-              className="text-orange-500 shrink-0 mt-0.5"
-            />
+          <div className="rounded-2xl border border-amber-200 bg-amber-50 p-5 flex items-start gap-4 shadow-sm">
+            <div className="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center shrink-0">
+              <AlertCircle size={20} className="text-amber-600" />
+            </div>
             <div>
-              <p className="text-sm font-medium text-orange-800">
-                Your evaluation has been returned by HOD
-              </p>
-              <p className="text-xs text-orange-600 mt-0.5">
-                Please review the remarks, make necessary changes, and resubmit.
+              <p className="text-[14px] font-bold text-amber-800 mb-1">Evaluation returned by HOD</p>
+              <p className="text-[13px] text-amber-700/80 font-medium leading-relaxed">
+                Please review the remarks in the evaluation form, make necessary changes, and resubmit.
               </p>
             </div>
           </div>
         )}
 
         {!loading && data?.evaluationStatus === "FINALIZED" && (
-          <div className="rounded-2xl border border-green-200 bg-green-50 p-4 flex items-start gap-3">
-            <CheckCircle2
-              size={15}
-              className="text-[#00a651] shrink-0 mt-0.5"
-            />
+          <div className="rounded-2xl border border-[#00a859]/20 bg-[#00a859]/5 p-5 flex items-start gap-4 shadow-sm">
+            <div className="w-10 h-10 rounded-full bg-[#00a859]/10 flex items-center justify-center shrink-0">
+              <CheckCircle2 size={20} className="text-[#00a859]" />
+            </div>
             <div>
-              <p className="text-sm font-medium text-green-800">
-                Your evaluation has been finalized
-              </p>
-              <p className="text-xs text-green-600 mt-0.5">
-                Congratulations! Your self-assessment for {data.academicYear} is
-                complete.
+              <p className="text-[14px] font-bold text-[#00a859] mb-1">Evaluation Finalized</p>
+              <p className="text-[13px] text-slate-600 font-medium leading-relaxed">
+                Congratulations! Your self-assessment for {data.academicYear} is complete and approved.
               </p>
             </div>
           </div>

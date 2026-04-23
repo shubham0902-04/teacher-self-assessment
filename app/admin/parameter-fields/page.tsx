@@ -22,38 +22,38 @@ type Field = {
 
 const CAT_COLORS = [
   {
-    bg: "bg-blue-50",
-    border: "border-blue-200",
-    icon: "bg-blue-100",
-    iconText: "text-blue-700",
-    badge: "bg-blue-100 text-blue-700",
+    bg: "bg-blue-50/50 hover:bg-blue-50",
+    border: "border-blue-200/60",
+    icon: "bg-blue-100/50",
+    iconText: "text-blue-600",
+    badge: "bg-blue-100/50 border border-blue-200/50 text-blue-700",
     dot: "bg-blue-500",
     marks: "text-blue-600",
   },
   {
-    bg: "bg-purple-50",
-    border: "border-purple-200",
-    icon: "bg-purple-100",
-    iconText: "text-purple-700",
-    badge: "bg-purple-100 text-purple-700",
+    bg: "bg-purple-50/50 hover:bg-purple-50",
+    border: "border-purple-200/60",
+    icon: "bg-purple-100/50",
+    iconText: "text-purple-600",
+    badge: "bg-purple-100/50 border border-purple-200/50 text-purple-700",
     dot: "bg-purple-500",
     marks: "text-purple-600",
   },
   {
-    bg: "bg-emerald-50",
-    border: "border-emerald-200",
-    icon: "bg-emerald-100",
-    iconText: "text-emerald-700",
-    badge: "bg-emerald-100 text-emerald-700",
-    dot: "bg-emerald-500",
-    marks: "text-emerald-600",
+    bg: "bg-[#00a859]/5 hover:bg-[#00a859]/10",
+    border: "border-[#00a859]/20",
+    icon: "bg-[#00a859]/10",
+    iconText: "text-[#00a859]",
+    badge: "bg-[#00a859]/10 border border-[#00a859]/20 text-[#00a859]",
+    dot: "bg-[#00a859]",
+    marks: "text-[#00a859]",
   },
   {
-    bg: "bg-amber-50",
-    border: "border-amber-200",
-    icon: "bg-amber-100",
-    iconText: "text-amber-700",
-    badge: "bg-amber-100 text-amber-700",
+    bg: "bg-amber-50/50 hover:bg-amber-50",
+    border: "border-amber-200/60",
+    icon: "bg-amber-100/50",
+    iconText: "text-amber-600",
+    badge: "bg-amber-100/50 border border-amber-200/50 text-amber-700",
     dot: "bg-amber-500",
     marks: "text-amber-600",
   },
@@ -208,42 +208,47 @@ export default function ParameterFieldsPage() {
   }
 
   return (
-    <div className="flex min-h-screen bg-[#f8f8f8] text-[#111]">
+    <div className="flex min-h-screen bg-[#f8fafc] text-slate-800 font-sans">
       <AdminSidebar />
 
-      <main className="flex-1 overflow-y-auto p-6">
+      <main className="flex-1 overflow-y-auto px-5 sm:px-8 py-8 space-y-6 max-w-[1400px] mx-auto w-full">
         {/* HEADER */}
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h1 className="text-3xl font-bold text-[#111]">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-6 rounded-2xl border border-slate-200/60 shadow-sm relative overflow-hidden">
+          <div className="absolute right-0 top-0 w-64 h-64 bg-[#00a859]/5 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none" />
+          <div className="relative z-10">
+            <h1 className="text-2xl font-bold text-slate-800 tracking-tight mb-1">
               Parameter Criteria
             </h1>
-            <p className="text-sm text-gray-400 mt-0.5">
+            <p className="text-[13px] text-slate-500 font-medium">
               Manage scoring criteria for each evaluation parameter
             </p>
           </div>
           {!loading && (
-            <div className="hidden sm:flex items-center gap-2">
-              <span className="text-xs font-medium bg-blue-50 text-blue-700 px-3 py-1.5 rounded-full border border-blue-100">
-                {totalFields} criteria
-              </span>
-              <span className="text-xs font-medium bg-amber-50 text-amber-700 px-3 py-1.5 rounded-full border border-amber-100">
-                {totalMaxMarks} total marks
-              </span>
+            <div className="relative z-10 hidden sm:flex items-center gap-3">
+              <div className="flex flex-col items-end">
+                <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Total Criteria</span>
+                <span className="text-[18px] font-bold text-indigo-600 leading-tight">{totalFields}</span>
+              </div>
+              <div className="h-8 w-px bg-slate-200" />
+              <div className="flex flex-col items-start">
+                <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Total Marks</span>
+                <span className="text-[18px] font-bold text-[#00a859] leading-tight">{totalMaxMarks}</span>
+              </div>
             </div>
           )}
         </div>
 
         {loading ? (
-          <div className="flex items-center justify-center py-24 text-gray-400 text-sm">
-            Loading...
+          <div className="flex flex-col items-center justify-center py-24 text-slate-400 gap-3">
+            <div className="w-6 h-6 border-2 border-[#00a859]/20 border-t-[#00a859] rounded-full animate-spin" />
+            <span className="text-[13px] font-medium">Loading categories...</span>
           </div>
         ) : categories.length === 0 ? (
-          <div className="flex items-center justify-center py-24 text-gray-400 text-sm">
+          <div className="flex items-center justify-center py-24 text-slate-400 text-[13px] font-medium">
             No categories found — create categories first
           </div>
         ) : (
-          <div className="space-y-5">
+          <div className="space-y-6">
             {categories.map((cat, catIdx) => {
               const color = CAT_COLORS[catIdx % CAT_COLORS.length];
               const catParams = getParams(cat._id);
@@ -260,90 +265,86 @@ export default function ParameterFieldsPage() {
               return (
                 <div
                   key={cat._id}
-                  className={`rounded-2xl border-2 ${color.border} bg-white shadow-sm overflow-hidden`}
+                  className={`rounded-2xl border ${color.border} bg-white shadow-sm overflow-hidden transition-all`}
                 >
                   {/* Category Header */}
                   <button
                     onClick={() => toggleCategory(cat._id)}
-                    className={`w-full flex items-center justify-between px-5 py-4 ${color.bg} hover:opacity-95 transition text-left`}
+                    className={`w-full flex items-center justify-between px-6 py-5 ${color.bg} transition-colors text-left group`}
                   >
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-4">
                       <div
-                        className={`${color.icon} px-3 py-1.5 rounded-lg shrink-0`}
+                        className={`${color.icon} w-12 h-12 flex items-center justify-center rounded-xl shrink-0 shadow-sm transition-transform group-hover:scale-105`}
                       >
                         <span
-                          className={`text-xs font-bold font-mono ${color.iconText}`}
+                          className={`text-[14px] font-bold font-mono ${color.iconText}`}
                         >
                           {cat.categoryCode}
                         </span>
                       </div>
                       <div>
-                        <p className="font-bold text-[#111] text-[15px]">
+                        <p className="font-bold text-slate-800 text-[16px] tracking-tight">
                           {cat.categoryName}
                         </p>
-                        <p className="text-xs text-gray-500 mt-0.5">
-                          {catParams.length} parameter
-                          {catParams.length !== 1 ? "s" : ""} &middot;{" "}
-                          {catFieldCount} criteria &middot;{" "}
-                          <span className={`font-semibold ${color.marks}`}>
-                            {catTotalMarks} marks
+                        <div className="flex items-center gap-2 mt-1">
+                          <span className="text-[12px] font-medium text-slate-500">
+                            {catParams.length} parameter{catParams.length !== 1 ? "s" : ""}
                           </span>
-                        </p>
+                          <span className="w-1 h-1 rounded-full bg-slate-300" />
+                          <span className="text-[12px] font-medium text-slate-500">
+                            {catFieldCount} criteria
+                          </span>
+                        </div>
                       </div>
                     </div>
-                    <div className="flex items-center gap-3">
-                      <span
-                        className={`text-xs font-bold px-3 py-1 rounded-full ${color.badge}`}
-                      >
-                        {catTotalMarks} / 300
-                      </span>
-                      {isCollapsed ? (
-                        <ChevronDown
-                          size={16}
-                          className="text-gray-500 shrink-0"
-                        />
-                      ) : (
-                        <ChevronUp
-                          size={16}
-                          className="text-gray-500 shrink-0"
-                        />
-                      )}
+                    <div className="flex items-center gap-4">
+                      <div className="flex flex-col items-end mr-2">
+                        <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Category Marks</span>
+                        <span
+                          className={`text-[13px] font-bold px-2.5 py-0.5 rounded-md ${color.badge}`}
+                        >
+                          {catTotalMarks} / 300
+                        </span>
+                      </div>
+                      <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center shadow-sm border border-slate-200/60 text-slate-400 group-hover:text-slate-600 transition-colors">
+                        {isCollapsed ? <ChevronDown size={18} /> : <ChevronUp size={18} />}
+                      </div>
                     </div>
                   </button>
 
                   {/* Parameters */}
                   {!isCollapsed && (
-                    <div className="divide-y divide-gray-100">
+                    <div className="divide-y divide-slate-100 bg-white">
                       {catParams.length === 0 ? (
-                        <p className="px-5 py-6 text-sm text-gray-400 text-center">
+                        <p className="px-6 py-8 text-[13px] font-medium text-slate-400 text-center bg-slate-50/50">
                           No parameters under this category
                         </p>
                       ) : (
                         catParams.map((param, paramIdx) => {
                           const paramFields = getFields(param._id);
                           return (
-                            <div key={param._id} className="bg-white">
+                            <div key={param._id} className="bg-white hover:bg-slate-50/30 transition-colors">
                               {/* Parameter row */}
-                              <div className="flex items-center justify-between px-5 py-3 bg-gray-50/80 border-t border-gray-100">
+                              <div className="flex flex-col sm:flex-row sm:items-center justify-between px-6 py-4 gap-4">
                                 <div className="flex items-center gap-3 min-w-0">
                                   <span
-                                    className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold text-white shrink-0 ${color.dot}`}
+                                    className={`w-7 h-7 rounded-full flex items-center justify-center text-[11px] font-bold text-white shrink-0 shadow-sm ${color.dot}`}
                                   >
                                     {paramIdx + 1}
                                   </span>
-                                  <span className="font-mono text-[11px] bg-gray-200 text-gray-600 px-2 py-0.5 rounded-md shrink-0">
+                                  <span className="font-mono text-[11px] font-bold bg-slate-100 border border-slate-200 text-slate-500 px-2 py-0.5 rounded-md shrink-0">
                                     {param.parameterCode}
                                   </span>
-                                  <span className="text-sm font-semibold text-[#111] truncate">
+                                  <span className="text-[14px] font-bold text-slate-700 truncate">
                                     {param.parameterName}
                                   </span>
-                                  <span className="text-xs text-gray-400 shrink-0">
+                                  <span className="text-[12px] font-medium text-slate-400 shrink-0">
                                     ({paramFields.length} criteria)
                                   </span>
                                 </div>
-                                <div className="flex items-center gap-2 shrink-0 ml-3">
+                                <div className="flex items-center gap-3 shrink-0 sm:ml-4">
                                   <span
-                                    className={`text-xs font-semibold px-2.5 py-1 rounded-full shrink-0 ${color.badge}`}
+                                    className={`text-[11px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-md ${color.badge}`}
                                   >
                                     Max {param.maxMarks}
                                   </span>
@@ -352,9 +353,9 @@ export default function ParameterFieldsPage() {
                                       setForm({ fieldName: "", maxMarks: 0 });
                                       setActiveParam(param._id);
                                     }}
-                                    className="inline-flex items-center gap-1.5 text-xs font-medium bg-[#ca1f23] text-white px-3 py-1.5 rounded-lg hover:opacity-90 transition shrink-0"
+                                    className="inline-flex items-center gap-1.5 text-[12px] font-bold bg-slate-800 text-white px-3 py-1.5 rounded-lg shadow-sm hover:bg-slate-700 transition-colors shrink-0"
                                   >
-                                    <Plus size={12} />
+                                    <Plus size={14} />
                                     Add Criteria
                                   </button>
                                 </div>
@@ -362,66 +363,72 @@ export default function ParameterFieldsPage() {
 
                               {/* Fields table */}
                               {paramFields.length > 0 ? (
-                                <table className="w-full text-sm">
-                                  <thead>
-                                    <tr className="text-xs text-gray-400 font-medium border-b border-gray-100">
-                                      <th className="px-5 py-2 text-left w-8">
-                                        #
-                                      </th>
-                                      <th className="px-5 py-2 text-left">
-                                        Criteria Name
-                                      </th>
-                                      <th className="px-5 py-2 text-center w-28">
-                                        Max Marks
-                                      </th>
-                                      <th className="px-5 py-2 text-center w-24">
-                                        Actions
-                                      </th>
-                                    </tr>
-                                  </thead>
-                                  <tbody className="divide-y divide-gray-50">
-                                    {paramFields.map((f, fi) => (
-                                      <tr
-                                        key={f._id}
-                                        className="hover:bg-gray-50/50 transition"
-                                      >
-                                        <td className="px-5 py-3 text-xs text-gray-300">
-                                          {fi + 1}
-                                        </td>
-                                        <td className="px-5 py-3 text-[#111]">
-                                          {f.fieldName}
-                                        </td>
-                                        <td className="px-5 py-3 text-center">
-                                          <span className="text-xs font-semibold bg-amber-50 text-amber-700 px-2.5 py-1 rounded-full border border-amber-100">
-                                            {f.maxMarks}
-                                          </span>
-                                        </td>
-                                        <td className="px-5 py-3">
-                                          <div className="flex items-center justify-center gap-3">
-                                            <button
-                                              onClick={() => openEdit(f)}
-                                              className="text-gray-300 hover:text-blue-500 transition"
-                                              title="Edit"
-                                            >
-                                              <Pencil size={14} />
-                                            </button>
-                                            <button
-                                              onClick={() => setDeleteId(f._id)}
-                                              className="text-gray-300 hover:text-red-500 transition"
-                                              title="Delete"
-                                            >
-                                              <Trash2 size={14} />
-                                            </button>
-                                          </div>
-                                        </td>
-                                      </tr>
-                                    ))}
-                                  </tbody>
-                                </table>
+                                <div className="px-6 pb-5">
+                                  <div className="rounded-xl border border-slate-200/60 overflow-hidden bg-slate-50/50">
+                                    <table className="w-full text-left">
+                                      <thead>
+                                        <tr className="border-b border-slate-100">
+                                          <th className="px-5 py-3 text-[11px] font-bold text-slate-400 uppercase tracking-wider w-12">
+                                            #
+                                          </th>
+                                          <th className="px-5 py-3 text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+                                            Criteria Name
+                                          </th>
+                                          <th className="px-5 py-3 text-[11px] font-bold text-slate-400 uppercase tracking-wider text-center w-32">
+                                            Max Marks
+                                          </th>
+                                          <th className="px-5 py-3 text-[11px] font-bold text-slate-400 uppercase tracking-wider text-right w-28">
+                                            Actions
+                                          </th>
+                                        </tr>
+                                      </thead>
+                                      <tbody className="divide-y divide-slate-100 bg-white">
+                                        {paramFields.map((f, fi) => (
+                                          <tr
+                                            key={f._id}
+                                            className="hover:bg-slate-50 transition-colors group"
+                                          >
+                                            <td className="px-5 py-3 text-[12px] font-bold text-slate-300">
+                                              {fi + 1}
+                                            </td>
+                                            <td className="px-5 py-3 text-[13px] font-medium text-slate-700">
+                                              {f.fieldName}
+                                            </td>
+                                            <td className="px-5 py-3 text-center">
+                                              <span className="text-[12px] font-bold bg-slate-100 border border-slate-200 text-slate-600 px-2.5 py-1 rounded-md inline-block min-w-[32px]">
+                                                {f.maxMarks}
+                                              </span>
+                                            </td>
+                                            <td className="px-5 py-3 text-right">
+                                              <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                <button
+                                                  onClick={() => openEdit(f)}
+                                                  className="p-1.5 text-slate-400 hover:text-[#00a859] hover:bg-[#00a859]/10 rounded-lg transition"
+                                                  title="Edit"
+                                                >
+                                                  <Pencil size={14} />
+                                                </button>
+                                                <button
+                                                  onClick={() => setDeleteId(f._id)}
+                                                  className="p-1.5 text-slate-400 hover:text-[#e31e24] hover:bg-[#e31e24]/10 rounded-lg transition"
+                                                  title="Delete"
+                                                >
+                                                  <Trash2 size={14} />
+                                                </button>
+                                              </div>
+                                            </td>
+                                          </tr>
+                                        ))}
+                                      </tbody>
+                                    </table>
+                                  </div>
+                                </div>
                               ) : (
-                                <p className="px-5 py-4 text-xs text-gray-400 text-center italic">
-                                  No criteria added yet
-                                </p>
+                                <div className="px-6 pb-4">
+                                  <p className="text-[12px] font-medium text-slate-400 italic bg-slate-50/50 p-3 rounded-xl border border-slate-100 text-center">
+                                    No criteria added yet
+                                  </p>
+                                </div>
                               )}
                             </div>
                           );
@@ -438,21 +445,21 @@ export default function ParameterFieldsPage() {
 
       {/* ADD MODAL */}
       {activeParam && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/20 p-4">
-          <div className="w-full max-w-sm rounded-3xl border border-gray-200 bg-white shadow-2xl">
-            <div className="flex items-center justify-between px-6 pt-6 pb-4 border-b border-gray-100">
-              <h3 className="text-lg font-bold text-[#111]">Add Criteria</h3>
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4">
+          <div className="w-full max-w-sm rounded-2xl border border-slate-100 bg-white shadow-2xl">
+            <div className="flex items-center justify-between px-6 py-5 border-b border-slate-100">
+              <h3 className="text-[18px] font-bold text-slate-800 tracking-tight">Add Criteria</h3>
               <button
                 onClick={() => setActiveParam(null)}
-                className="rounded-full p-1.5 text-gray-400 hover:bg-gray-100 transition"
+                className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition"
               >
-                <X size={16} />
+                <X size={18} />
               </button>
             </div>
-            <div className="px-6 py-5 space-y-4">
+            <div className="px-6 py-5 space-y-5">
               <div>
-                <label className="block text-sm font-medium text-[#111] mb-1.5">
-                  Criteria Name <span className="text-red-500">*</span>
+                <label className="block text-[13px] font-bold text-slate-700 mb-1.5">
+                  Criteria Name <span className="text-[#e31e24]">*</span>
                 </label>
                 <input
                   placeholder="e.g. Number of lectures delivered"
@@ -461,12 +468,12 @@ export default function ParameterFieldsPage() {
                     setForm({ ...form, fieldName: e.target.value })
                   }
                   onKeyDown={(e) => e.key === "Enter" && addField()}
-                  className="w-full rounded-xl border border-gray-300 px-4 py-3 text-sm text-[#111] outline-none focus:border-[#ca1f23]"
+                  className="w-full rounded-xl border border-slate-200 px-4 py-3 text-[14px] text-slate-800 outline-none focus:border-[#00a859] focus:ring-2 focus:ring-[#00a859]/20 transition bg-slate-50 focus:bg-white"
                   autoFocus
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-[#111] mb-1.5">
+                <label className="block text-[13px] font-bold text-slate-700 mb-1.5">
                   Max Marks
                 </label>
                 <input
@@ -477,23 +484,23 @@ export default function ParameterFieldsPage() {
                   onChange={(e) =>
                     setForm({ ...form, maxMarks: Number(e.target.value) })
                   }
-                  className="w-full rounded-xl border border-gray-300 px-4 py-3 text-sm text-[#111] outline-none focus:border-[#ca1f23]"
+                  className="w-full rounded-xl border border-slate-200 px-4 py-3 text-[14px] text-slate-800 outline-none focus:border-[#00a859] focus:ring-2 focus:ring-[#00a859]/20 transition bg-slate-50 focus:bg-white"
                 />
               </div>
             </div>
-            <div className="flex gap-2.5 px-6 pb-6">
+            <div className="flex gap-3 px-6 py-4 border-t border-slate-100 bg-slate-50/50 rounded-b-2xl">
               <button
                 onClick={() => setActiveParam(null)}
-                className="flex-1 rounded-xl border border-gray-200 py-2.5 text-sm font-medium text-gray-600 hover:bg-gray-50 transition"
+                className="flex-1 rounded-xl border border-slate-200 bg-white py-2.5 text-[14px] font-bold text-slate-600 hover:bg-slate-50 hover:text-slate-800 transition"
               >
                 Cancel
               </button>
               <button
                 onClick={addField}
                 disabled={submitting}
-                className="flex-1 rounded-xl bg-[#ca1f23] py-2.5 text-sm font-medium text-white hover:opacity-90 transition disabled:opacity-50 flex items-center justify-center gap-2"
+                className="flex-1 rounded-xl bg-[#00a859] py-2.5 text-[14px] font-bold text-white shadow-sm shadow-[#00a859]/20 transition hover:bg-[#008f4c] disabled:opacity-50 flex items-center justify-center gap-2"
               >
-                <Plus size={14} />
+                <Plus size={16} />
                 {submitting ? "Saving..." : "Add Criteria"}
               </button>
             </div>
@@ -503,21 +510,21 @@ export default function ParameterFieldsPage() {
 
       {/* EDIT MODAL */}
       {editField && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/20 p-4">
-          <div className="w-full max-w-sm rounded-3xl border border-gray-200 bg-white shadow-2xl">
-            <div className="flex items-center justify-between px-6 pt-6 pb-4 border-b border-gray-100">
-              <h3 className="text-lg font-bold text-[#111]">Edit Criteria</h3>
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4">
+          <div className="w-full max-w-sm rounded-2xl border border-slate-100 bg-white shadow-2xl">
+            <div className="flex items-center justify-between px-6 py-5 border-b border-slate-100">
+              <h3 className="text-[18px] font-bold text-slate-800 tracking-tight">Edit Criteria</h3>
               <button
                 onClick={() => setEditField(null)}
-                className="rounded-full p-1.5 text-gray-400 hover:bg-gray-100 transition"
+                className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition"
               >
-                <X size={16} />
+                <X size={18} />
               </button>
             </div>
-            <div className="px-6 py-5 space-y-4">
+            <div className="px-6 py-5 space-y-5">
               <div>
-                <label className="block text-sm font-medium text-[#111] mb-1.5">
-                  Criteria Name <span className="text-red-500">*</span>
+                <label className="block text-[13px] font-bold text-slate-700 mb-1.5">
+                  Criteria Name <span className="text-[#e31e24]">*</span>
                 </label>
                 <input
                   placeholder="e.g. Number of lectures delivered"
@@ -526,12 +533,12 @@ export default function ParameterFieldsPage() {
                     setEditForm({ ...editForm, fieldName: e.target.value })
                   }
                   onKeyDown={(e) => e.key === "Enter" && saveEdit()}
-                  className="w-full rounded-xl border border-gray-300 px-4 py-3 text-sm text-[#111] outline-none focus:border-[#ca1f23]"
+                  className="w-full rounded-xl border border-slate-200 px-4 py-3 text-[14px] text-slate-800 outline-none focus:border-[#00a859] focus:ring-2 focus:ring-[#00a859]/20 transition bg-slate-50 focus:bg-white"
                   autoFocus
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-[#111] mb-1.5">
+                <label className="block text-[13px] font-bold text-slate-700 mb-1.5">
                   Max Marks
                 </label>
                 <input
@@ -544,23 +551,23 @@ export default function ParameterFieldsPage() {
                       maxMarks: Number(e.target.value),
                     })
                   }
-                  className="w-full rounded-xl border border-gray-300 px-4 py-3 text-sm text-[#111] outline-none focus:border-[#ca1f23]"
+                  className="w-full rounded-xl border border-slate-200 px-4 py-3 text-[14px] text-slate-800 outline-none focus:border-[#00a859] focus:ring-2 focus:ring-[#00a859]/20 transition bg-slate-50 focus:bg-white"
                 />
               </div>
             </div>
-            <div className="flex gap-2.5 px-6 pb-6">
+            <div className="flex gap-3 px-6 py-4 border-t border-slate-100 bg-slate-50/50 rounded-b-2xl">
               <button
                 onClick={() => setEditField(null)}
-                className="flex-1 rounded-xl border border-gray-200 py-2.5 text-sm font-medium text-gray-600 hover:bg-gray-50 transition"
+                className="flex-1 rounded-xl border border-slate-200 bg-white py-2.5 text-[14px] font-bold text-slate-600 hover:bg-slate-50 hover:text-slate-800 transition"
               >
                 Cancel
               </button>
               <button
                 onClick={saveEdit}
                 disabled={editSubmitting}
-                className="flex-1 rounded-xl bg-[#ca1f23] py-2.5 text-sm font-medium text-white hover:opacity-90 transition disabled:opacity-50 flex items-center justify-center gap-2"
+                className="flex-1 rounded-xl bg-[#00a859] py-2.5 text-[14px] font-bold text-white shadow-sm shadow-[#00a859]/20 transition hover:bg-[#008f4c] disabled:opacity-50 flex items-center justify-center gap-2"
               >
-                <Pencil size={14} />
+                <Pencil size={16} />
                 {editSubmitting ? "Saving..." : "Save Changes"}
               </button>
             </div>
@@ -570,32 +577,27 @@ export default function ParameterFieldsPage() {
 
       {/* DELETE MODAL */}
       {deleteId && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/20 p-4">
-          <div className="w-full max-w-sm rounded-2xl border border-gray-200 bg-white p-6 shadow-2xl">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-base font-semibold text-[#111]">
-                Delete Criteria?
-              </h3>
-              <button
-                onClick={() => setDeleteId(null)}
-                className="rounded-full p-1 text-gray-400 hover:text-gray-600 transition"
-              >
-                <X size={17} />
-              </button>
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4">
+          <div className="w-full max-w-sm rounded-2xl border border-slate-100 bg-white p-6 shadow-2xl">
+            <div className="w-12 h-12 rounded-full bg-[#e31e24]/10 flex items-center justify-center mb-4">
+              <Trash2 size={20} className="text-[#e31e24]" />
             </div>
-            <p className="text-sm text-gray-500 mb-5">
-              This action is permanent and cannot be undone.
+            <h3 className="text-[18px] font-bold text-slate-800 mb-1.5">
+              Delete Criteria?
+            </h3>
+            <p className="text-[14px] text-slate-500 mb-6 leading-relaxed">
+              This action is permanent and cannot be undone. Are you sure you want to remove this criteria?
             </p>
-            <div className="flex gap-2.5">
+            <div className="flex gap-3">
               <button
                 onClick={() => setDeleteId(null)}
-                className="flex-1 rounded-xl border border-gray-200 py-2.5 text-sm font-medium text-gray-600 hover:bg-gray-50 transition"
+                className="flex-1 rounded-xl border border-slate-200 bg-white py-2.5 text-[14px] font-bold text-slate-600 hover:bg-slate-50 transition"
               >
                 Cancel
               </button>
               <button
                 onClick={confirmDelete}
-                className="flex-1 rounded-xl bg-red-600 py-2.5 text-sm font-medium text-white hover:bg-red-700 transition"
+                className="flex-1 rounded-xl bg-[#e31e24] py-2.5 text-[14px] font-bold text-white shadow-sm shadow-[#e31e24]/20 hover:bg-[#c9181f] transition"
               >
                 Delete
               </button>

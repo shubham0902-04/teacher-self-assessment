@@ -47,7 +47,9 @@ function Section({
   icon,
   title,
   subtitle,
-  color,
+  colorClass,
+  iconBgClass,
+  iconColorClass,
   children,
   defaultOpen = false,
 }: {
@@ -55,7 +57,9 @@ function Section({
   icon: React.ReactNode;
   title: string;
   subtitle: string;
-  color: string;
+  colorClass: string;
+  iconBgClass: string;
+  iconColorClass: string;
   children: React.ReactNode;
   defaultOpen?: boolean;
 }) {
@@ -64,33 +68,32 @@ function Section({
   return (
     <div
       id={id}
-      className="rounded-2xl border border-gray-200 bg-white shadow-sm overflow-hidden"
+      className="rounded-2xl border border-slate-200/60 bg-white shadow-sm overflow-hidden transition-all"
     >
       {/* Header */}
       <button
         onClick={() => setOpen((p) => !p)}
-        className="w-full flex items-center justify-between px-6 py-5 hover:bg-gray-50/60 transition text-left"
+        className={`w-full flex items-center justify-between px-6 py-5 hover:bg-slate-50 transition-colors text-left group`}
       >
         <div className="flex items-center gap-4">
           <div
-            className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
-            style={{ background: color + "15" }}
+            className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 shadow-sm transition-transform group-hover:scale-105 ${iconBgClass}`}
           >
-            <span style={{ color }}>{icon}</span>
+            <span className={iconColorClass}>{icon}</span>
           </div>
           <div>
-            <p className="text-[15px] font-semibold text-[#111]">{title}</p>
-            <p className="text-xs text-gray-400 mt-0.5">{subtitle}</p>
+            <p className="text-[16px] font-bold text-slate-800 tracking-tight">{title}</p>
+            <p className="text-[12px] font-medium text-slate-500 mt-0.5">{subtitle}</p>
           </div>
         </div>
-        <span className="text-gray-400 shrink-0">
-          {open ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-        </span>
+        <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center shadow-sm border border-slate-200/60 text-slate-400 group-hover:text-slate-600 transition-colors">
+          {open ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+        </div>
       </button>
 
       {/* Body */}
       {open && (
-        <div className="px-6 pb-6 border-t border-gray-100">{children}</div>
+        <div className="px-6 pb-6 border-t border-slate-100 bg-white">{children}</div>
       )}
     </div>
   );
@@ -116,7 +119,7 @@ function PasswordInput({
     <div>
       <label
         htmlFor={id}
-        className="block text-sm font-medium text-[#111] mb-1.5"
+        className="block text-[13px] font-bold text-slate-700 mb-1.5"
       >
         {label}
       </label>
@@ -127,12 +130,12 @@ function PasswordInput({
           value={value}
           onChange={(e) => onChange(e.target.value)}
           placeholder={placeholder || "••••••••"}
-          className="w-full rounded-xl border border-gray-300 px-4 py-2.5 pr-11 text-[#111] text-sm outline-none focus:border-[#ca1f23] focus:ring-2 focus:ring-[#ca1f23]/10 transition placeholder:text-gray-400"
+          className="w-full rounded-xl border border-slate-200 px-4 py-3 pr-11 text-[14px] text-slate-800 outline-none focus:border-[#00a859] focus:ring-2 focus:ring-[#00a859]/20 transition bg-slate-50 focus:bg-white placeholder:text-slate-400"
         />
         <button
           type="button"
           onClick={() => setShow((p) => !p)}
-          className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition"
+          className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition p-1 rounded-lg hover:bg-slate-100"
         >
           {show ? <EyeOff size={16} /> : <Eye size={16} />}
         </button>
@@ -317,36 +320,19 @@ export default function AdminSettingsPage() {
 
   // ─────────────────────────────────────────────────────────────────────────
   return (
-    <div className="flex min-h-screen bg-[#f8f8f8] text-[#111]">
+    <div className="flex min-h-screen bg-[#f8fafc] text-slate-800 font-sans">
       <AdminSidebar />
 
-      <main className="flex-1 overflow-y-auto p-6 space-y-5">
+      <main className="flex-1 overflow-y-auto px-5 sm:px-8 py-8 space-y-6 max-w-[1000px] mx-auto w-full">
         {/* ── PAGE HEADER ───────────────────────────────────────────────── */}
-        <div
-          className="rounded-2xl p-6 relative overflow-hidden"
-          style={{
-            background:
-              "linear-gradient(135deg, #0f0f0f 0%, #1c0405 60%, #2d0b0c 100%)",
-          }}
-        >
-          <div
-            style={{
-              position: "absolute",
-              right: -30,
-              top: -30,
-              width: 160,
-              height: 160,
-              borderRadius: "50%",
-              background: "rgba(202,31,35,0.15)",
-            }}
-          />
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-6 rounded-2xl border border-slate-200/60 shadow-sm relative overflow-hidden">
+          <div className="absolute right-0 top-0 w-64 h-64 bg-[#00a859]/5 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none" />
           <div className="relative z-10">
-            <p className="text-white/40 text-xs mb-1">Admin Panel</p>
-            <h1 className="text-xl font-semibold text-white mb-1">
-              Settings ⚙️
+            <h1 className="text-2xl font-bold text-slate-800 tracking-tight mb-1">
+              Settings
             </h1>
-            <p className="text-white/30 text-xs">
-              Manage your account, password, academic year, and system info.
+            <p className="text-[13px] text-slate-500 font-medium">
+              Manage your account, password, academic year, and system info
             </p>
           </div>
         </div>
@@ -354,40 +340,50 @@ export default function AdminSettingsPage() {
         {/* ── SECTION 1 — MY PROFILE ────────────────────────────────────── */}
         <Section
           id="profile"
-          icon={<User size={18} />}
+          icon={<User size={24} />}
           title="My Profile"
           subtitle="Update your display name and email address"
-          color="#ca1f23"
+          colorClass="text-blue-600"
+          iconBgClass="bg-blue-50 border border-blue-100"
+          iconColorClass="text-blue-600"
           defaultOpen
         >
           {profileLoading ? (
-            <div className="pt-5 space-y-3">
+            <div className="pt-6 space-y-4">
               {[1, 2].map((i) => (
-                <div key={i} className="h-10 rounded-xl bg-gray-100 animate-pulse" />
+                <div key={i} className="h-12 rounded-xl bg-slate-100 animate-pulse" />
               ))}
             </div>
           ) : (
-            <form onSubmit={saveProfile} className="pt-5 space-y-4">
+            <form onSubmit={saveProfile} className="pt-6 space-y-5">
               {/* Role badge */}
-              <div className="flex items-center gap-2 mb-1">
-                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-semibold bg-red-50 text-[#ca1f23]">
-                  <Shield size={11} />
-                  {profile?.role || "Admin"}
-                </span>
-                {profile?.employeeId && (
-                  <span className="text-xs text-gray-400 font-mono">
-                    ID: {profile.employeeId}
-                  </span>
-                )}
+              <div className="flex items-center gap-3 mb-2 p-4 bg-slate-50 rounded-xl border border-slate-100">
+                <div className="w-10 h-10 rounded-full bg-slate-200 flex items-center justify-center text-[14px] font-bold text-slate-600">
+                  {profileForm.name?.charAt(0).toUpperCase()}
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[14px] font-bold text-slate-800">{profileForm.name || "Admin User"}</span>
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-[11px] font-bold uppercase tracking-wider bg-[#00a859]/10 text-[#00a859] border border-[#00a859]/20">
+                      <Shield size={12} />
+                      {profile?.role || "Admin"}
+                    </span>
+                  </div>
+                  {profile?.employeeId && (
+                    <span className="text-[12px] text-slate-500 font-mono mt-0.5 block">
+                      ID: {profile.employeeId}
+                    </span>
+                  )}
+                </div>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                 <div>
                   <label
                     htmlFor="profile-name"
-                    className="block text-sm font-medium text-[#111] mb-1.5"
+                    className="block text-[13px] font-bold text-slate-700 mb-1.5"
                   >
-                    Full Name
+                    Full Name <span className="text-[#e31e24]">*</span>
                   </label>
                   <input
                     id="profile-name"
@@ -397,15 +393,15 @@ export default function AdminSettingsPage() {
                       setProfileForm((p) => ({ ...p, name: e.target.value }))
                     }
                     placeholder="Your full name"
-                    className="w-full rounded-xl border border-gray-300 px-4 py-2.5 text-[#111] text-sm outline-none focus:border-[#ca1f23] focus:ring-2 focus:ring-[#ca1f23]/10 transition placeholder:text-gray-400"
+                    className="w-full rounded-xl border border-slate-200 px-4 py-3 text-[14px] text-slate-800 outline-none focus:border-[#00a859] focus:ring-2 focus:ring-[#00a859]/20 transition bg-slate-50 focus:bg-white placeholder:text-slate-400"
                   />
                 </div>
                 <div>
                   <label
                     htmlFor="profile-email"
-                    className="block text-sm font-medium text-[#111] mb-1.5"
+                    className="block text-[13px] font-bold text-slate-700 mb-1.5"
                   >
-                    Email Address
+                    Email Address <span className="text-[#e31e24]">*</span>
                   </label>
                   <input
                     id="profile-email"
@@ -415,21 +411,21 @@ export default function AdminSettingsPage() {
                       setProfileForm((p) => ({ ...p, email: e.target.value }))
                     }
                     placeholder="admin@college.edu"
-                    className="w-full rounded-xl border border-gray-300 px-4 py-2.5 text-[#111] text-sm outline-none focus:border-[#ca1f23] focus:ring-2 focus:ring-[#ca1f23]/10 transition placeholder:text-gray-400"
+                    className="w-full rounded-xl border border-slate-200 px-4 py-3 text-[14px] text-slate-800 outline-none focus:border-[#00a859] focus:ring-2 focus:ring-[#00a859]/20 transition bg-slate-50 focus:bg-white placeholder:text-slate-400"
                   />
                 </div>
               </div>
 
-              <div className="flex justify-end pt-1">
+              <div className="flex justify-end pt-2">
                 <button
                   type="submit"
                   disabled={profileSaving}
-                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#ca1f23] text-white text-sm font-medium hover:opacity-95 transition disabled:opacity-50"
+                  className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-[#00a859] text-white text-[14px] font-bold shadow-sm shadow-[#00a859]/20 hover:bg-[#008f4c] transition-all hover:-translate-y-0.5 disabled:opacity-50 disabled:hover:translate-y-0"
                 >
                   {profileSaving ? (
                     <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                   ) : (
-                    <Save size={14} />
+                    <Save size={16} />
                   )}
                   {profileSaving ? "Saving..." : "Save Profile"}
                 </button>
@@ -441,12 +437,14 @@ export default function AdminSettingsPage() {
         {/* ── SECTION 2 — CHANGE PASSWORD ───────────────────────────────── */}
         <Section
           id="password"
-          icon={<Lock size={18} />}
+          icon={<Lock size={24} />}
           title="Change Password"
           subtitle="Update your login password with current password verification"
-          color="#2563eb"
+          colorClass="text-indigo-600"
+          iconBgClass="bg-indigo-50 border border-indigo-100"
+          iconColorClass="text-indigo-600"
         >
-          <form onSubmit={changePassword} className="pt-5 space-y-4">
+          <form onSubmit={changePassword} className="pt-6 space-y-5">
             <PasswordInput
               id="current-password"
               label="Current Password"
@@ -455,7 +453,7 @@ export default function AdminSettingsPage() {
               placeholder="Enter your current password"
             />
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
               <PasswordInput
                 id="new-password"
                 label="New Password"
@@ -477,13 +475,13 @@ export default function AdminSettingsPage() {
             {/* Match indicator */}
             {pwForm.newPassword && pwForm.confirmPassword && (
               <div
-                className={`flex items-center gap-2 text-xs font-medium ${
+                className={`flex items-center gap-2 text-[12px] font-bold px-3 py-2 rounded-lg inline-flex ${
                   pwForm.newPassword === pwForm.confirmPassword
-                    ? "text-[#00a651]"
-                    : "text-red-500"
+                    ? "bg-[#00a859]/10 text-[#00a859] border border-[#00a859]/20"
+                    : "bg-[#e31e24]/10 text-[#e31e24] border border-[#e31e24]/20"
                 }`}
               >
-                <CheckCircle2 size={13} />
+                <CheckCircle2 size={14} />
                 {pwForm.newPassword === pwForm.confirmPassword
                   ? "Passwords match"
                   : "Passwords do not match"}
@@ -492,27 +490,29 @@ export default function AdminSettingsPage() {
 
             {/* Password strength hint */}
             {pwForm.newPassword && (
-              <div className="flex gap-1.5 items-center">
-                {["bg-gray-200", "bg-gray-200", "bg-gray-200"].map((base, i) => {
-                  const len = pwForm.newPassword.length;
-                  const filled =
-                    (i === 0 && len >= 1) ||
-                    (i === 1 && len >= 6) ||
-                    (i === 2 && len >= 10);
-                  const fillColor =
-                    len < 6
-                      ? "bg-red-400"
-                      : len < 10
-                        ? "bg-amber-400"
-                        : "bg-[#00a651]";
-                  return (
-                    <div
-                      key={i}
-                      className={`h-1.5 flex-1 rounded-full ${filled ? fillColor : base} transition-all duration-300`}
-                    />
-                  );
-                })}
-                <span className="text-[11px] text-gray-400 ml-1 shrink-0">
+              <div className="flex gap-1.5 items-center bg-slate-50 p-3 rounded-xl border border-slate-100">
+                <div className="flex-1 flex gap-1.5">
+                  {["bg-slate-200", "bg-slate-200", "bg-slate-200"].map((base, i) => {
+                    const len = pwForm.newPassword.length;
+                    const filled =
+                      (i === 0 && len >= 1) ||
+                      (i === 1 && len >= 6) ||
+                      (i === 2 && len >= 10);
+                    const fillColor =
+                      len < 6
+                        ? "bg-[#e31e24]"
+                        : len < 10
+                          ? "bg-amber-400"
+                          : "bg-[#00a859]";
+                    return (
+                      <div
+                        key={i}
+                        className={`h-2 flex-1 rounded-full ${filled ? fillColor : base} transition-all duration-300`}
+                      />
+                    );
+                  })}
+                </div>
+                <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 ml-2 w-16 text-right">
                   {pwForm.newPassword.length < 6
                     ? "Weak"
                     : pwForm.newPassword.length < 10
@@ -522,16 +522,16 @@ export default function AdminSettingsPage() {
               </div>
             )}
 
-            <div className="flex justify-end pt-1">
+            <div className="flex justify-end pt-2">
               <button
                 type="submit"
                 disabled={pwSaving}
-                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#2563eb] text-white text-sm font-medium hover:opacity-95 transition disabled:opacity-50"
+                className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-slate-800 text-white text-[14px] font-bold shadow-sm hover:bg-slate-700 transition-all hover:-translate-y-0.5 disabled:opacity-50 disabled:hover:translate-y-0"
               >
                 {pwSaving ? (
                   <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                 ) : (
-                  <Lock size={14} />
+                  <Lock size={16} />
                 )}
                 {pwSaving ? "Updating..." : "Update Password"}
               </button>
@@ -542,25 +542,29 @@ export default function AdminSettingsPage() {
         {/* ── SECTION 3 — ACADEMIC YEAR ─────────────────────────────────── */}
         <Section
           id="academic-year"
-          icon={<CalendarDays size={18} />}
+          icon={<CalendarDays size={24} />}
           title="Academic Year"
           subtitle="Set the active academic year for faculty evaluations"
-          color="#059669"
+          colorClass="text-emerald-600"
+          iconBgClass="bg-emerald-50 border border-emerald-100"
+          iconColorClass="text-emerald-600"
         >
-          <div className="pt-5 space-y-4">
-            <p className="text-sm text-gray-500">
+          <div className="pt-6 space-y-5">
+            <p className="text-[13px] font-medium text-slate-500 bg-slate-50 p-3 rounded-xl border border-slate-100">
               This setting controls which academic year is shown in dashboards
               and evaluation forms. It is saved per browser session.
             </p>
 
             {/* Current year indicator */}
-            <div className="flex items-center gap-3 p-4 rounded-xl bg-green-50 border border-green-100">
-              <CheckCircle2 size={16} className="text-[#059669] shrink-0" />
+            <div className="flex items-center gap-4 p-4 rounded-xl bg-emerald-50/50 border border-emerald-100/50">
+              <div className="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600 shrink-0">
+                <CheckCircle2 size={20} />
+              </div>
               <div>
-                <p className="text-sm font-semibold text-[#059669]">
-                  Active Year: {academicYear}
+                <p className="text-[14px] font-bold text-emerald-800">
+                  Active Year: <span className="text-[16px]">{academicYear}</span>
                 </p>
-                <p className="text-xs text-green-600 mt-0.5">
+                <p className="text-[12px] font-medium text-emerald-600/80 mt-0.5">
                   All evaluation data is filtered by this year.
                 </p>
               </div>
@@ -568,7 +572,7 @@ export default function AdminSettingsPage() {
 
             {/* Year selector */}
             <div>
-              <label className="block text-sm font-medium text-[#111] mb-2">
+              <label className="block text-[13px] font-bold text-slate-700 mb-2">
                 Select Academic Year
               </label>
               <div className="flex flex-wrap gap-2">
@@ -579,10 +583,10 @@ export default function AdminSettingsPage() {
                       setYear(y);
                       toast.success(`Academic year set to ${y}`);
                     }}
-                    className={`px-5 py-2.5 rounded-xl text-sm font-medium border transition ${
+                    className={`px-5 py-2.5 rounded-xl text-[13px] font-bold transition-all ${
                       y === academicYear
-                        ? "bg-[#059669] text-white border-[#059669] shadow-sm"
-                        : "bg-white text-gray-600 border-gray-200 hover:border-[#059669]/40 hover:bg-green-50/50"
+                        ? "bg-emerald-600 text-white shadow-sm shadow-emerald-600/20 ring-2 ring-emerald-600/20"
+                        : "bg-white text-slate-600 border border-slate-200 hover:border-emerald-500/40 hover:bg-emerald-50/50 hover:text-emerald-700"
                     }`}
                   >
                     {y}
@@ -591,19 +595,19 @@ export default function AdminSettingsPage() {
               </div>
             </div>
 
-            <div className="flex items-center gap-3 pt-1">
+            <div className="flex items-center gap-4 pt-3 border-t border-slate-100">
               <button
                 onClick={() => {
                   resetToCurrentYear();
                   toast.success("Academic year reset to auto-detected current year.");
                 }}
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-gray-200 text-sm font-medium text-gray-600 hover:bg-gray-50 transition"
+                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-[13px] font-bold text-slate-600 hover:bg-slate-50 transition-colors shadow-sm"
               >
-                <RefreshCw size={13} />
+                <RefreshCw size={14} />
                 Reset to Auto-Detected
               </button>
-              <p className="text-xs text-gray-400">
-                Auto-detected: Academic year changes every June.
+              <p className="text-[11px] font-medium text-slate-400 italic">
+                Auto-detected changes every June.
               </p>
             </div>
           </div>
@@ -612,35 +616,40 @@ export default function AdminSettingsPage() {
         {/* ── SECTION 4 — SYSTEM INFO ───────────────────────────────────── */}
         <Section
           id="system-info"
-          icon={<Info size={18} />}
+          icon={<Info size={24} />}
           title="System Information"
           subtitle="Overview of the current system configuration and data"
-          color="#7c3aed"
+          colorClass="text-purple-600"
+          iconBgClass="bg-purple-50 border border-purple-100"
+          iconColorClass="text-purple-600"
         >
-          <div className="pt-5 space-y-5">
+          <div className="pt-6 space-y-6">
             {/* App info row */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
               {[
                 {
                   label: "App Version",
                   value: "0.1.0",
-                  icon: <Layers size={14} />,
-                  color: "#7c3aed",
-                  bg: "rgba(124,58,237,0.08)",
+                  icon: <Layers size={16} />,
+                  color: "text-purple-600",
+                  bg: "bg-purple-50/50",
+                  border: "border-purple-100",
                 },
                 {
                   label: "Framework",
                   value: "Next.js 16",
-                  icon: <Database size={14} />,
-                  color: "#111",
-                  bg: "rgba(0,0,0,0.04)",
+                  icon: <Database size={16} />,
+                  color: "text-slate-600",
+                  bg: "bg-slate-50",
+                  border: "border-slate-200",
                 },
                 {
                   label: "Database",
                   value: "MongoDB",
-                  icon: <Database size={14} />,
-                  color: "#059669",
-                  bg: "rgba(5,150,105,0.08)",
+                  icon: <Database size={16} />,
+                  color: "text-[#00a859]",
+                  bg: "bg-[#00a859]/5",
+                  border: "border-[#00a859]/20",
                 },
                 {
                   label: "Environment",
@@ -648,36 +657,38 @@ export default function AdminSettingsPage() {
                     process.env.NODE_ENV === "production"
                       ? "Production"
                       : "Development",
-                  icon: <Shield size={14} />,
+                  icon: <Shield size={16} />,
                   color:
-                    process.env.NODE_ENV === "production" ? "#ca1f23" : "#d97706",
+                    process.env.NODE_ENV === "production" ? "text-[#e31e24]" : "text-amber-600",
                   bg:
                     process.env.NODE_ENV === "production"
-                      ? "rgba(202,31,35,0.08)"
-                      : "rgba(217,119,6,0.08)",
+                      ? "bg-[#e31e24]/5"
+                      : "bg-amber-50",
+                  border:
+                    process.env.NODE_ENV === "production"
+                      ? "border-[#e31e24]/20"
+                      : "border-amber-200",
                 },
               ].map((item) => (
                 <div
                   key={item.label}
-                  className="rounded-xl p-4 border border-gray-100"
-                  style={{ background: item.bg }}
+                  className={`rounded-2xl p-5 border ${item.border} ${item.bg} flex flex-col items-center text-center transition-transform hover:-translate-y-0.5`}
                 >
-                  <span style={{ color: item.color }}>{item.icon}</span>
-                  <p
-                    className="text-sm font-bold mt-2 mb-0.5"
-                    style={{ color: item.color }}
-                  >
+                  <div className={`w-8 h-8 rounded-full flex items-center justify-center bg-white shadow-sm ${item.color} mb-3`}>
+                    {item.icon}
+                  </div>
+                  <p className={`text-[15px] font-bold mb-1 ${item.color}`}>
                     {item.value}
                   </p>
-                  <p className="text-[11px] text-gray-500">{item.label}</p>
+                  <p className="text-[11px] font-bold uppercase tracking-wider text-slate-500">{item.label}</p>
                 </div>
               ))}
             </div>
 
             {/* Data counts */}
-            <div>
-              <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">
-                Database Records
+            <div className="pt-2 border-t border-slate-100">
+              <p className="text-[12px] font-bold text-slate-400 uppercase tracking-wider mb-4">
+                Database Records Overview
               </p>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                 {[
@@ -715,14 +726,14 @@ export default function AdminSettingsPage() {
                   <a
                     key={item.label}
                     href={item.href}
-                    className="flex items-center justify-between p-3.5 rounded-xl border border-gray-200 bg-white hover:border-[#ca1f23]/30 hover:bg-red-50/20 transition group"
+                    className="flex items-center justify-between p-4 rounded-xl border border-slate-200 bg-white hover:border-[#00a859]/30 hover:bg-[#00a859]/5 hover:shadow-sm transition-all group"
                   >
-                    <span className="text-sm text-gray-600 group-hover:text-[#111] transition">
+                    <span className="text-[13px] font-bold text-slate-600 group-hover:text-slate-800 transition-colors">
                       {item.label}
                     </span>
-                    <span className="text-sm font-bold text-[#111]">
+                    <span className="text-[16px] font-bold text-slate-800 group-hover:text-[#00a859] transition-colors">
                       {item.value ?? (
-                        <span className="w-8 h-4 rounded bg-gray-100 animate-pulse inline-block" />
+                        <span className="w-8 h-4 rounded bg-slate-100 animate-pulse inline-block" />
                       )}
                     </span>
                   </a>
@@ -731,9 +742,9 @@ export default function AdminSettingsPage() {
             </div>
 
             {/* Tech stack */}
-            <div>
-              <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">
-                Tech Stack
+            <div className="pt-4">
+              <p className="text-[12px] font-bold text-slate-400 uppercase tracking-wider mb-3">
+                Technologies
               </p>
               <div className="flex flex-wrap gap-2">
                 {[
@@ -750,7 +761,7 @@ export default function AdminSettingsPage() {
                 ].map((tech) => (
                   <span
                     key={tech}
-                    className="px-3 py-1 rounded-full text-[11px] font-medium bg-gray-100 text-gray-600 border border-gray-200"
+                    className="px-3 py-1.5 rounded-lg text-[11px] font-bold bg-slate-100 text-slate-600 border border-slate-200/60 shadow-sm"
                   >
                     {tech}
                   </span>

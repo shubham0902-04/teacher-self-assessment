@@ -64,13 +64,13 @@ function Toggle({ value, onChange }: { value: boolean; onChange: () => void }) {
     <button
       type="button"
       onClick={onChange}
-      className={`relative h-6 w-11 rounded-full transition-colors duration-200 ${
-        value ? "bg-[#00a651]" : "bg-gray-300"
+      className={`relative h-6 w-11 rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#00a859] ${
+        value ? "bg-[#00a859]" : "bg-slate-300"
       }`}
     >
       <span
-        className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow-sm transition-all duration-200 ${
-          value ? "left-[22px]" : "left-0.5"
+        className={`absolute top-[2px] left-[2px] h-5 w-5 rounded-full bg-white shadow-sm transition-transform duration-200 ${
+          value ? "translate-x-5" : "translate-x-0"
         }`}
       />
     </button>
@@ -139,7 +139,6 @@ export default function AdminParametersPage() {
         })
       : parameters;
 
-    // Pehle category name se sort, phir displayOrder se
     return [...filtered].sort((a, b) => {
       const catA =
         typeof a.categoryId === "object" ? a.categoryId.categoryName : "";
@@ -298,64 +297,68 @@ export default function AdminParametersPage() {
   }
 
   return (
-    <div className="flex min-h-screen bg-[#f8f8f8] text-[#111]">
+    <div className="flex min-h-screen bg-[#f8fafc] text-slate-800 font-sans">
       <AdminSidebar />
 
-      <main className="flex-1 overflow-y-auto p-6">
+      <main className="flex-1 overflow-y-auto px-5 sm:px-8 py-8 space-y-6 max-w-[1400px] mx-auto w-full">
         {/* HEADER */}
-        <div className="flex items-center justify-between mb-6">
-          <h1 className="text-3xl font-bold text-[#111]">
-            Evaluation Parameters
-          </h1>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-6 rounded-2xl border border-slate-200/60 shadow-sm relative overflow-hidden">
+          <div className="absolute right-0 top-0 w-64 h-64 bg-[#00a859]/5 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none" />
+          <div className="relative z-10">
+            <h1 className="text-2xl font-bold text-slate-800 tracking-tight mb-1">
+              Evaluation Parameters
+            </h1>
+            <p className="text-[13px] text-slate-500 font-medium">Define parameters and their properties within each category</p>
+          </div>
           <button
             onClick={openAddModal}
-            className="inline-flex items-center gap-2 rounded-xl bg-[#ca1f23] px-5 py-3 font-medium text-white shadow-md transition hover:opacity-95"
+            className="relative z-10 inline-flex items-center gap-2 rounded-xl bg-[#00a859] px-5 py-2.5 text-[14px] font-bold text-white shadow-sm shadow-[#00a859]/20 transition-all hover:bg-[#008f4c] hover:-translate-y-0.5"
           >
-            <Plus size={18} />
+            <Plus size={16} />
             Add Parameter
           </button>
         </div>
 
         {/* STAT CARDS */}
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3 mb-6">
+        <div className="grid grid-cols-1 gap-5 sm:grid-cols-3">
           <StatCard
             title="Total Parameters"
             value={totalParameters}
             icon={<ListChecks size={20} />}
-            bg="bg-blue-50"
-            iconColor="text-blue-600"
+            bg="bg-indigo-50"
+            iconColor="text-indigo-500"
           />
           <StatCard
             title="Active Parameters"
             value={activeParameters}
             icon={<LayoutDashboard size={20} />}
-            bg="bg-green-50"
-            iconColor="text-[#00a651]"
+            bg="bg-[#00a859]/10"
+            iconColor="text-[#00a859]"
           />
           <StatCard
             title="Evidence Required"
             value={evidenceRequiredCount}
             icon={<ShieldCheck size={20} />}
             bg="bg-amber-50"
-            iconColor="text-amber-600"
+            iconColor="text-amber-500"
           />
         </div>
 
         {/* TABLE CARD */}
-        <div className="rounded-2xl border border-gray-200 bg-white shadow-sm overflow-hidden">
+        <div className="rounded-2xl border border-slate-200/60 bg-white shadow-sm overflow-hidden">
           {/* Search bar */}
-          <div className="px-6 py-4 border-b border-gray-100 flex items-center gap-3">
-            <Search size={16} className="text-gray-400 shrink-0" />
+          <div className="px-6 py-4 border-b border-slate-100 flex items-center gap-3 bg-slate-50/50">
+            <Search size={16} className="text-slate-400 shrink-0" />
             <input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search by name, code or category..."
-              className="flex-1 text-sm text-[#111] placeholder:text-gray-400 outline-none bg-transparent"
+              className="flex-1 text-[14px] text-slate-800 placeholder:text-slate-400 outline-none bg-transparent font-medium"
             />
             {search && (
               <button
                 onClick={() => setSearch("")}
-                className="text-gray-400 hover:text-gray-600 transition"
+                className="text-slate-400 hover:text-slate-600 transition p-1 rounded-lg hover:bg-slate-100"
               >
                 <X size={15} />
               </button>
@@ -364,40 +367,42 @@ export default function AdminParametersPage() {
 
           {/* Table */}
           <div className="overflow-x-auto">
-            <table className="min-w-full text-sm">
-              <thead className="bg-[#f5f5f7]">
-                <tr className="text-left text-sm font-semibold text-gray-600">
-                  <th className="px-5 py-4">Category</th>
-                  <th className="px-5 py-4">Parameter Name</th>
-                  <th className="px-5 py-4">Code</th>
-                  <th className="px-5 py-4">Max Marks</th>
-                  <th className="px-5 py-4">Multi Entry</th>
-                  <th className="px-5 py-4">Evidence</th>
-                  <th className="px-5 py-4">Order</th>
-                  <th className="px-5 py-4">Status</th>
-                  <th className="px-5 py-4">Actions</th>
+            <table className="min-w-full text-left">
+              <thead className="bg-slate-50 border-b border-slate-100">
+                <tr>
+                  <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">Category</th>
+                  <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">Parameter Name</th>
+                  <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">Code</th>
+                  <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider text-center">Max Marks</th>
+                  <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider text-center">Multi Entry</th>
+                  <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider text-center">Evidence</th>
+                  <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider text-center">Order</th>
+                  <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">Status</th>
+                  <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider text-right">Actions</th>
                 </tr>
               </thead>
 
-              <tbody className="bg-white divide-y divide-gray-100">
+              <tbody className="divide-y divide-slate-100 bg-white">
                 {loading ? (
                   <tr>
-                    <td
-                      colSpan={9}
-                      className="px-5 py-12 text-center text-gray-400"
-                    >
-                      Loading parameters...
+                    <td colSpan={9} className="px-6 py-12 text-center text-slate-400">
+                      <div className="flex flex-col items-center gap-3">
+                        <div className="w-6 h-6 border-2 border-[#00a859]/20 border-t-[#00a859] rounded-full animate-spin" />
+                        <span className="text-[13px] font-medium">Loading parameters...</span>
+                      </div>
                     </td>
                   </tr>
                 ) : filteredParameters.length === 0 ? (
                   <tr>
-                    <td
-                      colSpan={9}
-                      className="px-5 py-12 text-center text-gray-400"
-                    >
-                      {search
-                        ? `No results for "${search}"`
-                        : "No parameters found — add one above"}
+                    <td colSpan={9} className="px-6 py-12 text-center text-slate-400">
+                      <div className="flex flex-col items-center gap-3">
+                        <div className="w-12 h-12 rounded-full bg-slate-50 flex items-center justify-center">
+                          <ListChecks size={20} className="text-slate-300" />
+                        </div>
+                        <span className="text-[13px] font-medium">
+                          {search ? `No results for "${search}"` : "No parameters found — add one above"}
+                        </span>
+                      </div>
                     </td>
                   </tr>
                 ) : (
@@ -408,88 +413,69 @@ export default function AdminParametersPage() {
                         : "-";
 
                     return (
-                      <tr
-                        key={parameter._id}
-                        className="hover:bg-gray-50 transition"
-                      >
-                        <td className="px-5 py-4">
-                          <span className="text-xs font-medium bg-blue-50 text-blue-700 px-2.5 py-1 rounded-full">
+                      <tr key={parameter._id} className="hover:bg-slate-50/50 transition-colors group">
+                        <td className="px-6 py-4">
+                          <span className="text-[11px] font-bold bg-blue-50 border border-blue-100/50 text-blue-600 px-2.5 py-1 rounded-md">
                             {category}
                           </span>
                         </td>
-                        <td className="px-5 py-4 font-medium text-[#111]">
+                        <td className="px-6 py-4 font-bold text-slate-700 text-[13px]">
                           {parameter.parameterName}
                         </td>
-                        <td className="px-5 py-4">
-                          <span className="font-mono text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded-md">
+                        <td className="px-6 py-4">
+                          <span className="font-mono text-[11px] font-bold bg-slate-100 border border-slate-200 text-slate-500 px-2.5 py-1 rounded-md">
                             {parameter.parameterCode}
                           </span>
                         </td>
-                        <td className="px-5 py-4 text-gray-600">
-                          {parameter.maxMarks}
+                        <td className="px-6 py-4 text-[13px] font-bold text-slate-600 text-center">
+                          {parameter.maxMarks > 0 ? parameter.maxMarks : <span className="text-slate-300">—</span>}
                         </td>
-                        <td className="px-5 py-4">
-                          <span
-                            className={`text-xs font-medium px-2.5 py-1 rounded-full ${
-                              parameter.allowMultipleEntries
-                                ? "bg-green-50 text-green-700"
-                                : "bg-gray-100 text-gray-500"
-                            }`}
-                          >
+                        <td className="px-6 py-4 text-center">
+                          <span className={`text-[11px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-md border ${
+                            parameter.allowMultipleEntries
+                              ? "bg-[#00a859]/5 text-[#00a859] border-[#00a859]/20"
+                              : "bg-slate-50 text-slate-400 border-slate-200"
+                          }`}>
                             {parameter.allowMultipleEntries ? "Yes" : "No"}
                           </span>
                         </td>
-                        <td className="px-5 py-4">
-                          <span
-                            className={`text-xs font-medium px-2.5 py-1 rounded-full ${
-                              parameter.evidenceRequired
-                                ? "bg-amber-50 text-amber-700"
-                                : "bg-gray-100 text-gray-500"
-                            }`}
-                          >
+                        <td className="px-6 py-4 text-center">
+                          <span className={`text-[11px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-md border ${
+                            parameter.evidenceRequired
+                              ? "bg-amber-50 text-amber-600 border-amber-200"
+                              : "bg-slate-50 text-slate-400 border-slate-200"
+                          }`}>
                             {parameter.evidenceRequired ? "Yes" : "No"}
                           </span>
                         </td>
-                        <td className="px-5 py-4 text-gray-500">
+                        <td className="px-6 py-4 text-[13px] font-bold text-slate-500 text-center">
                           {parameter.displayOrder}
                         </td>
-                        <td className="px-5 py-4">
+                        <td className="px-6 py-4">
                           <button
                             onClick={() => handleToggleStatus(parameter)}
-                            className={`inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-medium transition ${
+                            className={`inline-flex items-center gap-2 rounded-full px-3 py-1 text-[11px] font-bold uppercase tracking-wider transition border ${
                               parameter.isActive
-                                ? "bg-green-100 text-green-700"
-                                : "bg-gray-100 text-gray-500"
+                                ? "bg-[#00a859]/10 text-[#00a859] border-[#00a859]/20 hover:bg-[#00a859]/20"
+                                : "bg-slate-100 text-slate-500 border-slate-200 hover:bg-slate-200"
                             }`}
                           >
-                            <span
-                              className={`h-4 w-8 rounded-full p-0.5 transition ${
-                                parameter.isActive
-                                  ? "bg-[#00a651]"
-                                  : "bg-gray-400"
-                              }`}
-                            >
-                              <span
-                                className={`block h-3 w-3 rounded-full bg-white transition-all ${
-                                  parameter.isActive ? "translate-x-4" : ""
-                                }`}
-                              />
-                            </span>
+                            <span className={`w-1.5 h-1.5 rounded-full ${parameter.isActive ? "bg-[#00a859]" : "bg-slate-400"}`} />
                             {parameter.isActive ? "Active" : "Inactive"}
                           </button>
                         </td>
-                        <td className="px-5 py-4">
-                          <div className="flex items-center gap-3">
+                        <td className="px-6 py-4 text-right">
+                          <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                             <button
                               onClick={() => openEditModal(parameter)}
-                              className="text-gray-400 hover:text-[#ca1f23] transition"
+                              className="p-1.5 text-slate-400 hover:text-[#00a859] hover:bg-[#00a859]/10 rounded-lg transition"
                               title="Edit"
                             >
                               <Pencil size={16} />
                             </button>
                             <button
                               onClick={() => setDeleteId(parameter._id)}
-                              className="text-gray-400 hover:text-red-500 transition"
+                              className="p-1.5 text-slate-400 hover:text-[#e31e24] hover:bg-[#e31e24]/10 rounded-lg transition"
                               title="Delete"
                             >
                               <Trash2 size={16} />
@@ -506,9 +492,8 @@ export default function AdminParametersPage() {
 
           {/* Footer count */}
           {!loading && filteredParameters.length > 0 && (
-            <div className="px-6 py-3 border-t border-gray-100 text-xs text-gray-400">
-              Showing {filteredParameters.length} of {totalParameters}{" "}
-              parameters
+            <div className="px-6 py-3 border-t border-slate-100 text-[11px] font-bold text-slate-400 bg-slate-50 uppercase tracking-wider">
+              Showing {filteredParameters.length} of {totalParameters} parameters
             </div>
           )}
         </div>
@@ -516,16 +501,16 @@ export default function AdminParametersPage() {
 
       {/* ADD / EDIT MODAL */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/20 p-4">
-          <div className="w-full max-w-2xl rounded-3xl border border-gray-200 bg-white shadow-2xl flex flex-col max-h-[90vh]">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4">
+          <div className="w-full max-w-2xl rounded-2xl border border-slate-100 bg-white shadow-2xl flex flex-col max-h-[90vh]">
             {/* Modal header */}
-            <div className="flex items-center justify-between px-6 pt-6 pb-4 border-b border-gray-100 shrink-0">
-              <h3 className="text-xl font-bold text-[#111]">
+            <div className="flex items-center justify-between px-6 py-5 border-b border-slate-100 shrink-0">
+              <h3 className="text-[18px] font-bold text-slate-800 tracking-tight">
                 {editingParameter ? "Edit Parameter" : "Add Parameter"}
               </h3>
               <button
                 onClick={closeModal}
-                className="rounded-full p-2 text-gray-400 hover:bg-gray-100 transition"
+                className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition"
               >
                 <X size={18} />
               </button>
@@ -536,19 +521,19 @@ export default function AdminParametersPage() {
               <form
                 id="parameter-form"
                 onSubmit={handleSubmit}
-                className="grid grid-cols-1 gap-4 md:grid-cols-2"
+                className="grid grid-cols-1 gap-5 md:grid-cols-2"
               >
                 {/* Category */}
                 <div className="md:col-span-2">
-                  <label className="mb-1.5 block text-sm font-medium text-[#111]">
-                    Category <span className="text-red-500">*</span>
+                  <label className="mb-1.5 block text-[13px] font-bold text-slate-700">
+                    Category <span className="text-[#e31e24]">*</span>
                   </label>
                   <select
                     value={form.categoryId}
                     onChange={(e) =>
                       handleInputChange("categoryId", e.target.value)
                     }
-                    className="w-full rounded-xl border border-gray-300 px-4 py-3 text-[#111] text-sm outline-none focus:border-[#ca1f23] bg-white"
+                    className="w-full rounded-xl border border-slate-200 px-4 py-3 text-slate-800 text-[14px] outline-none focus:border-[#00a859] focus:ring-2 focus:ring-[#00a859]/20 transition bg-slate-50 focus:bg-white"
                   >
                     <option value="">Select Category</option>
                     {categories.map((category) => (
@@ -561,8 +546,8 @@ export default function AdminParametersPage() {
 
                 {/* Parameter Name */}
                 <div>
-                  <label className="mb-1.5 block text-sm font-medium text-[#111]">
-                    Parameter Name <span className="text-red-500">*</span>
+                  <label className="mb-1.5 block text-[13px] font-bold text-slate-700">
+                    Parameter Name <span className="text-[#e31e24]">*</span>
                   </label>
                   <input
                     type="text"
@@ -571,14 +556,14 @@ export default function AdminParametersPage() {
                     onChange={(e) =>
                       handleInputChange("parameterName", e.target.value)
                     }
-                    className="w-full rounded-xl border border-gray-300 px-4 py-3 text-[#111] text-sm outline-none focus:border-[#ca1f23]"
+                    className="w-full rounded-xl border border-slate-200 px-4 py-3 text-slate-800 text-[14px] outline-none focus:border-[#00a859] focus:ring-2 focus:ring-[#00a859]/20 transition bg-slate-50 focus:bg-white"
                   />
                 </div>
 
                 {/* Parameter Code */}
                 <div>
-                  <label className="mb-1.5 block text-sm font-medium text-[#111]">
-                    Parameter Code <span className="text-red-500">*</span>
+                  <label className="mb-1.5 block text-[13px] font-bold text-slate-700">
+                    Parameter Code <span className="text-[#e31e24]">*</span>
                   </label>
                   <input
                     type="text"
@@ -587,13 +572,13 @@ export default function AdminParametersPage() {
                     onChange={(e) =>
                       handleInputChange("parameterCode", e.target.value)
                     }
-                    className="w-full rounded-xl border border-gray-300 px-4 py-3 text-[#111] text-sm outline-none focus:border-[#ca1f23] uppercase"
+                    className="w-full rounded-xl border border-slate-200 px-4 py-3 text-slate-800 text-[14px] outline-none focus:border-[#00a859] focus:ring-2 focus:ring-[#00a859]/20 transition bg-slate-50 focus:bg-white uppercase font-mono"
                   />
                 </div>
 
                 {/* Description */}
                 <div className="md:col-span-2">
-                  <label className="mb-1.5 block text-sm font-medium text-[#111]">
+                  <label className="mb-1.5 block text-[13px] font-bold text-slate-700">
                     Description
                   </label>
                   <textarea
@@ -603,13 +588,13 @@ export default function AdminParametersPage() {
                     onChange={(e) =>
                       handleInputChange("description", e.target.value)
                     }
-                    className="w-full rounded-xl border border-gray-300 px-4 py-3 text-[#111] text-sm outline-none focus:border-[#ca1f23] resize-none"
+                    className="w-full rounded-xl border border-slate-200 px-4 py-3 text-slate-800 text-[14px] outline-none focus:border-[#00a859] focus:ring-2 focus:ring-[#00a859]/20 transition bg-slate-50 focus:bg-white resize-none"
                   />
                 </div>
 
                 {/* Max Marks */}
                 <div>
-                  <label className="mb-1.5 block text-sm font-medium text-[#111]">
+                  <label className="mb-1.5 block text-[13px] font-bold text-slate-700">
                     Max Marks
                   </label>
                   <input
@@ -619,13 +604,13 @@ export default function AdminParametersPage() {
                     onChange={(e) =>
                       handleInputChange("maxMarks", Number(e.target.value))
                     }
-                    className="w-full rounded-xl border border-gray-300 px-4 py-3 text-[#111] text-sm outline-none focus:border-[#ca1f23]"
+                    className="w-full rounded-xl border border-slate-200 px-4 py-3 text-slate-800 text-[14px] outline-none focus:border-[#00a859] focus:ring-2 focus:ring-[#00a859]/20 transition bg-slate-50 focus:bg-white"
                   />
                 </div>
 
                 {/* Display Order */}
                 <div>
-                  <label className="mb-1.5 block text-sm font-medium text-[#111]">
+                  <label className="mb-1.5 block text-[13px] font-bold text-slate-700">
                     Display Order
                   </label>
                   <input
@@ -635,34 +620,34 @@ export default function AdminParametersPage() {
                     onChange={(e) =>
                       handleInputChange("displayOrder", Number(e.target.value))
                     }
-                    className="w-full rounded-xl border border-gray-300 px-4 py-3 text-[#111] text-sm outline-none focus:border-[#ca1f23]"
+                    className="w-full rounded-xl border border-slate-200 px-4 py-3 text-slate-800 text-[14px] outline-none focus:border-[#00a859] focus:ring-2 focus:ring-[#00a859]/20 transition bg-slate-50 focus:bg-white"
                   />
                 </div>
 
                 {/* Toggles */}
-                <div className="md:col-span-2 grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div className="md:col-span-2 grid grid-cols-1 sm:grid-cols-3 gap-4">
                   {[
                     {
-                      label: "Allow Multiple Entries",
+                      label: "Multiple Entries",
                       key: "allowMultipleEntries" as const,
                       value: form.allowMultipleEntries,
                     },
                     {
-                      label: "Evidence Required",
+                      label: "Evidence Req.",
                       key: "evidenceRequired" as const,
                       value: form.evidenceRequired,
                     },
                     {
-                      label: "Active",
+                      label: "Active Status",
                       key: "isActive" as const,
                       value: form.isActive,
                     },
                   ].map((toggle) => (
                     <div
                       key={toggle.key}
-                      className="flex items-center justify-between rounded-xl border border-gray-200 px-4 py-3"
+                      className="flex items-center justify-between rounded-xl border border-slate-200 px-4 py-3.5 bg-slate-50"
                     >
-                      <span className="text-sm font-medium text-[#111]">
+                      <span className="text-[13px] font-bold text-slate-700">
                         {toggle.label}
                       </span>
                       <Toggle
@@ -678,12 +663,19 @@ export default function AdminParametersPage() {
             </div>
 
             {/* Modal footer */}
-            <div className="flex items-center gap-3 px-6 py-4 border-t border-gray-100 shrink-0">
+            <div className="flex items-center gap-3 px-6 py-4 border-t border-slate-100 shrink-0 bg-slate-50/50 rounded-b-2xl">
+              <button
+                type="button"
+                onClick={closeModal}
+                className="flex-1 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-[14px] font-bold text-slate-600 hover:bg-slate-50 hover:text-slate-800 transition"
+              >
+                Cancel
+              </button>
               <button
                 type="submit"
                 form="parameter-form"
                 disabled={submitting}
-                className="flex-1 rounded-xl bg-[#ca1f23] px-4 py-3 text-sm font-medium text-white transition hover:opacity-95 disabled:opacity-50"
+                className="flex-1 rounded-xl bg-[#00a859] px-4 py-2.5 text-[14px] font-bold text-white shadow-sm shadow-[#00a859]/20 transition hover:bg-[#008f4c] disabled:opacity-50"
               >
                 {submitting
                   ? editingParameter
@@ -693,13 +685,6 @@ export default function AdminParametersPage() {
                     ? "Update Parameter"
                     : "Save Parameter"}
               </button>
-              <button
-                type="button"
-                onClick={closeModal}
-                className="rounded-xl border border-gray-300 px-5 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50 transition"
-              >
-                Cancel
-              </button>
             </div>
           </div>
         </div>
@@ -707,32 +692,27 @@ export default function AdminParametersPage() {
 
       {/* DELETE CONFIRM MODAL */}
       {deleteId && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/20 p-4">
-          <div className="w-full max-w-sm rounded-2xl border border-gray-200 bg-white p-6 shadow-2xl">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-base font-semibold text-[#111]">
-                Delete Parameter?
-              </h3>
-              <button
-                onClick={() => setDeleteId(null)}
-                className="rounded-full p-1 text-gray-400 hover:text-gray-600 transition"
-              >
-                <X size={17} />
-              </button>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4">
+          <div className="w-full max-w-sm rounded-2xl border border-slate-100 bg-white p-6 shadow-2xl">
+            <div className="w-12 h-12 rounded-full bg-[#e31e24]/10 flex items-center justify-center mb-4">
+              <Trash2 size={20} className="text-[#e31e24]" />
             </div>
-            <p className="text-sm text-gray-500 mb-5">
-              This action is permanent and cannot be undone.
+            <h3 className="text-[18px] font-bold text-slate-800 mb-1.5">
+              Delete Parameter?
+            </h3>
+            <p className="text-[14px] text-slate-500 mb-6 leading-relaxed">
+              This action is permanent and cannot be undone. Any data tied to this parameter may be orphaned.
             </p>
-            <div className="flex gap-2.5">
+            <div className="flex gap-3">
               <button
                 onClick={() => setDeleteId(null)}
-                className="flex-1 rounded-xl border border-gray-200 py-2.5 text-sm font-medium text-gray-600 hover:bg-gray-50 transition"
+                className="flex-1 rounded-xl border border-slate-200 bg-white py-2.5 text-[14px] font-bold text-slate-600 hover:bg-slate-50 transition"
               >
                 Cancel
               </button>
               <button
                 onClick={confirmDelete}
-                className="flex-1 rounded-xl bg-red-600 py-2.5 text-sm font-medium text-white hover:bg-red-700 transition"
+                className="flex-1 rounded-xl bg-[#e31e24] py-2.5 text-[14px] font-bold text-white shadow-sm shadow-[#e31e24]/20 hover:bg-[#c9181f] transition"
               >
                 Delete
               </button>
@@ -758,11 +738,11 @@ function StatCard({
   iconColor: string;
 }) {
   return (
-    <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm flex items-center gap-4">
-      <div className={`rounded-xl p-3 ${bg} ${iconColor}`}>{icon}</div>
+    <div className="rounded-2xl border border-slate-200/60 bg-white p-5 shadow-sm flex items-center gap-4 transition-all hover:shadow-md hover:-translate-y-0.5">
+      <div className={`rounded-xl p-3.5 ${bg} ${iconColor}`}>{icon}</div>
       <div>
-        <p className="text-sm text-gray-500">{title}</p>
-        <h3 className="text-3xl font-bold text-[#111]">{value}</h3>
+        <h3 className="text-3xl font-bold text-slate-800 tracking-tight leading-none mb-1">{value}</h3>
+        <p className="text-[12px] font-bold text-slate-500 uppercase tracking-wider">{title}</p>
       </div>
     </div>
   );

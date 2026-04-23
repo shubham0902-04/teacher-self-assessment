@@ -15,140 +15,99 @@ import {
   Menu,
   X,
   LogOut,
-  AlertTriangle,
   Building2,
   School,
 } from "lucide-react";
 
-const menu = [
+const NAV = [
   {
-    label: "Overview",
-    items: [{ name: "Dashboard", path: "/admin", icon: LayoutDashboard }],
+    group: "Overview",
+    items: [{ label: "Dashboard", href: "/admin", icon: LayoutDashboard }],
   },
   {
-    label: "Evaluation Setup",
+    group: "Evaluation Setup",
     items: [
-      { name: "Categories", path: "/admin/categories", icon: FolderKanban },
-      { name: "Parameters", path: "/admin/parameters", icon: ListChecks },
-      {
-        name: "Parameter Criteria",
-        path: "/admin/parameter-fields",
-        icon: SlidersHorizontal,
-      },
+      { label: "Categories", href: "/admin/categories", icon: FolderKanban },
+      { label: "Parameters", href: "/admin/parameters", icon: ListChecks },
+      { label: "Parameter Criteria", href: "/admin/parameter-fields", icon: SlidersHorizontal },
     ],
   },
   {
-    label: "Management",
+    group: "Management",
     items: [
-      { name: "Schools", path: "/admin/schools", icon: School },
-      { name: "Departments", path: "/admin/departments", icon: Building2 },
-      {
-        name: "Faculty Assignment",
-        path: "/admin/faculty-category-assignment",
-        icon: Users,
-      },
-      { name: "Users", path: "/admin/users", icon: Users },
-      { name: "Settings", path: "/admin/settings", icon: Settings },
+      { label: "Schools", href: "/admin/schools", icon: School },
+      { label: "Departments", href: "/admin/departments", icon: Building2 },
+      { label: "Faculty Assignment", href: "/admin/faculty-category-assignment", icon: Users },
+      { label: "Users", href: "/admin/users", icon: Users },
+      { label: "Settings", href: "/admin/settings", icon: Settings },
     ],
   },
 ];
 
-type SidebarContentProps = {
-  pathname: string;
-  userName: string;
-  onNavigate?: () => void;
-  onLogoutClick: () => void;
-};
-
-function SidebarContent({
+function NavContent({
   pathname,
   userName,
-  onNavigate,
-  onLogoutClick,
-}: SidebarContentProps) {
-  const initial = userName ? userName.charAt(0).toUpperCase() : "A";
-
+  onNav,
+  onLogout,
+}: {
+  pathname: string;
+  userName: string;
+  onNav?: () => void;
+  onLogout: () => void;
+}) {
   return (
-    <div className="flex flex-col h-full overflow-hidden">
-      <style>{`
-        .sidebar-nav::-webkit-scrollbar { width: 3px; }
-        .sidebar-nav::-webkit-scrollbar-track { background: transparent; }
-        .sidebar-nav::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); border-radius: 999px; }
-        .sidebar-nav::-webkit-scrollbar-thumb:hover { background: rgba(202,31,35,0.7); }
-      `}</style>
+    <div className="flex flex-col h-full select-none bg-white border-r border-slate-200">
+      {/* Logo */}
+      <div className="flex items-center gap-3 px-6 py-6 border-b border-slate-100">
+        <div className="w-8 h-8 rounded-lg bg-[#00a859] flex items-center justify-center shrink-0 shadow-md shadow-[#00a859]/20">
+          <GraduationCap size={18} className="text-white" />
+        </div>
+        <div>
+          <p className="text-[14px] font-bold text-slate-800 tracking-tight">Admin Portal</p>
+          <p className="text-[11px] text-slate-500 font-medium">Teacher Assessment</p>
+        </div>
+      </div>
 
-      {/* LOGO */}
-      <div className="px-5 pt-6 pb-5 border-b border-white/[0.06] shrink-0">
+      {/* Welcome card */}
+      <div className="mx-4 mt-5 mb-2 px-4 py-3.5 rounded-xl bg-slate-50 border border-slate-100">
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl bg-[#ca1f23] flex items-center justify-center shrink-0 shadow-lg shadow-red-900/40">
-            <GraduationCap size={18} className="text-white" />
+          <div className="w-9 h-9 rounded-full bg-gradient-to-br from-[#00a859] to-[#008f4c] flex items-center justify-center text-[13px] font-bold text-white shrink-0 shadow-sm">
+            {userName ? userName.charAt(0).toUpperCase() : "A"}
           </div>
-          <div>
-            <p className="text-[13px] font-semibold text-white leading-tight">
-              Teacher Assessment
-            </p>
-            <p className="text-[11px] text-white/40 leading-tight mt-0.5">
-              Admin Panel
-            </p>
+          <div className="min-w-0">
+            <p className="text-[13px] font-bold text-slate-800 truncate">{userName || "Administrator"}</p>
+            <p className="text-[11px] text-slate-500 truncate">System Admin</p>
           </div>
         </div>
       </div>
 
-      {/* NAV */}
-      <nav
-        className="sidebar-nav flex-1 py-4 px-3 space-y-5"
-        style={{
-          overflowY: "auto",
-          scrollbarWidth: "thin",
-          scrollbarColor: "rgba(255,255,255,0.12) transparent",
-        }}
-      >
-        {menu.map((group) => (
-          <div key={group.label}>
-            <p className="text-[10px] font-semibold uppercase tracking-widest text-white/25 px-3 mb-2">
-              {group.label}
+      {/* Nav */}
+      <nav className="flex-1 px-4 py-4 space-y-6 overflow-y-auto">
+        {NAV.map((section) => (
+          <div key={section.group}>
+            <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 px-3 mb-2">
+              {section.group}
             </p>
-            <div className="space-y-0.5">
-              {group.items.map((item) => {
-                const isActive =
-                  item.path === "/admin"
+            <div className="space-y-1">
+              {section.items.map((item) => {
+                const active =
+                  item.href === "/admin"
                     ? pathname === "/admin"
-                    : pathname.startsWith(item.path);
+                    : pathname.startsWith(item.href);
                 const Icon = item.icon;
-
                 return (
-                  <Link key={item.path} href={item.path} onClick={onNavigate}>
+                  <Link key={item.href} href={item.href} onClick={onNav}>
                     <div
-                      className={`
-                      group relative flex items-center gap-3 px-3 py-2.5 rounded-xl
-                      transition-all duration-150 cursor-pointer
-                      ${
-                        isActive
-                          ? "bg-[#ca1f23] text-white shadow-md shadow-red-900/30"
-                          : "text-white/50 hover:text-white hover:bg-white/[0.06]"
-                      }
-                    `}
+                      className={[
+                        "flex items-center gap-3 px-3 py-2.5 rounded-lg text-[13px] font-semibold transition-all duration-200 cursor-pointer group",
+                        active
+                          ? "bg-[#00a859]/10 text-[#00a859]"
+                          : "text-slate-600 hover:text-slate-900 hover:bg-slate-50",
+                      ].join(" ")}
                     >
-                      {isActive && (
-                        <span className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 rounded-r-full bg-white/60" />
-                      )}
-                      <Icon
-                        size={16}
-                        className={`shrink-0 transition-colors ${
-                          isActive
-                            ? "text-white"
-                            : "text-white/40 group-hover:text-white/70"
-                        }`}
-                      />
-                      <span className="text-[13px] font-medium flex-1">
-                        {item.name}
-                      </span>
-                      {isActive && (
-                        <ChevronRight
-                          size={13}
-                          className="text-white/50 shrink-0"
-                        />
-                      )}
+                      <Icon size={16} className={active ? "text-[#00a859]" : "text-slate-400 group-hover:text-slate-600"} />
+                      <span className="flex-1">{item.label}</span>
+                      {active && <ChevronRight size={14} className="text-[#00a859]/60" />}
                     </div>
                   </Link>
                 );
@@ -158,30 +117,15 @@ function SidebarContent({
         ))}
       </nav>
 
-      {/* BOTTOM */}
-      <div className="px-4 py-4 border-t border-white/[0.06] shrink-0">
-        <div className="flex items-center gap-2">
-          <div className="flex items-center gap-2.5 flex-1 min-w-0 px-2 py-2 rounded-xl">
-            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#ca1f23] to-[#8b1417] flex items-center justify-center text-[12px] font-bold text-white shrink-0">
-              {initial}
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-[13px] font-medium text-white truncate">
-                {userName || "Admin"}
-              </p>
-              <p className="text-[11px] text-white/35 truncate">
-                Administrator
-              </p>
-            </div>
-          </div>
-          <button
-            onClick={onLogoutClick}
-            title="Logout"
-            className="shrink-0 w-8 h-8 rounded-xl flex items-center justify-center text-white/30 hover:text-white hover:bg-red-500/20 border border-transparent hover:border-red-500/30 transition-all duration-150"
-          >
-            <LogOut size={15} />
-          </button>
-        </div>
+      {/* Logout */}
+      <div className="p-4 border-t border-slate-100 shrink-0">
+        <button
+          onClick={onLogout}
+          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-[13px] font-semibold text-slate-600 hover:text-[#e31e24] hover:bg-[#e31e24]/10 transition-all duration-200 group"
+        >
+          <LogOut size={16} className="text-slate-400 group-hover:text-[#e31e24]" />
+          <span>Sign Out</span>
+        </button>
       </div>
     </div>
   );
@@ -190,141 +134,99 @@ function SidebarContent({
 export default function AdminSidebar() {
   const pathname = usePathname();
   const router = useRouter();
-  const [mobileOpen, setMobileOpen] = useState(false);
-  const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const [open, setOpen] = useState(false);
+  const [showModal, setShowModal] = useState(false);
   const [userName, setUserName] = useState("");
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    setMounted(true);
     try {
-      const stored = localStorage.getItem("user");
-      if (stored) {
-        const parsed = JSON.parse(stored);
-        // eslint-disable-next-line react-hooks/set-state-in-effect
-        setUserName(parsed.name || "");
-      }
-    } catch {
-      /* ignore */
-    }
+      const u = localStorage.getItem("user");
+      if (u) setUserName(JSON.parse(u).name || "");
+    } catch {}
   }, []);
 
-  async function handleLogout() {
-    // Clear the httpOnly session cookie server-side
+  async function logout() {
     await fetch("/api/auth/logout", { method: "POST" });
-    // Clear UI-only localStorage values (name, role — not the token)
-    localStorage.removeItem("role");
-    localStorage.removeItem("user");
+    ["role", "user"].forEach((k) => localStorage.removeItem(k));
     router.push("/login");
   }
 
+  const name = mounted ? userName : "";
+
   return (
     <>
-      {/* DESKTOP — spacer */}
-      <div className="hidden lg:block w-[260px] shrink-0" />
-      {/* DESKTOP — fixed sidebar */}
-      <aside
-        className="hidden lg:flex flex-col"
-        style={{
-          position: "fixed",
-          top: 0,
-          left: 0,
-          width: "260px",
-          height: "100vh",
-          background: "#0f0f0f",
-          color: "white",
-          zIndex: 30,
-        }}
-      >
-        <SidebarContent
+      {/* Desktop spacer */}
+      <div className="hidden lg:block w-[260px] shrink-0 bg-[#f8fafc]" />
+
+      {/* Desktop sidebar */}
+      <aside className="hidden lg:block fixed top-0 left-0 w-[260px] h-screen z-30">
+        <NavContent
           pathname={pathname}
-          userName={userName}
-          onLogoutClick={() => setShowLogoutModal(true)}
+          userName={name}
+          onLogout={() => setShowModal(true)}
         />
       </aside>
 
-      {/* MOBILE */}
+      {/* Mobile bar */}
       <div className="lg:hidden">
-        <div className="fixed top-0 left-0 right-0 z-40 h-14 bg-[#0f0f0f] flex items-center justify-between px-4 border-b border-white/[0.06]">
-          <div className="flex items-center gap-2.5">
-            <div className="w-7 h-7 rounded-lg bg-[#ca1f23] flex items-center justify-center">
-              <GraduationCap size={14} className="text-white" />
+        <div className="fixed top-0 inset-x-0 z-40 h-16 bg-white border-b border-slate-200 flex items-center justify-between px-5">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-lg bg-[#00a859] flex items-center justify-center shadow-sm">
+              <GraduationCap size={16} className="text-white" />
             </div>
-            <span className="text-[13px] font-semibold text-white">
-              Teacher Assessment
-            </span>
+            <span className="text-[15px] font-bold text-slate-800">Admin Portal</span>
           </div>
-          <button
-            onClick={() => setMobileOpen(true)}
-            className="text-white/60 hover:text-white transition p-1"
-          >
-            <Menu size={22} />
+          <button onClick={() => setOpen(true)} className="text-slate-500 hover:text-slate-800 transition bg-slate-50 p-2 rounded-lg">
+            <Menu size={20} />
           </button>
         </div>
-        <div className="h-14" />
+        <div className="h-16" />
 
-        {mobileOpen && (
-          <div
-            className="fixed inset-0 z-40 bg-black/50"
-            onClick={() => setMobileOpen(false)}
-          />
-        )}
+        {open && <div className="fixed inset-0 z-40 bg-slate-900/40 backdrop-blur-sm" onClick={() => setOpen(false)} />}
 
         <aside
-          className={`
-          fixed top-0 left-0 z-50 h-full w-[260px] bg-[#0f0f0f] text-white
-          transition-transform duration-300 ease-in-out
-          ${mobileOpen ? "translate-x-0" : "-translate-x-full"}
-        `}
+          className={`fixed top-0 left-0 z-50 h-full w-[260px] bg-white transition-transform duration-300 ease-in-out ${open ? "translate-x-0 shadow-2xl" : "-translate-x-full"}`}
         >
           <button
-            onClick={() => setMobileOpen(false)}
-            className="absolute top-4 right-4 text-white/40 hover:text-white transition p-1 z-10"
+            onClick={() => setOpen(false)}
+            className="absolute top-5 right-4 text-slate-400 hover:text-slate-800 bg-slate-50 p-1.5 rounded-lg z-10"
           >
-            <X size={18} />
+            <X size={16} />
           </button>
-          <SidebarContent
+          <NavContent
             pathname={pathname}
-            userName={userName}
-            onNavigate={() => setMobileOpen(false)}
-            onLogoutClick={() => {
-              setMobileOpen(false);
-              setShowLogoutModal(true);
-            }}
+            userName={name}
+            onNav={() => setOpen(false)}
+            onLogout={() => { setOpen(false); setShowModal(true); }}
           />
         </aside>
       </div>
 
-      {/* LOGOUT CONFIRM MODAL */}
-      {showLogoutModal && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/40">
-          <div className="w-full max-w-sm bg-white rounded-2xl shadow-2xl overflow-hidden">
-            <div className="h-1 bg-[#ca1f23]" />
+      {/* Logout modal */}
+      {showModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4">
+          <div className="w-full max-w-sm bg-white rounded-2xl shadow-xl overflow-hidden border border-slate-100">
             <div className="p-6">
-              <div className="flex items-start gap-4 mb-5">
-                <div className="w-10 h-10 rounded-xl bg-red-50 flex items-center justify-center shrink-0">
-                  <AlertTriangle size={18} className="text-[#ca1f23]" />
-                </div>
-                <div>
-                  <h3 className="text-[15px] font-semibold text-[#111] leading-tight">
-                    Sign out of your account?
-                  </h3>
-                  <p className="text-[13px] text-gray-400 mt-1 leading-snug">
-                    Your session will be ended and you will be redirected to the
-                    login page.
-                  </p>
-                </div>
+              <div className="w-12 h-12 rounded-full bg-[#e31e24]/10 flex items-center justify-center mb-4">
+                <LogOut size={20} className="text-[#e31e24]" />
               </div>
-              <div className="flex gap-2.5">
+              <h3 className="text-[18px] font-bold text-slate-800 mb-1.5">Sign Out</h3>
+              <p className="text-[14px] text-slate-500 mb-6 leading-relaxed">
+                Are you sure you want to sign out? You will need to log back in to access the portal.
+              </p>
+              <div className="flex gap-3">
                 <button
-                  onClick={() => setShowLogoutModal(false)}
-                  className="flex-1 py-2.5 rounded-xl border border-gray-200 text-[13px] font-medium text-gray-600 hover:bg-gray-50 transition"
+                  onClick={() => setShowModal(false)}
+                  className="flex-1 py-2.5 rounded-xl border border-slate-200 text-[14px] font-semibold text-slate-600 hover:bg-slate-50 hover:text-slate-800 transition"
                 >
                   Cancel
                 </button>
                 <button
-                  onClick={handleLogout}
-                  className="flex-1 py-2.5 rounded-xl bg-[#ca1f23] text-white text-[13px] font-medium hover:opacity-90 transition flex items-center justify-center gap-2"
+                  onClick={logout}
+                  className="flex-1 py-2.5 rounded-xl bg-[#e31e24] text-white text-[14px] font-semibold hover:bg-[#c9181f] transition shadow-sm shadow-[#e31e24]/20"
                 >
-                  <LogOut size={14} />
                   Sign Out
                 </button>
               </div>

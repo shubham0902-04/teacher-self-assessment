@@ -16,6 +16,7 @@ import {
   Plus,
   Trash2,
   FileText,
+  Hash,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -599,38 +600,22 @@ export default function EvaluationFormPage() {
   // ── Category colors ─────────────────────────────────────────────────────────
 
   const catColors = [
-    {
-      border: "border-[#ca1f23]",
-      badge: "bg-red-50 text-[#ca1f23]",
-      bar: "#ca1f23",
-    },
-    {
-      border: "border-blue-500",
-      badge: "bg-blue-50 text-blue-600",
-      bar: "#3b82f6",
-    },
-    {
-      border: "border-[#00a651]",
-      badge: "bg-green-50 text-[#00a651]",
-      bar: "#00a651",
-    },
-    {
-      border: "border-purple-500",
-      badge: "bg-purple-50 text-purple-600",
-      bar: "#8b5cf6",
-    },
+    { border: "border-slate-200/60", badge: "bg-slate-50 text-slate-500 border border-slate-200", bar: "#00a859" },
+    { border: "border-slate-200/60", badge: "bg-slate-50 text-slate-500 border border-slate-200", bar: "#00a859" },
+    { border: "border-slate-200/60", badge: "bg-slate-50 text-slate-500 border border-slate-200", bar: "#00a859" },
+    { border: "border-slate-200/60", badge: "bg-slate-50 text-slate-500 border border-slate-200", bar: "#00a859" },
   ];
 
   // ── Loading state ───────────────────────────────────────────────────────────
 
   if (loading) {
     return (
-      <div className="flex min-h-screen bg-[#f8f8f8]">
+      <div className="flex min-h-screen bg-[#f8fafc]">
         <FacultySidebar />
         <main className="flex-1 flex items-center justify-center">
-          <div className="flex flex-col items-center gap-3 text-gray-400">
+          <div className="flex flex-col items-center gap-3 text-slate-400">
             <Loader2 size={28} className="animate-spin" />
-            <p className="text-sm">Loading evaluation form...</p>
+            <p className="text-sm font-medium">Loading evaluation form...</p>
           </div>
         </main>
       </div>
@@ -661,33 +646,33 @@ export default function EvaluationFormPage() {
   // ── Main UI ─────────────────────────────────────────────────────────────────
 
   return (
-    <div className="flex min-h-screen bg-[#f8f8f8] text-[#111]">
+    <div className="flex min-h-screen bg-[#f8fafc] text-slate-800 font-sans">
       <FacultySidebar />
 
       <main className="flex-1 overflow-y-auto">
         {/* STICKY HEADER */}
-        <div className="sticky top-0 z-20 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between gap-4">
+        <div className="sticky top-0 z-20 bg-white/80 backdrop-blur-md border-b border-slate-200/60 px-5 sm:px-8 py-3.5 flex items-center justify-between gap-4">
           <div>
-            <h1 className="text-xl font-bold text-[#111]">
+            <h1 className="text-[18px] sm:text-[20px] font-bold text-slate-800 tracking-tight leading-none mb-1">
               Self Assessment Form
             </h1>
-            <p className="text-xs text-gray-400 mt-0.5">
+            <p className="text-[12px] text-slate-500 font-medium">
               Academic Year: {academicYear}
             </p>
           </div>
 
           <div className="flex items-center gap-3">
             {/* Score pill */}
-            <div className="hidden sm:flex items-center gap-2 px-4 py-2 rounded-xl bg-gray-50 border border-gray-200">
-              <span className="text-xs text-gray-400">Total Score</span>
-              <span className="text-sm font-bold text-[#111]">
+            <div className="hidden sm:flex items-center gap-2 px-3.5 py-2 rounded-xl bg-slate-50 border border-slate-200/60 shadow-sm">
+              <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Score</span>
+              <span className="text-[13px] font-bold text-slate-700">
                 {grandTotal}
-                <span className="text-gray-400 font-normal">/{grandMax}</span>
+                <span className="text-slate-400 font-medium">/{grandMax}</span>
               </span>
             </div>
 
             {isReadOnly ? (
-              <span className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-blue-50 text-blue-600 text-xs font-medium">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#00a859]/10 text-[#00a859] text-[11px] font-bold uppercase tracking-wider border border-[#00a859]/20 shadow-sm">
                 <CheckCircle2 size={13} />
                 Submitted
               </span>
@@ -696,25 +681,17 @@ export default function EvaluationFormPage() {
                 <button
                   onClick={saveDraft}
                   disabled={saving || submitting}
-                  className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-gray-200 text-sm font-medium text-gray-600 hover:bg-gray-50 transition disabled:opacity-50"
+                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-white border border-slate-200/60 text-[12px] font-bold text-slate-600 shadow-sm hover:shadow-md hover:bg-slate-50 transition-all duration-200 disabled:opacity-50"
                 >
-                  {saving ? (
-                    <Loader2 size={14} className="animate-spin" />
-                  ) : (
-                    <Save size={14} />
-                  )}
+                  {saving ? <Loader2 size={13} className="animate-spin" /> : <Save size={13} />}
                   {saving ? "Saving..." : "Save Draft"}
                 </button>
                 <button
                   onClick={submitToHOD}
                   disabled={saving || submitting}
-                  className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#ca1f23] text-white text-sm font-medium hover:opacity-95 transition disabled:opacity-50"
+                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#00a859] text-white text-[12px] font-bold shadow-sm shadow-[#00a859]/20 hover:bg-[#008f4c] transition-all duration-200 disabled:opacity-50"
                 >
-                  {submitting ? (
-                    <Loader2 size={14} className="animate-spin" />
-                  ) : (
-                    <Send size={14} />
-                  )}
+                  {submitting ? <Loader2 size={13} className="animate-spin" /> : <Send size={13} />}
                   {submitting ? "Submitting..." : "Submit to HOD"}
                 </button>
               </>
@@ -724,17 +701,16 @@ export default function EvaluationFormPage() {
 
         {/* Read-only notice */}
         {isReadOnly && (
-          <div className="mx-6 mt-4 flex items-start gap-3 bg-blue-50 border border-blue-100 rounded-xl px-4 py-3">
+          <div className="mx-5 sm:mx-8 mt-6 flex items-start gap-3 bg-blue-50 border border-blue-100 rounded-xl px-4 py-3 shadow-sm">
             <AlertCircle size={15} className="text-blue-500 shrink-0 mt-0.5" />
-            <p className="text-sm text-blue-700">
-              This evaluation has been submitted and is currently under review.
-              You cannot make changes at this time.
+            <p className="text-[13px] font-medium text-blue-800">
+              This evaluation has been submitted and is currently under review. You cannot make changes at this time.
             </p>
           </div>
         )}
 
         {/* FORM CONTENT */}
-        <div className="p-6 space-y-5">
+        <div className="p-5 sm:p-8 space-y-6 max-w-[1200px] mx-auto">
           {categories.map((cat, catIdx) => {
             const cc = catColors[catIdx % catColors.length];
             const isCollapsed = collapsedCategories.has(cat._id);
@@ -763,7 +739,7 @@ export default function EvaluationFormPage() {
             return (
               <div
                 key={cat._id}
-                className={`rounded-2xl border-2 ${cc.border} bg-white shadow-sm overflow-hidden`}
+                className={`rounded-2xl border ${cc.border} bg-white shadow-sm overflow-hidden transition-all duration-200`}
               >
                 {/* Category header */}
                 <button
@@ -775,20 +751,19 @@ export default function EvaluationFormPage() {
                       return next;
                     })
                   }
-                  className="w-full flex items-center justify-between px-5 py-4 hover:bg-gray-50/50 transition text-left"
+                  className="w-full flex items-center justify-between px-5 py-4 hover:bg-slate-50/50 transition text-left"
                 >
                   <div className="flex items-center gap-3">
-                    {/* FIX: categoryCode badge — was missing because categoryCode wasn't in API response shape */}
                     <span
-                      className={`text-xs font-bold px-2.5 py-1 rounded-full ${cc.badge}`}
+                      className={`text-[10px] font-bold px-2.5 py-1 rounded-md ${cc.badge}`}
                     >
                       {cat.categoryCode || "CAT"}
                     </span>
                     <div>
-                      <p className="font-semibold text-[#111] text-[15px]">
+                      <p className="font-bold text-slate-800 text-[14px] leading-tight mb-0.5">
                         {cat.categoryName}
                       </p>
-                      <p className="text-xs text-gray-400 mt-0.5">
+                      <p className="text-[11px] text-slate-500 font-medium">
                         {(cat.parameters || []).length} parameter
                         {(cat.parameters || []).length !== 1 ? "s" : ""}
                       </p>
@@ -817,7 +792,7 @@ export default function EvaluationFormPage() {
 
                 {/* Parameters */}
                 {!isCollapsed && (
-                  <div className="border-t border-gray-100 divide-y divide-gray-100">
+                  <div className="border-t border-slate-100 divide-y divide-slate-50 bg-slate-50/30">
                     {(cat.parameters || []).map((param, paramIdx) => {
                       const paramData = catFormData?.parameters[paramIdx];
                       if (!paramData) return null;
@@ -832,14 +807,14 @@ export default function EvaluationFormPage() {
                         <div key={param._id} className="p-5">
                           {/* Parameter header */}
                           <div className="flex items-center justify-between mb-4">
-                            <div className="flex items-center gap-2.5">
-                              <span className="w-1.5 h-1.5 rounded-full bg-gray-400 shrink-0" />
+                            <div className="flex items-center gap-2">
+                              <Hash size={13} className="text-slate-400 shrink-0" />
                               <div>
-                                <p className="text-sm font-semibold text-[#111]">
+                                <p className="text-[13px] font-bold text-slate-700 leading-tight">
                                   {param.parameterName}
                                 </p>
-                                <div className="flex items-center gap-2 mt-0.5">
-                                  <span className="font-mono text-[10px] text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded">
+                                <div className="flex flex-wrap items-center gap-2 mt-1">
+                                  <span className="font-mono text-[10px] text-slate-500 bg-slate-100 border border-slate-200 px-1.5 py-0.5 rounded">
                                     {param.parameterCode}
                                   </span>
                                   {/* FIX: Show "—" if maxMarks is 0 (not configured) */}
@@ -887,7 +862,7 @@ export default function EvaluationFormPage() {
                               (entry, entryIdx) => (
                                 <div
                                   key={entry.entryId}
-                                  className="bg-gray-50 rounded-xl p-4 relative"
+                                  className="bg-white border border-slate-200 shadow-sm rounded-xl p-4 relative"
                                 >
                                   {(paramData.entries || []).length > 1 &&
                                     !isReadOnly && (
@@ -899,7 +874,7 @@ export default function EvaluationFormPage() {
                                             entryIdx,
                                           )
                                         }
-                                        className="absolute top-3 right-3 text-gray-400 hover:text-red-500 transition"
+                                        className="absolute top-3 right-3 text-slate-400 hover:text-[#e31e24] transition bg-slate-50 hover:bg-[#e31e24]/10 p-1.5 rounded-lg"
                                       >
                                         <Trash2 size={14} />
                                       </button>
@@ -982,7 +957,7 @@ export default function EvaluationFormPage() {
                                                   );
                                                 }
                                               }}
-                                              className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-[#111] outline-none focus:border-[#ca1f23] disabled:opacity-60 disabled:cursor-not-allowed"
+                                              className="w-full rounded-lg border border-slate-200 bg-slate-50 focus:bg-white px-3 py-2 text-[13px] font-bold text-slate-700 outline-none focus:border-[#00a859] focus:ring-2 focus:ring-[#00a859]/20 transition shadow-inner disabled:opacity-60 disabled:cursor-not-allowed"
                                             />
                                           </div>
                                         );
@@ -1043,17 +1018,17 @@ export default function EvaluationFormPage() {
                             )}
                           </div>
 
-                          {/* Add entry */}
-                          {param.allowMultipleEntries && !isReadOnly && (
-                            <button
-                              onClick={() => addEntry(catIdx, paramIdx)}
-                              className="mt-3 flex items-center gap-1.5 text-xs font-medium text-[#ca1f23] hover:text-red-700 transition"
-                            >
-                              <Plus size={13} />
-                              Add another entry
-                            </button>
-                          )}
-                        </div>
+                                  {/* Add entry */}
+                                  {param.allowMultipleEntries && !isReadOnly && (
+                                    <button
+                                      onClick={() => addEntry(catIdx, paramIdx)}
+                                      className="mt-3 flex items-center gap-1.5 text-[11px] font-bold text-[#00a859] hover:text-[#008f4c] bg-[#00a859]/10 px-3 py-1.5 rounded-md hover:bg-[#00a859]/20 transition"
+                                    >
+                                      <Plus size={13} />
+                                      Add another entry
+                                    </button>
+                                  )}
+                                </div>
                       );
                     })}
                   </div>
@@ -1063,22 +1038,22 @@ export default function EvaluationFormPage() {
           })}
 
           {/* GRAND TOTAL */}
-          <div className="rounded-2xl border-2 border-[#00a651] bg-white p-5 shadow-sm">
+          <div className="rounded-2xl border border-slate-200/60 bg-white p-6 shadow-sm">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-semibold text-[#111]">Grand Total</p>
-                <p className="text-xs text-gray-400 mt-0.5">
+                <p className="text-[15px] font-bold text-slate-800">Grand Total</p>
+                <p className="text-[12px] font-medium text-slate-500 mt-0.5">
                   Sum of all categories (capped at max marks per parameter)
                 </p>
               </div>
               <div className="text-right">
-                <p className="text-3xl font-bold text-[#111]">
+                <p className="text-3xl font-bold text-slate-800">
                   {grandTotal}
-                  <span className="text-xl text-gray-400 font-normal">
+                  <span className="text-xl text-slate-400 font-medium">
                     /{grandMax}
                   </span>
                 </p>
-                <div className="w-32 h-2 rounded-full bg-gray-100 overflow-hidden mt-2">
+                <div className="w-40 h-2 rounded-full bg-slate-100 overflow-hidden mt-2 border border-slate-200">
                   <div
                     className="h-full rounded-full transition-all duration-700"
                     style={{
@@ -1087,7 +1062,7 @@ export default function EvaluationFormPage() {
                           ? Math.round((grandTotal / grandMax) * 100)
                           : 0
                       }%`,
-                      background: "linear-gradient(90deg, #ca1f23, #00a651)",
+                      background: "linear-gradient(90deg, #008f4c, #00a859)",
                     }}
                   />
                 </div>
@@ -1101,7 +1076,7 @@ export default function EvaluationFormPage() {
               <button
                 onClick={saveDraft}
                 disabled={saving || submitting}
-                className="inline-flex items-center gap-2 px-6 py-3 rounded-xl border border-gray-200 text-sm font-medium text-gray-600 hover:bg-gray-50 transition disabled:opacity-50"
+                className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-white border border-slate-200/60 text-[13px] font-bold text-slate-600 shadow-sm hover:shadow-md hover:bg-slate-50 transition-all duration-200 disabled:opacity-50"
               >
                 {saving ? (
                   <Loader2 size={15} className="animate-spin" />
@@ -1113,7 +1088,7 @@ export default function EvaluationFormPage() {
               <button
                 onClick={submitToHOD}
                 disabled={saving || submitting}
-                className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-[#ca1f23] text-white text-sm font-medium hover:opacity-95 transition disabled:opacity-50"
+                className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-[#00a859] text-white text-[13px] font-bold shadow-sm shadow-[#00a859]/20 hover:bg-[#008f4c] transition-all duration-200 disabled:opacity-50"
               >
                 {submitting ? (
                   <Loader2 size={15} className="animate-spin" />
