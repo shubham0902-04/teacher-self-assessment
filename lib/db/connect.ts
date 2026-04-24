@@ -1,5 +1,16 @@
 import mongoose from "mongoose";
 
+// Import all models to ensure they are registered in Mongoose
+import "@/models/User";
+import "@/models/School";
+import "@/models/Department";
+import "@/models/EvaluationCategory";
+import "@/models/EvaluationParameter";
+import "@/models/ParameterField";
+import "@/models/FacultyCategoryAssignment";
+import "@/models/TeacherEvaluation";
+import "@/models/EvidenceFile";
+
 const MONGODB_URI = process.env.MONGODB_URI!;
 
 if (!MONGODB_URI) {
