@@ -6,7 +6,7 @@ export async function GET() {
   try {
     await connectDB();
 
-    const data = await FacultyCategoryAssignment.find();
+    const data = await FacultyCategoryAssignment.find().lean();
 
     return NextResponse.json({
       success: true,

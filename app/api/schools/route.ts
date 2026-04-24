@@ -5,7 +5,7 @@ import School from "@/models/School";
 export async function GET() {
   try {
     await connectDB();
-    const schools = await School.find().sort({ schoolName: 1 });
+    const schools = await School.find().sort({ schoolName: 1 }).lean();
     return NextResponse.json({ success: true, data: schools });
   } catch (error) {
     console.error("GET schools error:", error);

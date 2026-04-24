@@ -109,7 +109,8 @@ export async function GET(req: Request) {
       .populate("facultyId", "name email employeeId")
       .populate("departmentId", "departmentName departmentCode")
       .populate("schoolId", "schoolName schoolCode")
-      .sort({ updatedAt: -1 });
+      .sort({ updatedAt: -1 })
+      .lean();
 
     return NextResponse.json({ success: true, data });
   } catch (error) {

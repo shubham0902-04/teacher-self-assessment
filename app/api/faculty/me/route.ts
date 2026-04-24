@@ -47,11 +47,22 @@ export async function GET(req: Request) {
     const { payload } = await jwtVerify(token, secret);
     const userId = payload.id as string;
 
-    // Fetch faculty user with department + school populated
-    const user = await User.findById(userId)
-      .select("-password")
-      .populate("departmentId", "departmentName departmentCode")
-      .populate("schoolId", "schoolName schoolCode");
+    // Fetch user, category assignment, and evaluation in parallel
+    const [user, assignment, evaluation] = await Promise.all([
+      User.findById(userId)
+        .select("-password")
+        .populate("departmentId", "departmentName departmentCode")
+        .populate("schoolId", "schoolName schoolCode")
+        .lean(),
+      FacultyCategoryAssignment.findOne({
+        facultyId: userId,
+        academicYear,
+      }).populate("assignedCategories", "categoryName categoryCode").lean(),
+      TeacherEvaluation.findOne({
+        facultyId: userId,
+        academicYear,
+      }).select("status submittedToHODAt updatedAt").lean(),
+    ]);
 
     if (!user) {
       return NextResponse.json(
@@ -59,18 +70,6 @@ export async function GET(req: Request) {
         { status: 404 },
       );
     }
-
-    // Fetch category assignment for this academic year
-    const assignment = await FacultyCategoryAssignment.findOne({
-      facultyId: userId,
-      academicYear,
-    }).populate("assignedCategories", "categoryName categoryCode");
-
-    // Check existing evaluation status
-    const evaluation = await TeacherEvaluation.findOne({
-      facultyId: userId,
-      academicYear,
-    }).select("status submittedToHODAt updatedAt");
 
     return NextResponse.json({
       success: true,

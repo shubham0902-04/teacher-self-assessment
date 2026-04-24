@@ -8,7 +8,7 @@ export async function GET() {
 
     const categories = await EvaluationCategory.find().sort({
       displayOrder: 1,
-    });
+    }).lean();
 
     return NextResponse.json({
       success: true,

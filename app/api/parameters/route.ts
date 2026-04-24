@@ -8,7 +8,8 @@ export async function GET() {
 
     const parameters = await EvaluationParameter.find()
       .populate("categoryId", "categoryName categoryCode")
-      .sort({ displayOrder: 1 });
+      .sort({ displayOrder: 1 })
+      .lean();
 
     return NextResponse.json({
       success: true,

@@ -9,7 +9,8 @@ export async function GET() {
     const faculties = await User.find({ role: "Faculty" })
       .select("-password")
       .populate("departmentId", "departmentName departmentCode")
-      .populate("schoolId", "schoolName schoolCode");
+      .populate("schoolId", "schoolName schoolCode")
+      .lean();
 
     return NextResponse.json({ success: true, data: faculties });
   } catch (error) {

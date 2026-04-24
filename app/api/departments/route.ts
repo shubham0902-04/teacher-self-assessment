@@ -11,7 +11,8 @@ export async function GET(req: Request) {
     const query = schoolId ? { schoolId, isActive: true } : { isActive: true };
     const departments = await Department.find(query)
       .populate("schoolId", "schoolName schoolCode")
-      .sort({ departmentName: 1 });
+      .sort({ departmentName: 1 })
+      .lean();
 
     return NextResponse.json({ success: true, data: departments });
   } catch (error) {

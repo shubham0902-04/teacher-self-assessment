@@ -51,7 +51,8 @@ export async function GET() {
     const users = await User.find()
       .select("-password")
       .populate("departmentId", "departmentName departmentCode")
-      .populate("schoolId", "schoolName schoolCode");
+      .populate("schoolId", "schoolName schoolCode")
+      .lean();
 
     return NextResponse.json({ success: true, data: users });
   } catch (error) {

@@ -14,7 +14,7 @@ export async function GET(req: Request) {
     query = { parameterId };
   }
 
-  const data = await ParameterField.find(query).populate("parameterId");
+  const data = await ParameterField.find(query).populate("parameterId").lean();
 
   return NextResponse.json({
     success: true,
