@@ -3,6 +3,7 @@ import { connectDB } from "@/lib/db/connect";
 import User from "@/models/User";
 import { cookies } from "next/headers";
 import { jwtVerify } from "jose";
+import bcrypt from "bcryptjs";
 
 async function getAuthUser() {
   const cookieStore = await cookies();
@@ -60,7 +61,7 @@ export async function PATCH(req: Request) {
     }
 
     const body = await req.json();
-    const { name, email } = body;
+    const { name, email, password } = body;
 
     if (!name?.trim() && !email?.trim()) {
       return NextResponse.json(
@@ -89,6 +90,9 @@ export async function PATCH(req: Request) {
     const updateData: Record<string, string> = {};
     if (name?.trim()) updateData.name = name.trim();
     if (email?.trim()) updateData.email = email.toLowerCase().trim();
+    if (password?.trim()) {
+      updateData.password = await bcrypt.hash(password.trim(), 10);
+    }
 
     const updated = await User.findByIdAndUpdate(payload.id, updateData, {
       new: true,

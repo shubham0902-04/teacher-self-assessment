@@ -16,7 +16,8 @@ import {
   BadgeCheck,
   Building2,
   LayoutTemplate,
-  Hash
+  Hash,
+  Upload
 } from "lucide-react";
 
 type FieldValue = {
@@ -128,16 +129,21 @@ function CategoryBlock({ cat, catIdx, canEdit, onMarkChange }: any) {
                     </div>
                   </div>
                   {entry.evidenceFiles && entry.evidenceFiles.length > 0 && (
-                    <div className="px-4 pb-4 flex flex-wrap gap-2 border-t border-slate-50 pt-3 bg-slate-50/50">
-                      <span className="w-full text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Evidence Documents</span>
-                      {entry.evidenceFiles.map((file: any, fIdx: number) => {
-                        const fileObj = typeof file === "object" && file !== null && "fileUrl" in file ? (file as { fileName: string; fileUrl: string }) : null;
-                        return fileObj ? (
-                          <a key={fIdx} href={fileObj.fileUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white border border-slate-200 text-[11px] text-blue-600 font-semibold hover:border-blue-300 hover:bg-blue-50 transition shadow-sm">
-                            <FileText size={12} /> {fileObj.fileName} <ExternalLink size={10} />
+                    <div className="px-4 pb-4 border-t border-slate-50 pt-3 bg-slate-50/50">
+                      <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 flex items-center gap-1.5 px-1">
+                        <Upload size={12} className="text-slate-300" /> Supportive Evidence
+                      </p>
+                      <div className="flex flex-wrap gap-2">
+                        {entry.evidenceFiles.map((file: any, fIdx: number) => (
+                          <a key={fIdx} href={file.fileUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-white border border-slate-200 text-[11px] text-[#00a859] font-bold hover:border-emerald-400 hover:bg-emerald-50 transition-all shadow-sm group">
+                            <div className="w-6 h-6 rounded-lg bg-emerald-50 text-[#00a859] flex items-center justify-center group-hover:bg-emerald-100 transition-colors">
+                              <FileText size={12} />
+                            </div>
+                            {file.fileName}
+                            <ExternalLink size={10} className="text-slate-300 group-hover:text-emerald-400" />
                           </a>
-                        ) : null;
-                      })}
+                        ))}
+                      </div>
                     </div>
                   )}
                 </div>

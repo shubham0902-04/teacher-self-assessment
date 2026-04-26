@@ -9,7 +9,7 @@ type Submission = {
   _id: string;
   academicYear: string;
   status: string;
-  submittedAt: string | null;
+  submittedToHODAt: string | null;
 };
 
 const STATUS_META: Record<string, { label: string; color: string; bg: string; icon: any }> = {
@@ -43,21 +43,21 @@ export default function FacultySubmissionsPage() {
 
   return (
     <main className="flex-1 overflow-y-auto px-5 sm:px-8 py-8 space-y-6 max-w-[1200px] mx-auto w-full">
-      <div className="bg-white rounded-2xl border border-slate-200/60 shadow-sm p-6 sm:p-8 relative overflow-hidden">
+      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 sm:p-6 relative overflow-hidden">
         <div className="absolute right-0 top-0 w-64 h-64 bg-[#00a859]/5 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none" />
         <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-slate-800 mb-1">My Submissions</h1>
-            <p className="text-[13px] text-slate-500 font-medium">History of your self-assessment evaluations</p>
+            <h1 className="text-xl font-black text-slate-800 mb-0.5 tracking-tight">My Submissions</h1>
+            <p className="text-[12px] text-slate-500 font-bold uppercase tracking-wider">Evaluation History</p>
           </div>
-          <div className="flex items-center gap-3 bg-slate-50 px-4 py-2 rounded-xl border border-slate-200">
-            <Search size={16} className="text-slate-400" />
+          <div className="flex items-center gap-3 bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-200 shadow-inner">
+            <Search size={14} className="text-slate-400" />
             <input 
               type="text" 
-              placeholder="Filter by year..." 
+              placeholder="Search year..." 
               value={search} 
               onChange={e => setSearch(e.target.value)} 
-              className="bg-transparent outline-none text-[13px] font-medium text-slate-700 w-32" 
+              className="bg-transparent outline-none text-[12px] font-bold text-slate-700 w-28 placeholder:text-slate-300" 
             />
           </div>
         </div>
@@ -71,31 +71,31 @@ export default function FacultySubmissionsPage() {
         ) : (
           <div className="overflow-x-auto">
             <table className="min-w-full text-left">
-              <thead className="bg-slate-50 border-b border-slate-100">
+              <thead className="bg-slate-50/50 border-b border-slate-100">
                 <tr>
-                  <th className="px-8 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest">Academic Year</th>
-                  <th className="px-8 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest">Status</th>
-                  <th className="px-8 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest">Submitted On</th>
-                  <th className="px-8 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest text-right">View</th>
+                  <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Academic Year</th>
+                  <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Status</th>
+                  <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Submitted On</th>
+                  <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Action</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {filtered.map(s => {
                   const meta = STATUS_META[s.status] || STATUS_META.NOT_STARTED;
                   return (
-                    <tr key={s._id} className="hover:bg-slate-50 transition group">
-                      <td className="px-8 py-5 text-[15px] font-bold text-slate-700">{s.academicYear}</td>
-                      <td className="px-8 py-5">
-                        <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-lg ${meta.bg} ${meta.color} text-[11px] font-bold border border-current/10`}>
+                    <tr key={s._id} className="hover:bg-slate-50/50 transition-all duration-200 group">
+                      <td className="px-6 py-4 text-[14px] font-black text-slate-700">{s.academicYear}</td>
+                      <td className="px-6 py-4">
+                        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg ${meta.bg} ${meta.color} text-[10px] font-black border border-current/10 shadow-sm`}>
                           <meta.icon size={12} /> {meta.label}
                         </span>
                       </td>
-                      <td className="px-8 py-5 text-[13px] text-slate-500 font-medium">
-                        {s.submittedAt ? new Date(s.submittedAt).toLocaleDateString() : "Not Submitted"}
+                      <td className="px-6 py-4 text-[12px] text-slate-500 font-bold">
+                        {s.submittedToHODAt ? new Date(s.submittedToHODAt).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" }) : "—"}
                       </td>
-                      <td className="px-8 py-5 text-right">
-                        <Link href={`/faculty/evaluation?academicYear=${s.academicYear}`} className="inline-flex items-center gap-1.5 text-[#00a859] hover:text-[#008f4c] font-bold text-[13px] transition">
-                          View Details <ArrowUpRight size={14} />
+                      <td className="px-6 py-4 text-right">
+                        <Link href={`/faculty/evaluation?academicYear=${s.academicYear}`} className="inline-flex items-center gap-1.5 text-[#00a859] hover:text-white hover:bg-[#00a859] px-3 py-1.5 rounded-lg font-black text-[11px] transition-all shadow-sm shadow-[#00a859]/5">
+                          View Analysis <ArrowUpRight size={13} />
                         </Link>
                       </td>
                     </tr>

@@ -136,55 +136,73 @@ function EvidenceUpload({
   uploading: boolean;
 }) {
   return (
-    <div className="mt-3">
-      <p className="text-xs font-medium text-gray-500 mb-2">Evidence Files</p>
-      {files.length > 0 && (
-        <div className="space-y-1 mb-2">
-          {files.map((f, i) => (
-            <div
-              key={`${f.publicId || f.fileName}-${i}`}
-              className="flex items-center gap-2 bg-green-50 border border-green-100 rounded-lg px-3 py-2"
-            >
-              <FileText size={13} className="text-[#00a651] shrink-0" />
-              <span className="text-xs text-green-700 flex-1 truncate">
-                {f.fileName}
-              </span>
-              <button
-                onClick={() => onRemove(i)}
-                className="text-gray-400 hover:text-red-500 transition shrink-0"
-              >
-                <X size={13} />
-              </button>
-            </div>
-          ))}
+    <div className="mt-4 pt-4 border-t border-slate-100">
+      <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center gap-2">
+          <Upload size={14} className="text-slate-400" />
+          <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Supportive Evidence</p>
         </div>
-      )}
-      <label
-        className={`flex items-center gap-2 cursor-pointer border-2 border-dashed rounded-lg px-3 py-2 transition ${
-          uploading
-            ? "opacity-50 cursor-not-allowed border-gray-200"
-            : "border-gray-200 hover:border-[#ca1f23] hover:bg-red-50/30"
-        }`}
-      >
-        {uploading ? (
-          <Loader2 size={14} className="text-gray-400 animate-spin" />
-        ) : (
-          <Upload size={14} className="text-gray-400" />
+        {files.length > 0 && (
+          <span className="text-[10px] font-bold text-[#00a859] bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-100">
+            {files.length} File{files.length > 1 ? "s" : ""} Attached
+          </span>
         )}
-        <span className="text-xs text-gray-400">
-          {uploading ? "Uploading..." : "Upload evidence"}
-        </span>
-        <input
-          type="file"
-          className="hidden"
-          disabled={uploading}
-          onChange={(e) => {
-            const f = e.target.files?.[0];
-            if (f) onUpload(f);
-            e.target.value = "";
-          }}
-        />
-      </label>
+      </div>
+
+      <div className="space-y-2">
+        {files.map((f, i) => (
+          <div
+            key={`${f.publicId || f.fileName}-${i}`}
+            className="flex items-center gap-3 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 group hover:bg-white hover:border-emerald-200 transition-all duration-200"
+          >
+            <div className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center shadow-sm border border-emerald-100/50">
+              <FileText size={16} />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-[12px] font-bold text-slate-700 truncate">{f.fileName}</p>
+              <p className="text-[10px] text-slate-400 font-medium capitalize">{f.resourceType} • Linked</p>
+            </div>
+            <button
+              onClick={() => onRemove(i)}
+              className="w-8 h-8 rounded-lg text-slate-400 hover:text-red-500 hover:bg-red-50 transition-all flex items-center justify-center"
+            >
+              <X size={14} />
+            </button>
+          </div>
+        ))}
+
+        <label
+          className={`flex flex-col items-center justify-center gap-2 cursor-pointer border-2 border-dashed rounded-2xl p-6 transition-all duration-300 ${
+            uploading
+              ? "opacity-50 cursor-not-allowed border-slate-200 bg-slate-50"
+              : "border-slate-200 hover:border-[#00a859] hover:bg-emerald-50/30 group"
+          }`}
+        >
+          <div className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors ${uploading ? "bg-slate-100" : "bg-slate-50 group-hover:bg-emerald-100"}`}>
+            {uploading ? (
+              <Loader2 size={20} className="text-[#00a859] animate-spin" />
+            ) : (
+              <Upload size={20} className="text-slate-400 group-hover:text-[#00a859]" />
+            )}
+          </div>
+          <div className="text-center">
+            <p className="text-[13px] font-bold text-slate-600">
+              {uploading ? "Uploading Evidence..." : "Add Evidence File"}
+            </p>
+            <p className="text-[11px] text-slate-400 font-medium">PDF, JPG, PNG or DOCX</p>
+          </div>
+          <input
+            type="file"
+            className="hidden"
+            disabled={uploading}
+            onChange={(e) => {
+              const f = e.target.files?.[0];
+              if (f) onUpload(f);
+              e.target.value = "";
+            }}
+          />
+        </label>
+      </div>
     </div>
   );
 }
@@ -543,6 +561,22 @@ export default function EvaluationFormPage() {
   // ── Submit to HOD ───────────────────────────────────────────────────────────
 
   async function submitToHOD() {
+    // Evidence Validation
+    for (let ci = 0; ci < categories.length; ci++) {
+      for (let pi = 0; pi < categories[ci].parameters.length; pi++) {
+        const param = categories[ci].parameters[pi];
+        if (param.evidenceRequired) {
+          const paramData = formData[ci]?.parameters[pi];
+          const allFiles = paramData?.entries?.flatMap(e => e.evidenceFiles || []) || [];
+          if (allFiles.length === 0) {
+            toast.error(`Evidence is required for parameter: ${param.parameterName}`);
+            // Scroll to the parameter could be added here
+            return;
+          }
+        }
+      }
+    }
+
     try {
       setSubmitting(true);
       const payload = buildPayload("SUBMITTED_TO_HOD");
