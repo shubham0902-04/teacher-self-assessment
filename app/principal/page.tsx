@@ -110,15 +110,12 @@ export default function PrincipalDashboard() {
 
   if (loading) {
     return (
-      <div className="flex min-h-screen bg-[#f8fafc]">
-        <PrincipalSidebar />
-        <main className="flex-1 p-8">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-            {[1, 2, 3, 4].map(i => <div key={i} className="h-32 rounded-2xl bg-slate-100 animate-pulse" />)}
-          </div>
-          <div className="h-96 rounded-2xl bg-slate-100 animate-pulse" />
-        </main>
-      </div>
+      <main className="flex-1 p-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          {[1, 2, 3, 4].map(i => <div key={i} className="h-32 rounded-2xl bg-slate-100 animate-pulse" />)}
+        </div>
+        <div className="h-96 rounded-2xl bg-slate-100 animate-pulse" />
+      </main>
     );
   }
 
