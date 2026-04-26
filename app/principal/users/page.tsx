@@ -159,8 +159,8 @@ export default function PrincipalUsersPage() {
   }
 
   return (
-    <main className="flex-1 overflow-y-auto px-5 sm:px-8 py-8 space-y-6 max-w-[1200px] mx-auto w-full">
-        
+    <>
+      <main className="flex-1 overflow-y-auto px-5 sm:px-8 py-8 space-y-6 max-w-[1200px] mx-auto w-full">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-6 rounded-2xl border border-slate-200 shadow-sm relative overflow-hidden">
           <div className="absolute right-0 top-0 w-64 h-64 bg-emerald-500/5 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none" />
           <div className="relative z-10">
@@ -226,7 +226,6 @@ export default function PrincipalUsersPage() {
         </div>
       </main>
 
-      {/* MODAL */}
       {isFormOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4">
           <div className="w-full max-w-md bg-white rounded-2xl shadow-2xl flex flex-col">
@@ -281,7 +280,6 @@ export default function PrincipalUsersPage() {
         </div>
       )}
 
-      {/* DELETE MODAL */}
       {deleteId && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4">
           <div className="w-full max-w-sm bg-white rounded-2xl p-6 shadow-2xl">
@@ -295,6 +293,6 @@ export default function PrincipalUsersPage() {
           </div>
         </div>
       )}
-      </main>
-    );
-  }
+    </>
+  );
+}
