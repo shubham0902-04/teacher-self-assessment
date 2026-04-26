@@ -14,6 +14,7 @@ import {
   Building2,
   ChevronRight,
   User,
+  CheckSquare,
 } from "lucide-react";
 
 const NAV = [
@@ -32,6 +33,7 @@ const NAV = [
     group: "Management",
     items: [
       { label: "Manage Faculty", href: "/hod/users", icon: User },
+      { label: "Category Assignment", href: "/hod/faculty-category-assignment", icon: CheckSquare },
     ],
   },
   {

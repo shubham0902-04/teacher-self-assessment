@@ -47,7 +47,6 @@ function Section({
   icon,
   title,
   subtitle,
-  colorClass,
   iconBgClass,
   iconColorClass,
   children,

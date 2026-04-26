@@ -60,7 +60,8 @@ export default function UsersPage() {
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [showPassword, setShowPassword] = useState(false);
 
-  const needsSchoolDept = form.role === "Faculty" || form.role === "HOD";
+  const needsSchool = form.role === "Faculty" || form.role === "HOD" || form.role === "Principal";
+  const needsDept = form.role === "Faculty" || form.role === "HOD";
   const isEditing = editingUser !== null;
 
   // ---------------- LOAD ----------------
@@ -190,8 +191,8 @@ export default function UsersPage() {
     if (!form.name.trim()) return toast.error("Name is required");
     if (!form.email.trim()) return toast.error("Email is required");
     if (!isEditing && !form.password.trim()) return toast.error("Password is required");
-    if (needsSchoolDept && !form.schoolId) return toast.error("School is required for Faculty and HOD");
-    if (needsSchoolDept && !form.departmentId) return toast.error("Department is required for Faculty and HOD");
+    if (needsSchool && !form.schoolId) return toast.error("School is required for this role");
+    if (needsDept && !form.departmentId) return toast.error("Department is required for this role");
 
     try {
       setLoading(true);
@@ -476,7 +477,7 @@ export default function UsersPage() {
                   </select>
                 </div>
 
-                {needsSchoolDept && (
+                {needsSchool && (
                   <div className="p-4 rounded-xl border border-slate-200 bg-slate-50 space-y-4">
                     <div>
                       <label className="mb-1.5 block text-[13px] font-bold text-slate-700">
@@ -503,7 +504,8 @@ export default function UsersPage() {
                       )}
                     </div>
 
-                    <div>
+                    {needsDept && (
+                      <div>
                       <label className="mb-1.5 block text-[13px] font-bold text-slate-700">
                         Department <span className="text-[#e31e24]">*</span>
                       </label>
@@ -531,6 +533,7 @@ export default function UsersPage() {
                         </select>
                       )}
                     </div>
+                    )}
                   </div>
                 )}
 

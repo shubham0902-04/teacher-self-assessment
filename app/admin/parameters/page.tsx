@@ -150,6 +150,19 @@ export default function AdminParametersPage() {
     });
   }, [parameters, search]);
 
+  const parametersByCategory = useMemo(() => {
+    const grouped: Record<string, Parameter[]> = {};
+    categories.forEach((c) => {
+      grouped[c._id] = [];
+    });
+    filteredParameters.forEach((p) => {
+      const catId = typeof p.categoryId === "object" ? p.categoryId._id : p.categoryId as string;
+      if (!grouped[catId]) grouped[catId] = [];
+      grouped[catId].push(p);
+    });
+    return grouped;
+  }, [filteredParameters, categories]);
+
   const totalParameters = parameters.length;
   const activeParameters = parameters.filter((p) => p.isActive).length;
   const evidenceRequiredCount = parameters.filter(
@@ -344,158 +357,103 @@ export default function AdminParametersPage() {
           />
         </div>
 
-        {/* TABLE CARD */}
-        <div className="rounded-2xl border border-slate-200/60 bg-white shadow-sm overflow-hidden">
-          {/* Search bar */}
-          <div className="px-6 py-4 border-b border-slate-100 flex items-center gap-3 bg-slate-50/50">
-            <Search size={16} className="text-slate-400 shrink-0" />
-            <input
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search by name, code or category..."
-              className="flex-1 text-[14px] text-slate-800 placeholder:text-slate-400 outline-none bg-transparent font-medium"
-            />
-            {search && (
-              <button
-                onClick={() => setSearch("")}
-                className="text-slate-400 hover:text-slate-600 transition p-1 rounded-lg hover:bg-slate-100"
-              >
-                <X size={15} />
-              </button>
-            )}
-          </div>
-
-          {/* Table */}
-          <div className="overflow-x-auto">
-            <table className="min-w-full text-left">
-              <thead className="bg-slate-50 border-b border-slate-100">
-                <tr>
-                  <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">Category</th>
-                  <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">Parameter Name</th>
-                  <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">Code</th>
-                  <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider text-center">Max Marks</th>
-                  <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider text-center">Multi Entry</th>
-                  <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider text-center">Evidence</th>
-                  <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider text-center">Order</th>
-                  <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">Status</th>
-                  <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider text-right">Actions</th>
-                </tr>
-              </thead>
-
-              <tbody className="divide-y divide-slate-100 bg-white">
-                {loading ? (
-                  <tr>
-                    <td colSpan={9} className="px-6 py-12 text-center text-slate-400">
-                      <div className="flex flex-col items-center gap-3">
-                        <div className="w-6 h-6 border-2 border-[#00a859]/20 border-t-[#00a859] rounded-full animate-spin" />
-                        <span className="text-[13px] font-medium">Loading parameters...</span>
-                      </div>
-                    </td>
-                  </tr>
-                ) : filteredParameters.length === 0 ? (
-                  <tr>
-                    <td colSpan={9} className="px-6 py-12 text-center text-slate-400">
-                      <div className="flex flex-col items-center gap-3">
-                        <div className="w-12 h-12 rounded-full bg-slate-50 flex items-center justify-center">
-                          <ListChecks size={20} className="text-slate-300" />
-                        </div>
-                        <span className="text-[13px] font-medium">
-                          {search ? `No results for "${search}"` : "No parameters found — add one above"}
-                        </span>
-                      </div>
-                    </td>
-                  </tr>
-                ) : (
-                  filteredParameters.map((parameter) => {
-                    const category =
-                      typeof parameter.categoryId === "object"
-                        ? parameter.categoryId.categoryName
-                        : "-";
-
-                    return (
-                      <tr key={parameter._id} className="hover:bg-slate-50/50 transition-colors group">
-                        <td className="px-6 py-4">
-                          <span className="text-[11px] font-bold bg-blue-50 border border-blue-100/50 text-blue-600 px-2.5 py-1 rounded-md">
-                            {category}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 font-bold text-slate-700 text-[13px]">
-                          {parameter.parameterName}
-                        </td>
-                        <td className="px-6 py-4">
-                          <span className="font-mono text-[11px] font-bold bg-slate-100 border border-slate-200 text-slate-500 px-2.5 py-1 rounded-md">
-                            {parameter.parameterCode}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 text-[13px] font-bold text-slate-600 text-center">
-                          {parameter.maxMarks > 0 ? parameter.maxMarks : <span className="text-slate-300">—</span>}
-                        </td>
-                        <td className="px-6 py-4 text-center">
-                          <span className={`text-[11px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-md border ${
-                            parameter.allowMultipleEntries
-                              ? "bg-[#00a859]/5 text-[#00a859] border-[#00a859]/20"
-                              : "bg-slate-50 text-slate-400 border-slate-200"
-                          }`}>
-                            {parameter.allowMultipleEntries ? "Yes" : "No"}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 text-center">
-                          <span className={`text-[11px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-md border ${
-                            parameter.evidenceRequired
-                              ? "bg-amber-50 text-amber-600 border-amber-200"
-                              : "bg-slate-50 text-slate-400 border-slate-200"
-                          }`}>
-                            {parameter.evidenceRequired ? "Yes" : "No"}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 text-[13px] font-bold text-slate-500 text-center">
-                          {parameter.displayOrder}
-                        </td>
-                        <td className="px-6 py-4">
-                          <button
-                            onClick={() => handleToggleStatus(parameter)}
-                            className={`inline-flex items-center gap-2 rounded-full px-3 py-1 text-[11px] font-bold uppercase tracking-wider transition border ${
-                              parameter.isActive
-                                ? "bg-[#00a859]/10 text-[#00a859] border-[#00a859]/20 hover:bg-[#00a859]/20"
-                                : "bg-slate-100 text-slate-500 border-slate-200 hover:bg-slate-200"
-                            }`}
-                          >
-                            <span className={`w-1.5 h-1.5 rounded-full ${parameter.isActive ? "bg-[#00a859]" : "bg-slate-400"}`} />
-                            {parameter.isActive ? "Active" : "Inactive"}
-                          </button>
-                        </td>
-                        <td className="px-6 py-4 text-right">
-                          <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <button
-                              onClick={() => openEditModal(parameter)}
-                              className="p-1.5 text-slate-400 hover:text-[#00a859] hover:bg-[#00a859]/10 rounded-lg transition"
-                              title="Edit"
-                            >
-                              <Pencil size={16} />
-                            </button>
-                            <button
-                              onClick={() => setDeleteId(parameter._id)}
-                              className="p-1.5 text-slate-400 hover:text-[#e31e24] hover:bg-[#e31e24]/10 rounded-lg transition"
-                              title="Delete"
-                            >
-                              <Trash2 size={16} />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    );
-                  })
-                )}
-              </tbody>
-            </table>
-          </div>
-
-          {/* Footer count */}
-          {!loading && filteredParameters.length > 0 && (
-            <div className="px-6 py-3 border-t border-slate-100 text-[11px] font-bold text-slate-400 bg-slate-50 uppercase tracking-wider">
-              Showing {filteredParameters.length} of {totalParameters} parameters
+        {/* NEW CATEGORY-WISE GRID */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {categories.length === 0 && !loading && (
+            <div className="col-span-full py-16 text-center text-slate-400 bg-white rounded-2xl border border-slate-200/60 shadow-sm">
+              <p className="text-[14px] font-medium">No categories found. Please create categories first.</p>
             </div>
           )}
+
+          {categories.map((category) => {
+            const catParams = parametersByCategory[category._id] || [];
+            
+            return (
+              <div key={category._id} className="flex flex-col bg-white rounded-2xl border border-slate-200/60 shadow-sm overflow-hidden h-fit">
+                {/* Category Header */}
+                <div className="bg-slate-50 border-b border-slate-100 px-5 py-4 flex items-center justify-between">
+                  <div className="min-w-0">
+                    <h2 className="text-[15px] font-bold text-slate-800 truncate">{category.categoryName}</h2>
+                    <p className="text-[11px] text-slate-500 font-medium mt-0.5">{catParams.length} parameters</p>
+                  </div>
+                  <button
+                    onClick={() => {
+                      setEditingParameter(null);
+                      setForm({ ...initialForm, categoryId: category._id });
+                      setIsModalOpen(true);
+                    }}
+                    className="shrink-0 w-8 h-8 rounded-lg bg-white border border-slate-200 text-slate-500 hover:text-[#00a859] hover:border-[#00a859]/30 hover:bg-[#00a859]/5 transition-all flex items-center justify-center shadow-sm"
+                    title="Add Parameter to this Category"
+                  >
+                    <Plus size={16} />
+                  </button>
+                </div>
+
+                {/* Parameters List */}
+                <div className="p-4 space-y-3">
+                  {catParams.length === 0 ? (
+                    <div className="text-center py-6 text-slate-400">
+                      <p className="text-[12px] font-medium">No parameters added yet.</p>
+                    </div>
+                  ) : (
+                    catParams.map((param) => (
+                      <div key={param._id} className="bg-[#f8fafc] border border-slate-200/60 rounded-xl p-4 relative group hover:border-[#00a859]/30 hover:shadow-sm transition-all">
+                        {/* Status Dot */}
+                        <div className={`absolute top-4 right-4 w-2 h-2 rounded-full ${param.isActive ? "bg-[#00a859]" : "bg-slate-300"}`} title={param.isActive ? "Active" : "Inactive"} />
+                        
+                        <div className="pr-6">
+                          <h3 className="text-[13px] font-bold text-slate-700 leading-tight mb-1">{param.parameterName}</h3>
+                          <p className="text-[11px] font-mono font-semibold text-slate-500 mb-2">{param.parameterCode}</p>
+                        </div>
+                        
+                        <div className="flex flex-wrap gap-2 mb-3">
+                          {param.maxMarks > 0 && (
+                            <span className="text-[10px] font-bold bg-blue-50 text-blue-600 px-2 py-0.5 rounded border border-blue-100/50">
+                              Max {param.maxMarks}
+                            </span>
+                          )}
+                          {param.allowMultipleEntries && (
+                            <span className="text-[10px] font-bold bg-[#00a859]/10 text-[#00a859] px-2 py-0.5 rounded border border-[#00a859]/20">
+                              Multi-Entry
+                            </span>
+                          )}
+                          {param.evidenceRequired && (
+                            <span className="text-[10px] font-bold bg-amber-50 text-amber-600 px-2 py-0.5 rounded border border-amber-200">
+                              Evidence Req
+                            </span>
+                          )}
+                        </div>
+
+                        {/* Actions */}
+                        <div className="flex items-center justify-end gap-1 pt-3 border-t border-slate-200/60">
+                          <button
+                            onClick={() => handleToggleStatus(param)}
+                            className="mr-auto text-[11px] font-semibold text-slate-500 hover:text-slate-800 transition px-2 py-1 bg-white rounded border border-slate-200 shadow-sm"
+                          >
+                            {param.isActive ? "Deactivate" : "Activate"}
+                          </button>
+                          <button
+                            onClick={() => openEditModal(param)}
+                            className="p-1.5 text-slate-400 hover:text-[#00a859] hover:bg-[#00a859]/10 rounded-md transition"
+                            title="Edit"
+                          >
+                            <Pencil size={14} />
+                          </button>
+                          <button
+                            onClick={() => setDeleteId(param._id)}
+                            className="p-1.5 text-slate-400 hover:text-[#e31e24] hover:bg-[#e31e24]/10 rounded-md transition"
+                            title="Delete"
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+            );
+          })}
         </div>
       </main>
 
