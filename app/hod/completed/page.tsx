@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import HODSidebar from "@/app/components/hod/HODSidebar";
 import Link from "next/link";
 import { useAcademicYear } from "@/app/hooks/useAcademicYear";
 import {
@@ -14,7 +13,9 @@ import {
   ChevronRight,
   CalendarDays,
   SlidersHorizontal,
+  Filter,
 } from "lucide-react";
+import CustomSelect from "@/app/components/ui/CustomSelect";
 
 type Faculty = { _id: string; name: string; email: string; employeeId?: string };
 type Evaluation = {
@@ -70,9 +71,7 @@ export default function HODCompletedPage() {
   });
 
   return (
-    <div className="flex min-h-screen bg-[#f8fafc] text-slate-800 font-sans">
-      <HODSidebar />
-      <main className="flex-1 overflow-y-auto">
+    <main className="flex-1 overflow-y-auto w-full">
 
         {/* Header */}
         <div className="bg-white/80 backdrop-blur-md border-b border-slate-200/60 px-5 sm:px-8 py-4 flex items-center justify-between sticky top-0 z-20">
@@ -157,16 +156,19 @@ export default function HODCompletedPage() {
                   />
                   {search && <button onClick={() => setSearch("")}><X size={13} className="text-slate-400 hover:text-slate-600" /></button>}
                 </div>
-                <select
+                
+                <CustomSelect
+                  options={[
+                    { value: "ALL", label: "All Statuses" },
+                    { value: "SUBMITTED_TO_PRINCIPAL", label: "Forwarded" },
+                    { value: "RETURNED_BY_HOD", label: "Returned" },
+                    { value: "FINALIZED", label: "Finalized" },
+                  ]}
                   value={statusFilter}
-                  onChange={(e) => setStatusFilter(e.target.value)}
-                  className="text-[12px] font-medium border border-slate-200/60 bg-slate-50 rounded-xl px-3 py-2.5 text-slate-700 outline-none hover:border-slate-300 transition shadow-sm"
-                >
-                  <option value="ALL">All Statuses</option>
-                  <option value="SUBMITTED_TO_PRINCIPAL">Forwarded</option>
-                  <option value="RETURNED_BY_HOD">Returned</option>
-                  <option value="FINALIZED">Finalized</option>
-                </select>
+                  onChange={setStatusFilter}
+                  icon={Filter}
+                  className="w-full sm:w-48"
+                />
               </div>
             </div>
 
@@ -237,6 +239,5 @@ export default function HODCompletedPage() {
           </div>
         </div>
       </main>
-    </div>
-  );
-}
+    );
+  }

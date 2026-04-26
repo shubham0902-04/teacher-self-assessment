@@ -100,9 +100,13 @@ export async function GET(req: Request) {
       );
     }
 
-    // ── Apply academic year filter ─────────────────────────────────────────────
+    // ── Apply filters from query string ───────────────────────────────────────
+    const status = searchParams.get("status");
     if (academicYear) {
-      filter = { ...filter, academicYear };
+      filter.academicYear = academicYear;
+    }
+    if (status) {
+      filter.status = status;
     }
 
     const data = await TeacherEvaluation.find(filter)

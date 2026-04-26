@@ -334,9 +334,7 @@ export default function EvaluationDetail({ id, backUrl }: { id: string, backUrl:
   const totalFacultyScore = localCats.reduce((sum, cat) => sum + cat.parameters.reduce((ps, param) => ps + param.entries.reduce((es, entry) => es + entry.fields.reduce((fs, field) => fs + safeNum(field.value), 0), 0), 0), 0);
 
   return (
-    <div className="flex min-h-screen bg-[#f8fafc] text-slate-800 font-sans">
-      <HODSidebar />
-      <main className="flex-1 overflow-y-auto">
+    <main className="flex-1 overflow-y-auto bg-[#f8fafc]">
 
         {/* Top Header */}
         <div className="bg-white/80 backdrop-blur-md border-b border-slate-200/60 px-5 sm:px-8 py-3.5 flex items-center sticky top-0 z-20">
@@ -482,6 +480,5 @@ export default function EvaluationDetail({ id, backUrl }: { id: string, backUrl:
           </div>
         </div>
       </main>
-    </div>
   );
 }

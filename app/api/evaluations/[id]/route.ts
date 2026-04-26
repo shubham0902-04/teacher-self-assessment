@@ -80,7 +80,10 @@ export async function GET(req: Request, context: RouteContext) {
   try {
     await connectDB();
     const { id } = await context.params;
-    const evaluation = await TeacherEvaluation.findById(id);
+    const evaluation = await TeacherEvaluation.findById(id)
+      .populate("facultyId", "name email employeeId")
+      .populate("departmentId", "departmentName")
+      .populate("schoolId", "schoolName");
 
     if (!evaluation) {
       return NextResponse.json(

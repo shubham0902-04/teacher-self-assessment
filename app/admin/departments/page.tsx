@@ -10,8 +10,10 @@ import {
   Plus,
   X,
   School,
+  Filter,
 } from "lucide-react";
 import { toast } from "sonner";
+import CustomSelect from "@/app/components/ui/CustomSelect";
 
 type SchoolType = {
   _id: string;
@@ -90,9 +92,7 @@ export default function DepartmentsPage() {
       const res = await fetch("/api/schools");
       const data = await res.json();
       if (data.success) setSchools(data.data || []);
-    } catch {
-      // silent
-    }
+    } catch { /* silent */ }
   }
 
   useEffect(() => {
@@ -251,9 +251,7 @@ export default function DepartmentsPage() {
           <div className="absolute right-0 top-0 w-64 h-64 bg-[#00a859]/5 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none" />
           <div className="relative z-10">
             <h1 className="text-2xl font-bold text-slate-800 tracking-tight mb-1">Departments</h1>
-            <p className="text-[13px] text-slate-500 font-medium">
-              Manage all departments and their assigned schools
-            </p>
+            <p className="text-[13px] text-slate-500 font-medium">Manage all departments and their assigned schools</p>
           </div>
           <button
             onClick={openAddModal}
@@ -267,24 +265,16 @@ export default function DepartmentsPage() {
         {/* STAT CARDS */}
         <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
           <div className="rounded-2xl border border-slate-200/60 bg-white p-6 shadow-sm flex items-center gap-5 transition-all hover:shadow-md hover:-translate-y-0.5">
-            <div className="rounded-xl p-3.5 bg-blue-50 text-blue-500">
-              <Building2 size={24} />
-            </div>
+            <div className="rounded-xl p-3.5 bg-blue-50 text-blue-500"><Building2 size={24} /></div>
             <div>
-              <h3 className="text-3xl font-bold text-slate-800 tracking-tight leading-none mb-1">
-                {departments.length}
-              </h3>
+              <h3 className="text-3xl font-bold text-slate-800 tracking-tight leading-none mb-1">{departments.length}</h3>
               <p className="text-[12px] font-bold text-slate-500 uppercase tracking-wider">Total Departments</p>
             </div>
           </div>
           <div className="rounded-2xl border border-slate-200/60 bg-white p-6 shadow-sm flex items-center gap-5 transition-all hover:shadow-md hover:-translate-y-0.5">
-            <div className="rounded-xl p-3.5 bg-[#00a859]/10 text-[#00a859]">
-              <Building2 size={24} />
-            </div>
+            <div className="rounded-xl p-3.5 bg-[#00a859]/10 text-[#00a859]"><Building2 size={24} /></div>
             <div>
-              <h3 className="text-3xl font-bold text-slate-800 tracking-tight leading-none mb-1">
-                {activeDepts}
-              </h3>
+              <h3 className="text-3xl font-bold text-slate-800 tracking-tight leading-none mb-1">{activeDepts}</h3>
               <p className="text-[12px] font-bold text-slate-500 uppercase tracking-wider">Active Departments</p>
             </div>
           </div>
@@ -292,37 +282,25 @@ export default function DepartmentsPage() {
 
         {/* TABLE CARD */}
         <div className="rounded-2xl border border-slate-200/60 bg-white shadow-sm overflow-hidden">
-          {/* Search + Filter */}
-          <div className="px-6 py-4 border-b border-slate-100 flex flex-col sm:flex-row gap-3 bg-slate-50/50">
-            <div className="flex items-center gap-2 flex-1">
+          <div className="px-6 py-4 border-b border-slate-100 flex flex-col sm:flex-row gap-4 bg-slate-50/50">
+            <div className="flex items-center gap-2 flex-1 bg-white border border-slate-200 rounded-xl px-4 py-2 shadow-sm focus-within:border-[#00a859] transition-all">
               <Search size={16} className="text-slate-400 shrink-0" />
               <input
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                placeholder="Search by name or code..."
-                className="flex-1 text-[14px] text-slate-800 placeholder:text-slate-400 outline-none bg-transparent font-medium"
+                placeholder="Search departments..."
+                className="flex-1 text-[13px] text-slate-800 outline-none bg-transparent font-medium"
               />
-              {search && (
-                <button
-                  onClick={() => setSearch("")}
-                  className="text-slate-400 hover:text-slate-600 transition p-1 rounded-lg hover:bg-slate-100"
-                >
-                  <X size={15} />
-                </button>
-              )}
+              {search && <button onClick={() => setSearch("")} className="text-slate-400 hover:text-slate-600 p-1 rounded-lg"><X size={15} /></button>}
             </div>
-            <select
+            
+            <CustomSelect
+              options={[{ value: "", label: "All Schools" }, ...schools.map(s => ({ value: s._id, label: s.schoolName }))]}
               value={filterSchool}
-              onChange={(e) => setFilterSchool(e.target.value)}
-              className="text-[13px] font-semibold text-slate-600 border border-slate-200 rounded-xl px-3 py-2 outline-none focus:border-[#00a859] bg-white transition"
-            >
-              <option value="">All Schools</option>
-              {schools.map((s) => (
-                <option key={s._id} value={s._id}>
-                  {s.schoolName}
-                </option>
-              ))}
-            </select>
+              onChange={setFilterSchool}
+              icon={Filter}
+              className="w-full sm:w-64"
+            />
           </div>
 
           <div className="overflow-x-auto">
@@ -336,259 +314,93 @@ export default function DepartmentsPage() {
                   <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider text-right">Actions</th>
                 </tr>
               </thead>
-
               <tbody className="bg-white divide-y divide-slate-100">
                 {loading ? (
-                  <tr>
-                    <td colSpan={5} className="px-6 py-12 text-center text-slate-400">
-                      <div className="flex flex-col items-center gap-3">
-                        <div className="w-6 h-6 border-2 border-[#00a859]/20 border-t-[#00a859] rounded-full animate-spin" />
-                        <span className="text-[13px] font-medium">Loading departments...</span>
-                      </div>
-                    </td>
-                  </tr>
+                  <tr><td colSpan={5} className="py-20 text-center"><div className="w-6 h-6 border-2 border-[#00a859]/20 border-t-[#00a859] rounded-full animate-spin mx-auto mb-2" /> Loading...</td></tr>
                 ) : filteredDepts.length === 0 ? (
-                  <tr>
-                    <td colSpan={5} className="px-6 py-12 text-center text-slate-400">
-                      <div className="flex flex-col items-center gap-3">
-                        <div className="w-12 h-12 rounded-full bg-slate-50 flex items-center justify-center">
-                          <Building2 size={20} className="text-slate-300" />
-                        </div>
-                        <span className="text-[13px] font-medium">
-                          {search || filterSchool
-                            ? "No departments match your filters"
-                            : "No departments found — add one above"}
-                        </span>
-                      </div>
-                    </td>
-                  </tr>
+                  <tr><td colSpan={5} className="py-20 text-center text-slate-400 text-[13px] font-medium">No departments found.</td></tr>
                 ) : (
-                  filteredDepts.map((dept) => {
-                    const schoolName = getSchoolName(dept);
-                    return (
-                      <tr key={dept._id} className="hover:bg-slate-50/50 transition-colors group">
-                        <td className="px-6 py-4 font-bold text-slate-700 text-[13px]">
-                          <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 rounded-lg bg-blue-50/50 flex items-center justify-center shrink-0 border border-blue-100">
-                              <Building2 size={14} className="text-blue-500" />
-                            </div>
-                            {dept.departmentName}
-                          </div>
-                        </td>
-                        <td className="px-6 py-4">
-                          <span className="font-mono text-[11px] font-bold bg-slate-100 border border-slate-200 text-slate-500 px-2.5 py-1 rounded-md">
-                            {dept.departmentCode}
+                  filteredDepts.map((dept) => (
+                    <tr key={dept._id} className="hover:bg-slate-50/50 transition-colors group">
+                      <td className="px-6 py-4 font-bold text-slate-700 text-[13px]">
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 rounded-lg bg-blue-50/50 flex items-center justify-center border border-blue-100"><Building2 size={14} className="text-blue-500" /></div>
+                          {dept.departmentName}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4"><span className="font-mono text-[11px] font-bold bg-slate-100 border border-slate-200 text-slate-500 px-2.5 py-1 rounded-md">{dept.departmentCode}</span></td>
+                      <td className="px-6 py-4">
+                        {getSchoolName(dept) ? (
+                          <span className="inline-flex items-center gap-1.5 text-[11px] font-bold bg-indigo-50 border border-indigo-100/50 text-indigo-600 px-2.5 py-1 rounded-md">
+                            <School size={12} /> {getSchoolName(dept)}
                           </span>
-                        </td>
-                        <td className="px-6 py-4">
-                          {schoolName ? (
-                            <span className="inline-flex items-center gap-1.5 text-[11px] font-bold bg-indigo-50 border border-indigo-100/50 text-indigo-600 px-2.5 py-1 rounded-md">
-                              <School size={12} />
-                              {schoolName}
-                            </span>
-                          ) : (
-                            <span className="text-slate-300 text-[13px]">—</span>
-                          )}
-                        </td>
-                        <td className="px-6 py-4">
-                          <button
-                            onClick={() => handleToggleStatus(dept)}
-                            className={`inline-flex items-center gap-2 rounded-full px-3 py-1 text-[11px] font-bold uppercase tracking-wider transition border ${
-                              dept.isActive
-                                ? "bg-[#00a859]/10 text-[#00a859] border-[#00a859]/20 hover:bg-[#00a859]/20"
-                                : "bg-slate-100 text-slate-500 border-slate-200 hover:bg-slate-200"
-                            }`}
-                          >
-                            <span className={`w-1.5 h-1.5 rounded-full ${dept.isActive ? "bg-[#00a859]" : "bg-slate-400"}`} />
-                            {dept.isActive ? "Active" : "Inactive"}
-                          </button>
-                        </td>
-                        <td className="px-6 py-4 text-right">
-                          <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <button
-                              onClick={() => openEditModal(dept)}
-                              className="p-1.5 text-slate-400 hover:text-[#00a859] hover:bg-[#00a859]/10 rounded-lg transition"
-                              title="Edit"
-                            >
-                              <Pencil size={16} />
-                            </button>
-                            <button
-                              onClick={() => setDeleteId(dept._id)}
-                              className="p-1.5 text-slate-400 hover:text-[#e31e24] hover:bg-[#e31e24]/10 rounded-lg transition"
-                              title="Delete"
-                            >
-                              <Trash2 size={16} />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    );
-                  })
+                        ) : "—"}
+                      </td>
+                      <td className="px-6 py-4">
+                        <button onClick={() => handleToggleStatus(dept)} className={`inline-flex items-center gap-2 rounded-full px-3 py-1 text-[11px] font-bold uppercase transition border ${dept.isActive ? "bg-emerald-50 text-emerald-600 border-emerald-200" : "bg-slate-100 text-slate-500 border-slate-200"}`}>
+                          <span className={`w-1.5 h-1.5 rounded-full ${dept.isActive ? "bg-emerald-500" : "bg-slate-400"}`} />
+                          {dept.isActive ? "Active" : "Inactive"}
+                        </button>
+                      </td>
+                      <td className="px-6 py-4 text-right">
+                        <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <button onClick={() => openEditModal(dept)} className="p-1.5 text-slate-400 hover:text-[#00a859] hover:bg-emerald-50 rounded-lg"><Pencil size={16} /></button>
+                          <button onClick={() => setDeleteId(dept._id)} className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg"><Trash2 size={16} /></button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
                 )}
               </tbody>
             </table>
           </div>
-
-          {!loading && filteredDepts.length > 0 && (
-            <div className="px-6 py-3 border-t border-slate-100 text-[11px] font-bold text-slate-400 bg-slate-50 uppercase tracking-wider">
-              Showing {filteredDepts.length} of {departments.length} departments
-            </div>
-          )}
         </div>
       </main>
 
-      {/* ADD / EDIT MODAL */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4">
-          <div className="w-full max-w-md rounded-2xl border border-slate-100 bg-white shadow-2xl flex flex-col max-h-[90vh]">
-            <div className="flex items-center justify-between px-6 py-5 border-b border-slate-100 shrink-0">
-              <h3 className="text-[18px] font-bold text-slate-800 tracking-tight">
-                {editingDept ? "Edit Department" : "Add Department"}
-              </h3>
-              <button
-                onClick={closeModal}
-                className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition"
-              >
-                <X size={18} />
-              </button>
+          <div className="w-full max-w-md bg-white rounded-2xl shadow-2xl flex flex-col max-h-[90vh]">
+            <div className="px-6 py-5 border-b flex items-center justify-between">
+              <h3 className="font-bold text-slate-800">{editingDept ? "Edit Department" : "Add Department"}</h3>
+              <button onClick={closeModal} className="text-slate-400 hover:text-slate-600 transition"><X size={18} /></button>
             </div>
-
-            <div className="overflow-y-auto px-6 py-5">
-              <form
-                id="dept-form"
-                onSubmit={handleSubmit}
-                className="space-y-5"
-              >
-                {/* School dropdown */}
-                <div>
-                  <label className="mb-1.5 block text-[13px] font-bold text-slate-700">
-                    School <span className="text-[#e31e24]">*</span>
-                  </label>
-                  {schools.length === 0 ? (
-                    <div className="w-full rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-[13px] text-amber-700 font-medium">
-                      No schools found —{" "}
-                      <a
-                        href="/admin/schools"
-                        className="underline font-bold text-amber-800 hover:text-amber-900"
-                      >
-                        create schools first
-                      </a>
-                    </div>
-                  ) : (
-                    <select
-                      value={form.schoolId}
-                      onChange={(e) =>
-                        setForm({ ...form, schoolId: e.target.value })
-                      }
-                      className="w-full rounded-xl border border-slate-200 px-4 py-3 text-[14px] text-slate-800 outline-none focus:border-[#00a859] focus:ring-2 focus:ring-[#00a859]/20 transition bg-slate-50 focus:bg-white"
-                    >
-                      <option value="">Select School</option>
-                      {schools.map((s) => (
-                        <option key={s._id} value={s._id}>
-                          {s.schoolName} ({s.schoolCode})
-                        </option>
-                      ))}
-                    </select>
-                  )}
-                </div>
-
-                <div>
-                  <label className="mb-1.5 block text-[13px] font-bold text-slate-700">
-                    Department Name <span className="text-[#e31e24]">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="e.g. Computer Science"
-                    value={form.departmentName}
-                    onChange={(e) =>
-                      setForm({ ...form, departmentName: e.target.value })
-                    }
-                    className="w-full rounded-xl border border-slate-200 px-4 py-3 text-[14px] text-slate-800 outline-none focus:border-[#00a859] focus:ring-2 focus:ring-[#00a859]/20 transition bg-slate-50 focus:bg-white"
-                  />
-                </div>
-
-                <div>
-                  <label className="mb-1.5 block text-[13px] font-bold text-slate-700">
-                    Department Code <span className="text-[#e31e24]">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="e.g. CS"
-                    value={form.departmentCode}
-                    onChange={(e) =>
-                      setForm({ ...form, departmentCode: e.target.value })
-                    }
-                    className="w-full rounded-xl border border-slate-200 px-4 py-3 text-[14px] text-slate-800 outline-none focus:border-[#00a859] focus:ring-2 focus:ring-[#00a859]/20 transition bg-slate-50 focus:bg-white uppercase font-mono"
-                  />
-                </div>
-
-                <div className="flex items-center justify-between rounded-xl border border-slate-200 px-4 py-3.5 bg-slate-50">
-                  <span className="text-[13px] font-bold text-slate-700">
-                    Active Status
-                  </span>
-                  <Toggle
-                    value={form.isActive}
-                    onChange={() =>
-                      setForm({ ...form, isActive: !form.isActive })
-                    }
-                  />
-                </div>
-              </form>
+            <div className="overflow-y-auto px-6 py-5 space-y-5">
+              <div>
+                <label className="text-[13px] font-bold text-slate-700 block mb-1.5">School <span className="text-red-500">*</span></label>
+                <CustomSelect
+                  options={[{ value: "", label: "Select School" }, ...schools.map(s => ({ value: s._id, label: s.schoolName }))]}
+                  value={form.schoolId}
+                  onChange={v => setForm({ ...form, schoolId: v })}
+                />
+              </div>
+              <div>
+                <label className="text-[13px] font-bold text-slate-700 block mb-1.5">Department Name <span className="text-red-500">*</span></label>
+                <input value={form.departmentName} onChange={e => setForm({...form, departmentName: e.target.value})} className="w-full rounded-xl border border-slate-200 px-4 py-3 text-[14px] outline-none focus:border-[#00a859] bg-slate-50 focus:bg-white" />
+              </div>
+              <div>
+                <label className="text-[13px] font-bold text-slate-700 block mb-1.5">Department Code <span className="text-red-500">*</span></label>
+                <input value={form.departmentCode} onChange={e => setForm({...form, departmentCode: e.target.value})} className="w-full rounded-xl border border-slate-200 px-4 py-3 text-[14px] outline-none focus:border-[#00a859] bg-slate-50 focus:bg-white uppercase font-mono" />
+              </div>
+              <div className="flex items-center justify-between rounded-xl border border-slate-200 px-4 py-3.5 bg-slate-50">
+                <span className="text-[13px] font-bold text-slate-700">Active Status</span>
+                <Toggle value={form.isActive} onChange={() => setForm({ ...form, isActive: !form.isActive })} />
+              </div>
             </div>
-
-            <div className="flex items-center gap-3 px-6 py-4 border-t border-slate-100 shrink-0 bg-slate-50/50 rounded-b-2xl">
-              <button
-                type="button"
-                onClick={closeModal}
-                className="flex-1 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-[14px] font-bold text-slate-600 hover:bg-slate-50 hover:text-slate-800 transition"
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                form="dept-form"
-                disabled={submitting}
-                className="flex-1 rounded-xl bg-[#00a859] px-4 py-2.5 text-[14px] font-bold text-white shadow-sm shadow-[#00a859]/20 transition hover:bg-[#008f4c] disabled:opacity-50"
-              >
-                {submitting
-                  ? editingDept
-                    ? "Updating..."
-                    : "Saving..."
-                  : editingDept
-                    ? "Update Department"
-                    : "Save Department"}
-              </button>
+            <div className="p-4 bg-slate-50 rounded-b-2xl flex gap-3">
+              <button onClick={closeModal} className="flex-1 py-2.5 rounded-xl border bg-white font-bold text-slate-600">Cancel</button>
+              <button onClick={handleSubmit} disabled={submitting} className="flex-1 py-2.5 rounded-xl bg-[#00a859] text-white font-bold shadow-lg shadow-[#00a859]/20 disabled:opacity-50">{submitting ? "Saving..." : "Save Dept"}</button>
             </div>
           </div>
         </div>
       )}
 
-      {/* DELETE MODAL */}
       {deleteId && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4">
-          <div className="w-full max-w-sm rounded-2xl border border-slate-100 bg-white p-6 shadow-2xl">
-            <div className="w-12 h-12 rounded-full bg-[#e31e24]/10 flex items-center justify-center mb-4">
-              <Trash2 size={20} className="text-[#e31e24]" />
-            </div>
-            <h3 className="text-[18px] font-bold text-slate-800 mb-1.5">
-              Delete Department?
-            </h3>
-            <p className="text-[14px] text-slate-500 mb-6 leading-relaxed">
-              Users linked to this department will lose their department reference. This action cannot be undone.
-            </p>
+          <div className="w-full max-w-sm bg-white rounded-2xl p-6 shadow-2xl">
+            <h3 className="font-bold text-slate-800 mb-6 text-center">Delete Department?</h3>
             <div className="flex gap-3">
-              <button
-                onClick={() => setDeleteId(null)}
-                className="flex-1 rounded-xl border border-slate-200 bg-white py-2.5 text-[14px] font-bold text-slate-600 hover:bg-slate-50 transition"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={confirmDelete}
-                className="flex-1 rounded-xl bg-[#e31e24] py-2.5 text-[14px] font-bold text-white shadow-sm shadow-[#e31e24]/20 hover:bg-[#c9181f] transition"
-              >
-                Delete
-              </button>
+              <button onClick={() => setDeleteId(null)} className="flex-1 border py-2.5 rounded-xl font-bold text-slate-600">Cancel</button>
+              <button onClick={confirmDelete} className="flex-1 bg-red-600 text-white py-2.5 rounded-xl font-bold">Delete</button>
             </div>
           </div>
         </div>

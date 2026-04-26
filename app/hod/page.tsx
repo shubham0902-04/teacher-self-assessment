@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import HODSidebar from "@/app/components/hod/HODSidebar";
 import Link from "next/link";
 import { useAcademicYear } from "@/app/hooks/useAcademicYear";
 import {
@@ -92,9 +91,7 @@ export default function HODDashboard() {
     counts.pending > 0 ? 2 : 1;
 
   return (
-    <div className="flex min-h-screen bg-[#f8fafc] text-slate-800 font-sans">
-      <HODSidebar />
-      <main className="flex-1 overflow-y-auto">
+    <main className="flex-1 overflow-y-auto">
         {/* Header */}
         <div className="bg-white/80 backdrop-blur-md border-b border-slate-200/60 px-5 sm:px-8 py-4 flex items-center justify-between sticky top-0 z-20">
           <div>
@@ -261,6 +258,5 @@ export default function HODDashboard() {
 
         </div>
       </main>
-    </div>
-  );
-}
+    );
+  }

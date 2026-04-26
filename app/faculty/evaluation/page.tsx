@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import FacultySidebar from "@/app/components/faculty/FacultySidebar";
 import { useAcademicYear } from "@/app/hooks/useAcademicYear";
 import {
   ChevronDown,
@@ -610,46 +609,37 @@ export default function EvaluationFormPage() {
 
   if (loading) {
     return (
-      <div className="flex min-h-screen bg-[#f8fafc]">
-        <FacultySidebar />
-        <main className="flex-1 flex items-center justify-center">
-          <div className="flex flex-col items-center gap-3 text-slate-400">
-            <Loader2 size={28} className="animate-spin" />
-            <p className="text-sm font-medium">Loading evaluation form...</p>
-          </div>
-        </main>
-      </div>
+      <main className="flex-1 flex items-center justify-center bg-[#f8fafc]">
+        <div className="flex flex-col items-center gap-3 text-slate-400">
+          <Loader2 size={28} className="animate-spin" />
+          <p className="text-sm font-medium">Loading evaluation form...</p>
+        </div>
+      </main>
     );
   }
 
   if (categories.length === 0) {
     return (
-      <div className="flex min-h-screen bg-[#f8f8f8]">
-        <FacultySidebar />
-        <main className="flex-1 flex items-center justify-center p-6">
-          <div className="text-center max-w-sm">
-            <div className="w-16 h-16 rounded-2xl bg-amber-50 flex items-center justify-center mx-auto mb-4">
-              <AlertCircle size={28} className="text-amber-500" />
-            </div>
-            <h3 className="text-lg font-semibold text-[#111] mb-2">
-              No Categories Assigned
-            </h3>
-            <p className="text-sm text-gray-400">
-              Please contact your administrator to assign evaluation categories.
-            </p>
+      <main className="flex-1 flex items-center justify-center p-6 bg-[#f8fafc]">
+        <div className="text-center max-w-sm">
+          <div className="w-16 h-16 rounded-2xl bg-amber-50 flex items-center justify-center mx-auto mb-4">
+            <AlertCircle size={28} className="text-amber-500" />
           </div>
-        </main>
-      </div>
+          <h3 className="text-lg font-semibold text-[#111] mb-2">
+            No Categories Assigned
+          </h3>
+          <p className="text-sm text-gray-400">
+            Please contact your administrator to assign evaluation categories.
+          </p>
+        </div>
+      </main>
     );
   }
 
   // ── Main UI ─────────────────────────────────────────────────────────────────
 
   return (
-    <div className="flex min-h-screen bg-[#f8fafc] text-slate-800 font-sans">
-      <FacultySidebar />
-
-      <main className="flex-1 overflow-y-auto">
+    <main className="flex-1 overflow-y-auto">
         {/* STICKY HEADER */}
         <div className="sticky top-0 z-20 bg-white/80 backdrop-blur-md border-b border-slate-200/60 px-5 sm:px-8 py-3.5 flex items-center justify-between gap-4">
           <div>
@@ -1101,6 +1091,5 @@ export default function EvaluationFormPage() {
           )}
         </div>
       </main>
-    </div>
-  );
-}
+    );
+  }

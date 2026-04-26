@@ -1,6 +1,5 @@
 "use client";
 
-import HODSidebar from "@/app/components/hod/HODSidebar";
 import { useEffect, useState } from "react";
 import { Search, X, Save, Users, CheckSquare, Building2 } from "lucide-react";
 import { toast } from "sonner";
@@ -173,10 +172,7 @@ export default function FacultyCategoryAssignmentPage() {
   // ---------------- UI ----------------
 
   return (
-    <div className="flex min-h-screen bg-[#f8fafc] text-slate-800 font-sans">
-      <HODSidebar />
-
-      <main className="flex-1 overflow-y-auto px-5 sm:px-8 py-8 space-y-6 max-w-[1400px] mx-auto w-full">
+    <main className="flex-1 overflow-y-auto px-5 sm:px-8 py-8 space-y-6 max-w-[1200px] mx-auto w-full">
         {/* HEADER */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-6 rounded-2xl border border-slate-200/60 shadow-sm relative overflow-hidden">
           <div className="absolute right-0 top-0 w-64 h-64 bg-[#00a859]/5 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none" />
@@ -413,6 +409,5 @@ export default function FacultyCategoryAssignmentPage() {
           )}
         </div>
       </main>
-    </div>
-  );
-}
+    );
+  }

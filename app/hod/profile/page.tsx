@@ -1,119 +1,86 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import HODSidebar from "@/app/components/hod/HODSidebar";
 import { GraduationCap, Building2, Mail, BadgeCheck, User, CalendarDays, LogOut } from "lucide-react";
 import { useRouter } from "next/navigation";
-
-type UserData = {
-  name?: string;
-  email?: string;
-  role?: string;
-  employeeId?: string;
-  departmentId?: { departmentName?: string; departmentCode?: string } | string;
-};
+import { useAuth } from "@/app/hooks/useAuth";
 
 export default function HODProfilePage() {
   const router = useRouter();
-  const [user, setUser] = useState<UserData>({});
-  const [department, setDepartment] = useState("");
-  const [mounted, setMounted] = useState(false);
+  const { userName, userEmail } = useAuth();
+  const [deptName, setDeptName] = useState("");
 
   useEffect(() => {
-    setMounted(true);
-    try {
-      const u = localStorage.getItem("user");
-      if (u) setUser(JSON.parse(u));
-      const d = localStorage.getItem("hodDepartmentName");
-      if (d) setDepartment(d);
-    } catch {}
+    const d = localStorage.getItem("hodDepartmentName");
+    if (d) setDeptName(d);
   }, []);
 
   async function handleLogout() {
     await fetch("/api/auth/logout", { method: "POST" });
-    ["role", "user", "hodDepartmentName"].forEach((k) => localStorage.removeItem(k));
+    localStorage.removeItem("user");
+    localStorage.removeItem("role");
     router.push("/login");
   }
 
-  const initial = user.name ? user.name.charAt(0).toUpperCase() : "H";
-
-  if (!mounted) return null;
-
-  const INFO = [
-    { label: "Full Name",    value: user.name || "—",         icon: User },
-    { label: "Email",        value: user.email || "—",        icon: Mail },
-    { label: "Employee ID",  value: user.employeeId || "—",   icon: BadgeCheck },
-    { label: "Department",   value: department || "—",        icon: Building2 },
-    { label: "Role",         value: user.role || "HOD",       icon: GraduationCap },
-    { label: "Academic Year", value: new Date().getFullYear() + "–" + (new Date().getFullYear() + 1), icon: CalendarDays },
+  const items = [
+    { label: "Name", value: userName || "HOD", icon: User },
+    { label: "Email", value: userEmail || "—", icon: Mail },
+    { label: "Department", value: deptName || "—", icon: Building2 },
+    { label: "Role", value: "Department Head", icon: BadgeCheck, color: "text-[#00a859]" },
+    { label: "Last Activity", value: new Date().toLocaleDateString(), icon: CalendarDays },
   ];
 
   return (
-    <div className="flex min-h-screen bg-[#f8fafc] text-slate-800 font-sans">
-      <HODSidebar />
-      <main className="flex-1 overflow-y-auto">
-
-        {/* Header */}
-        <div className="bg-white/80 backdrop-blur-md border-b border-slate-200/60 px-5 sm:px-8 py-4 flex items-center sticky top-0 z-20">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-[#00a859]/10 flex items-center justify-center">
-              <User size={16} className="text-[#00a859]" />
-            </div>
-            <div>
-              <h1 className="text-[18px] sm:text-[20px] font-bold text-slate-800 tracking-tight leading-none mb-1">My Profile</h1>
-              <p className="text-[12px] text-slate-500 font-medium">Your account information</p>
-            </div>
+    <main className="flex-1 overflow-y-auto px-5 sm:px-8 py-8 space-y-6 max-w-[1200px] mx-auto w-full">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="flex items-center gap-4">
+          <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-[#00a859] flex items-center justify-center border border-emerald-100 shadow-sm">
+            <User size={24} />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold text-slate-800 tracking-tight">My Profile</h1>
+            <p className="text-[13px] text-slate-500 font-medium">Your personal account details</p>
           </div>
         </div>
+      </div>
 
-        <div className="px-5 sm:px-8 py-6 max-w-2xl mx-auto space-y-6">
-
-          {/* Avatar card */}
-          <div className="bg-white rounded-2xl border border-slate-200/60 shadow-sm p-6 sm:p-8 flex items-center gap-5 sm:gap-6 relative overflow-hidden">
-            {/* Decoration */}
-            <div className="absolute top-0 right-0 w-32 h-32 bg-[#00a859]/10 rounded-full blur-3xl"></div>
-            
-            <div className="relative z-10 w-20 h-20 sm:w-24 sm:h-24 rounded-2xl bg-gradient-to-br from-[#00a859] to-[#008f4c] flex items-center justify-center text-3xl sm:text-4xl font-bold text-white shrink-0 shadow-lg shadow-[#00a859]/20">
-              {initial}
-            </div>
-            <div className="relative z-10">
-              <p className="text-[20px] sm:text-[24px] font-bold text-slate-800 tracking-tight leading-tight mb-1">{user.name || "HOD"}</p>
-              <p className="text-[13px] text-slate-500 font-medium mb-3">{user.email}</p>
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-md bg-[#00a859]/10 text-[#00a859] text-[10px] font-bold uppercase tracking-wider border border-[#00a859]/20">
-                <GraduationCap size={12} />
-                Head of Department
-              </span>
-            </div>
-          </div>
-
-          {/* Info grid */}
-          <div className="bg-white rounded-2xl border border-slate-200/60 shadow-sm p-6 sm:p-8">
-            <p className="text-[14px] font-bold text-slate-800 mb-5">Account Details</p>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-6 gap-x-8">
-              {INFO.map(({ label, value, icon: Icon }) => (
-                <div key={label} className="flex items-start gap-3.5">
-                  <div className="w-8 h-8 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center shrink-0 shadow-sm mt-0.5">
-                    <Icon size={14} className="text-slate-500" />
+      <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
+        <div className="p-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div className="space-y-6">
+              {items.map((item, i) => (
+                <div key={i} className="flex items-center gap-4 p-4 rounded-2xl bg-slate-50/50 border border-slate-100 hover:bg-white hover:shadow-sm transition-all duration-200">
+                  <div className="w-10 h-10 rounded-xl bg-white border border-slate-100 flex items-center justify-center text-slate-400">
+                    <item.icon size={20} />
                   </div>
                   <div>
-                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1">{label}</p>
-                    <p className="text-[13px] font-semibold text-slate-800">{value}</p>
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{item.label}</p>
+                    <p className={`text-[14px] font-bold ${item.color || "text-slate-700"}`}>{item.value}</p>
                   </div>
                 </div>
               ))}
             </div>
+            
+            <div className="flex flex-col items-center justify-center p-8 bg-slate-50 rounded-3xl border border-dashed border-slate-200">
+              <div className="w-20 h-20 rounded-3xl bg-[#00a859]/10 flex items-center justify-center text-[#00a859] mb-4">
+                <GraduationCap size={40} />
+              </div>
+              <h3 className="text-lg font-bold text-slate-800 mb-1">Institutional Access</h3>
+              <p className="text-sm text-slate-500 text-center max-w-[200px]">You have full administrative access to your department evaluations.</p>
+            </div>
           </div>
+        </div>
 
-          {/* Sign out */}
-          <button
+        <div className="px-8 py-6 bg-slate-50 border-t border-slate-100 flex justify-end">
+          <button 
             onClick={handleLogout}
-            className="w-full flex items-center justify-center gap-2 py-3.5 rounded-2xl bg-white border border-slate-200/60 text-[13px] font-bold text-slate-600 shadow-sm hover:shadow-md hover:bg-[#e31e24]/10 hover:text-[#e31e24] hover:border-[#e31e24]/20 transition-all duration-200 group"
+            className="flex items-center gap-2 px-6 py-3 bg-red-50 text-red-600 rounded-xl font-bold border border-red-100 hover:bg-red-500 hover:text-white transition-all shadow-sm"
           >
-            <LogOut size={16} className="text-slate-400 group-hover:text-[#e31e24] transition-colors" />
-            Sign Out
+            <LogOut size={18} />
+            Logout System
           </button>
         </div>
-      </main>
-    </div>
+      </div>
+    </main>
   );
 }

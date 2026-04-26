@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import FacultySidebar from "@/app/components/faculty/FacultySidebar";
 import Link from "next/link";
 import { useAcademicYear } from "@/app/hooks/useAcademicYear";
 import {
@@ -102,10 +101,7 @@ export default function FacultyDashboard() {
   const canEdit = !data?.evaluationStatus || ["NOT_STARTED", "DRAFT", "RETURNED_BY_HOD", "RETURNED_BY_PRINCIPAL"].includes(data.evaluationStatus);
 
   return (
-    <div className="flex min-h-screen bg-[#f8fafc] text-slate-800 font-sans">
-      <FacultySidebar />
-
-      <main className="flex-1 overflow-y-auto px-5 sm:px-8 py-8 space-y-6 max-w-[1200px] mx-auto w-full">
+    <main className="flex-1 overflow-y-auto px-5 sm:px-8 py-8 space-y-6 max-w-[1200px] mx-auto w-full">
         {/* Hero Banner */}
         <div className="rounded-3xl p-6 sm:p-8 relative overflow-hidden bg-slate-900 shadow-lg shadow-slate-900/10">
           <div className="absolute right-0 top-0 w-64 h-64 bg-[#00a859]/20 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none" />
@@ -302,6 +298,5 @@ export default function FacultyDashboard() {
           </div>
         )}
       </main>
-    </div>
-  );
-}
+    );
+  }

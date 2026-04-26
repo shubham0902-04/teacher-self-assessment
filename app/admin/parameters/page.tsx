@@ -13,6 +13,7 @@ import {
   Plus,
 } from "lucide-react";
 import { toast } from "sonner";
+import CustomSelect from "@/app/components/ui/CustomSelect";
 
 type Category = {
   _id: string;
@@ -357,7 +358,7 @@ export default function AdminParametersPage() {
           />
         </div>
 
-        {/* NEW CATEGORY-WISE GRID */}
+        {/* CATEGORY-WISE GRID */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {categories.length === 0 && !loading && (
             <div className="col-span-full py-16 text-center text-slate-400 bg-white rounded-2xl border border-slate-200/60 shadow-sm">
@@ -474,7 +475,7 @@ export default function AdminParametersPage() {
               </button>
             </div>
 
-            {/* Modal body — scrollable */}
+            {/* Modal body */}
             <div className="overflow-y-auto px-6 py-5">
               <form
                 id="parameter-form"
@@ -486,20 +487,11 @@ export default function AdminParametersPage() {
                   <label className="mb-1.5 block text-[13px] font-bold text-slate-700">
                     Category <span className="text-[#e31e24]">*</span>
                   </label>
-                  <select
+                  <CustomSelect
+                    options={[{ value: "", label: "Select Category" }, ...categories.map(cat => ({ value: cat._id, label: cat.categoryName }))]}
                     value={form.categoryId}
-                    onChange={(e) =>
-                      handleInputChange("categoryId", e.target.value)
-                    }
-                    className="w-full rounded-xl border border-slate-200 px-4 py-3 text-slate-800 text-[14px] outline-none focus:border-[#00a859] focus:ring-2 focus:ring-[#00a859]/20 transition bg-slate-50 focus:bg-white"
-                  >
-                    <option value="">Select Category</option>
-                    {categories.map((category) => (
-                      <option key={category._id} value={category._id}>
-                        {category.categoryName}
-                      </option>
-                    ))}
-                  </select>
+                    onChange={(val) => handleInputChange("categoryId", val)}
+                  />
                 </div>
 
                 {/* Parameter Name */}

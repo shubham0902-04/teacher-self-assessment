@@ -2,9 +2,18 @@
 
 import AdminSidebar from "@/app/components/admin/AdminSidebar";
 import { useEffect, useState } from "react";
-import { Search, X, Save, Users, CheckSquare, Building2 } from "lucide-react";
+import {
+  Search,
+  X,
+  Save,
+  Users,
+  CheckSquare,
+  Building2,
+  Filter,
+} from "lucide-react";
 import { toast } from "sonner";
 import { useAcademicYear } from "@/app/hooks/useAcademicYear";
+import CustomSelect from "@/app/components/ui/CustomSelect";
 
 type Faculty = {
   _id: string;
@@ -24,11 +33,6 @@ type Assignment = {
   academicYear: string;
 };
 
-type AssignmentResponse = {
-  success: boolean;
-  data: Assignment[];
-};
-
 export default function FacultyCategoryAssignmentPage() {
   const { academicYear } = useAcademicYear();
   const [faculties, setFaculties] = useState<Faculty[]>([]);
@@ -39,7 +43,6 @@ export default function FacultyCategoryAssignmentPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
-  // Unique departments from faculties
   const departments = Array.from(
     new Map(
       faculties
@@ -67,8 +70,6 @@ export default function FacultyCategoryAssignmentPage() {
       selected[f._id]?.length === categories.length && categories.length > 0,
   ).length;
 
-  // ---------------- LOAD ----------------
-
   useEffect(() => {
     async function loadData() {
       try {
@@ -79,18 +80,18 @@ export default function FacultyCategoryAssignmentPage() {
           fetch("/api/faculty-category-assignments"),
         ]);
 
-        const [facData, catData, assData]: [
-          { success: boolean; data: Faculty[] },
-          { success: boolean; data: Category[] },
-          AssignmentResponse,
-        ] = await Promise.all([facRes.json(), catRes.json(), assRes.json()]);
+        const [facData, catData, assData] = await Promise.all([
+          facRes.json(),
+          catRes.json(),
+          assRes.json(),
+        ]);
 
         if (facData.success) setFaculties(facData.data);
         if (catData.success) setCategories(catData.data);
 
         if (assData.success) {
           const mapping: Record<string, string[]> = {};
-          assData.data.forEach((item) => {
+          assData.data.forEach((item: any) => {
             mapping[item.facultyId] = item.assignedCategories ?? [];
           });
           setSelected(mapping);
@@ -103,8 +104,6 @@ export default function FacultyCategoryAssignmentPage() {
     }
     loadData();
   }, []);
-
-  // ---------------- TOGGLE ----------------
 
   function toggleCategory(facultyId: string, categoryId: string) {
     setSelected((prev) => {
@@ -124,9 +123,8 @@ export default function FacultyCategoryAssignmentPage() {
       const updated = { ...prev };
       faculties.forEach((f) => {
         if (!updated[f._id]) updated[f._id] = [];
-        if (!updated[f._id].includes(categoryId)) {
+        if (!updated[f._id].includes(categoryId))
           updated[f._id] = [...updated[f._id], categoryId];
-        }
       });
       return updated;
     });
@@ -139,8 +137,6 @@ export default function FacultyCategoryAssignmentPage() {
       [facultyId]: categories.map((c) => c._id),
     }));
   }
-
-  // ---------------- SAVE ----------------
 
   async function saveAll() {
     const payload = Object.keys(selected).map((facultyId) => ({
@@ -157,109 +153,84 @@ export default function FacultyCategoryAssignmentPage() {
         body: JSON.stringify(payload),
       });
 
-      const data = await res.json();
-      if (data.success) {
+      if ((await res.json()).success)
         toast.success("Assignments saved successfully");
-      } else {
-        toast.error("Save failed — try again");
-      }
+      else toast.error("Save failed");
     } catch {
-      toast.error("Network error — try again");
+      toast.error("Network error");
     } finally {
       setSaving(false);
     }
   }
 
-  // ---------------- UI ----------------
-
   return (
     <div className="flex min-h-screen bg-[#f8fafc] text-slate-800 font-sans">
       <AdminSidebar />
-
       <main className="flex-1 overflow-y-auto px-5 sm:px-8 py-8 space-y-6 max-w-[1400px] mx-auto w-full">
-        {/* HEADER */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-6 rounded-2xl border border-slate-200/60 shadow-sm relative overflow-hidden">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-6 rounded-2xl border border-slate-200 shadow-sm relative overflow-hidden">
           <div className="absolute right-0 top-0 w-64 h-64 bg-[#00a859]/5 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none" />
           <div className="relative z-10">
             <h1 className="text-2xl font-bold text-slate-800 tracking-tight mb-1">
               Category Assignment
             </h1>
             <p className="text-[13px] text-slate-500 font-medium">
-              Academic Year: <span className="text-slate-700 font-bold">{academicYear}</span>
+              Academic Year:{" "}
+              <span className="text-slate-700 font-bold">{academicYear}</span>
             </p>
           </div>
           <button
             onClick={saveAll}
             disabled={saving}
-            className="relative z-10 inline-flex items-center gap-2 rounded-xl bg-[#00a859] px-5 py-2.5 text-[14px] font-bold text-white shadow-sm shadow-[#00a859]/20 transition-all hover:bg-[#008f4c] hover:-translate-y-0.5 disabled:opacity-50 disabled:hover:translate-y-0"
+            className="relative z-10 inline-flex items-center gap-2 rounded-xl bg-[#00a859] px-5 py-2.5 text-[14px] font-bold text-white shadow-sm shadow-[#00a859]/20 transition-all hover:bg-[#008f4c] hover:-translate-y-0.5 disabled:opacity-50"
           >
             {saving ? (
-              <>
-                <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                Saving...
-              </>
+              <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
             ) : (
-              <>
-                <Save size={16} />
-                Save Assignments
-              </>
+              <Save size={16} />
             )}
+            {saving ? "Saving..." : "Save Assignments"}
           </button>
         </div>
 
-        {/* STAT PILLS */}
-        {!loading && (
-          <div className="flex flex-wrap gap-3">
-            <span className="text-[11px] font-bold uppercase tracking-wider bg-blue-50 text-blue-600 px-3 py-1.5 rounded-lg border border-blue-100/50">
-              {faculties.length} faculty
-            </span>
-            <span className="text-[11px] font-bold uppercase tracking-wider bg-indigo-50 text-indigo-600 px-3 py-1.5 rounded-lg border border-indigo-100/50">
-              {categories.length} categories
-            </span>
-            <span className="text-[11px] font-bold uppercase tracking-wider bg-[#00a859]/10 text-[#00a859] px-3 py-1.5 rounded-lg border border-[#00a859]/20">
-              {fullyAssigned} fully assigned
-            </span>
-          </div>
-        )}
+        <div className="flex flex-wrap gap-3">
+          <span className="text-[11px] font-bold uppercase tracking-wider bg-blue-50 text-blue-600 px-3 py-1.5 rounded-lg border border-blue-100">
+            {faculties.length} faculty
+          </span>
+          <span className="text-[11px] font-bold uppercase tracking-wider bg-indigo-50 text-indigo-600 px-3 py-1.5 rounded-lg border border-indigo-100">
+            {categories.length} categories
+          </span>
+          <span className="text-[11px] font-bold uppercase tracking-wider bg-emerald-50 text-emerald-600 px-3 py-1.5 rounded-lg border border-emerald-100">
+            {fullyAssigned} fully assigned
+          </span>
+        </div>
 
-        {/* BULK SELECT & FILTERS */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-          {/* Filters */}
           <div className="flex flex-col sm:flex-row gap-3">
-            <div className="flex items-center gap-2 flex-1 bg-white border border-slate-200/60 rounded-xl px-4 py-2.5 shadow-sm focus-within:border-[#00a859] focus-within:ring-2 focus-within:ring-[#00a859]/20 transition-all">
+            <div className="flex items-center gap-2 flex-1 bg-white border border-slate-200 rounded-xl px-4 py-2.5 shadow-sm focus-within:border-[#00a859] transition-all">
               <Search size={16} className="text-slate-400 shrink-0" />
               <input
-                type="text"
-                placeholder="Search faculty..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="flex-1 text-[13px] font-medium text-slate-800 placeholder:text-slate-400 outline-none bg-transparent"
+                placeholder="Search faculty..."
+                className="flex-1 text-[13px] outline-none bg-transparent"
               />
-              {search && (
-                <button
-                  onClick={() => setSearch("")}
-                  className="text-slate-400 hover:text-slate-600 transition p-1 rounded-lg hover:bg-slate-100"
-                >
-                  <X size={14} />
-                </button>
-              )}
             </div>
 
-            <select
+            <CustomSelect
+              options={[
+                { value: "", label: "All Departments" },
+                ...departments.map((d) => ({
+                  value: d._id,
+                  label: d.departmentName,
+                })),
+              ]}
               value={departmentFilter}
-              onChange={(e) => setDepartmentFilter(e.target.value)}
-              className="bg-white border border-slate-200/60 rounded-xl px-4 py-2.5 text-[13px] font-medium text-slate-700 outline-none focus:border-[#00a859] focus:ring-2 focus:ring-[#00a859]/20 shadow-sm transition-all"
-            >
-              <option value="">All Departments</option>
-              {departments.map((dept) => (
-                <option key={dept._id} value={dept._id}>
-                  {dept.departmentName}
-                </option>
-              ))}
-            </select>
+              onChange={setDepartmentFilter}
+              icon={Filter}
+              className="w-full sm:w-64"
+            />
           </div>
 
-          {/* Bulk Select */}
           {!loading && categories.length > 0 && (
             <div className="flex flex-col gap-2">
               <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
@@ -270,10 +241,9 @@ export default function FacultyCategoryAssignmentPage() {
                   <button
                     key={cat._id}
                     onClick={() => bulkSelectCategory(cat._id)}
-                    className="inline-flex items-center gap-1.5 text-[11px] font-bold px-3 py-1.5 rounded-lg bg-white border border-slate-200/60 text-slate-600 hover:border-[#00a859] hover:text-[#00a859] hover:bg-[#00a859]/5 transition-all shadow-sm"
+                    className="inline-flex items-center gap-1.5 text-[11px] font-bold px-3 py-1.5 rounded-lg bg-white border border-slate-200 text-slate-600 hover:border-[#00a859] hover:text-[#00a859] hover:bg-emerald-50 transition-all shadow-sm"
                   >
-                    <CheckSquare size={14} />
-                    {cat.categoryName}
+                    <CheckSquare size={14} /> {cat.categoryName}
                   </button>
                 ))}
               </div>
@@ -281,145 +251,97 @@ export default function FacultyCategoryAssignmentPage() {
           )}
         </div>
 
-        {/* TABLE */}
-        <div className="rounded-2xl border border-slate-200/60 bg-white shadow-sm overflow-hidden">
+        <div className="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
           {loading ? (
-            <div className="py-16 flex flex-col items-center gap-3 text-slate-400">
-              <div className="w-6 h-6 border-2 border-[#00a859]/20 border-t-[#00a859] rounded-full animate-spin" />
-              <span className="text-[13px] font-medium">Loading assignments...</span>
-            </div>
-          ) : faculties.length === 0 ? (
-            <div className="py-16 text-center text-slate-400 text-[13px] font-medium">
-              No faculty members found — create faculty users first
+            <div className="py-20 text-center text-slate-400">
+              <div className="w-6 h-6 border-2 border-[#00a859]/20 border-t-[#00a859] rounded-full animate-spin mx-auto mb-2" />{" "}
+              Loading...
             </div>
           ) : (
             <div className="overflow-x-auto">
               <table className="min-w-full text-left">
                 <thead className="bg-slate-50 border-b border-slate-100">
                   <tr>
-                    <th className="px-6 py-4 sticky left-0 bg-slate-50 z-10 text-[11px] font-bold text-slate-400 uppercase tracking-wider border-r border-slate-100 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.05)]">
-                      <div className="flex items-center gap-2">
-                        <Users size={14} />
-                        Faculty
-                      </div>
+                    <th className="px-6 py-4 sticky left-0 bg-slate-50 z-10 text-[11px] font-bold text-slate-400 uppercase border-r">
+                      Faculty
                     </th>
-                    <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+                    <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase">
                       Department
                     </th>
                     {categories.map((cat) => (
                       <th
                         key={cat._id}
-                        className="px-6 py-4 text-center whitespace-nowrap text-[11px] font-bold text-slate-400 uppercase tracking-wider"
+                        className="px-6 py-4 text-center text-[11px] font-bold text-slate-400 uppercase"
                       >
                         {cat.categoryName}
                       </th>
                     ))}
-                    <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider text-center bg-slate-100/50">
+                    <th className="px-6 py-4 text-center text-[11px] font-bold text-slate-400 uppercase bg-slate-100/50">
                       All
                     </th>
                   </tr>
                 </thead>
-
                 <tbody className="divide-y divide-slate-100 bg-white">
-                  {filteredFaculties.length === 0 ? (
-                    <tr>
-                      <td
-                        colSpan={categories.length + 3}
-                        className="px-6 py-12 text-center text-slate-400 text-[13px] font-medium bg-slate-50/50"
+                  {filteredFaculties.map((fac) => {
+                    const assigned = selected[fac._id]?.length ?? 0;
+                    const allDone =
+                      assigned === categories.length && categories.length > 0;
+                    return (
+                      <tr
+                        key={fac._id}
+                        className="hover:bg-slate-50 transition group"
                       >
-                        No faculty match your search
-                      </td>
-                    </tr>
-                  ) : (
-                    filteredFaculties.map((fac) => {
-                      const assignedCount = selected[fac._id]?.length ?? 0;
-                      const allAssigned =
-                        assignedCount === categories.length &&
-                        categories.length > 0;
-                      const deptName =
-                        typeof fac.departmentId === "object"
-                          ? fac.departmentId?.departmentName
-                          : null;
-
-                      return (
-                        <tr
-                          key={fac._id}
-                          className="hover:bg-slate-50/50 transition-colors group"
-                        >
-                          <td className="px-6 py-4 sticky left-0 bg-white group-hover:bg-slate-50/50 z-10 border-r border-slate-100 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.05)] transition-colors">
-                            <div className="flex items-center gap-3">
-                              <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-[12px] font-bold text-slate-600 shrink-0 border border-slate-200">
-                                {fac.name.charAt(0).toUpperCase()}
-                              </div>
-                              <div>
-                                <p className="font-bold text-slate-700 text-[13px] leading-tight">
-                                  {fac.name}
-                                </p>
-                                <p className="text-[11px] font-medium text-slate-400 mt-0.5">
-                                  {assignedCount}/{categories.length} assigned
-                                </p>
-                              </div>
+                        <td className="px-6 py-4 sticky left-0 bg-white group-hover:bg-slate-50 z-10 border-r">
+                          <div className="flex items-center gap-3">
+                            <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-[12px] font-bold text-slate-600 border">
+                              {fac.name.charAt(0)}
                             </div>
+                            <div>
+                              <p className="font-bold text-slate-700 text-[13px] leading-tight">
+                                {fac.name}
+                              </p>
+                              <p className="text-[11px] text-slate-400">
+                                {assigned}/{categories.length} assigned
+                              </p>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4">
+                          {typeof fac.departmentId === "object" ? (
+                            <span className="inline-flex items-center gap-1.5 text-[11px] font-bold bg-blue-50 text-blue-600 px-2.5 py-1 rounded-md border border-blue-100">
+                              <Building2 size={12} />{" "}
+                              {fac.departmentId?.departmentName}
+                            </span>
+                          ) : (
+                            "—"
+                          )}
+                        </td>
+                        {categories.map((cat) => (
+                          <td key={cat._id} className="px-6 py-4 text-center">
+                            <input
+                              type="checkbox"
+                              checked={
+                                selected[fac._id]?.includes(cat._id) ?? false
+                              }
+                              onChange={() => toggleCategory(fac._id, cat._id)}
+                              className="w-4 h-4 rounded border-slate-300 text-[#00a859] focus:ring-[#00a859] cursor-pointer"
+                            />
                           </td>
-
-                          <td className="px-6 py-4">
-                            {deptName ? (
-                              <span className="inline-flex items-center gap-1.5 text-[11px] font-bold bg-blue-50 text-blue-600 px-2.5 py-1 rounded-md border border-blue-100/50">
-                                <Building2 size={12} />
-                                {deptName}
-                              </span>
-                            ) : (
-                              <span className="text-slate-300 text-[13px]">—</span>
-                            )}
-                          </td>
-
-                          {categories.map((cat) => {
-                            const checked =
-                              selected[fac._id]?.includes(cat._id) ?? false;
-                            return (
-                              <td
-                                key={cat._id}
-                                className="px-6 py-4 text-center bg-slate-50/10"
-                              >
-                                <div className="flex items-center justify-center">
-                                  <input
-                                    type="checkbox"
-                                    checked={checked}
-                                    onChange={() =>
-                                      toggleCategory(fac._id, cat._id)
-                                    }
-                                    className="w-4 h-4 rounded border-slate-300 text-[#00a859] focus:ring-[#00a859] cursor-pointer"
-                                  />
-                                </div>
-                              </td>
-                            );
-                          })}
-
-                          <td className="px-6 py-4 text-center bg-slate-50/30">
-                            <button
-                              onClick={() => bulkSelectFaculty(fac._id)}
-                              disabled={allAssigned}
-                              className={`text-[11px] font-bold px-3 py-1.5 rounded-lg transition-colors ${
-                                allAssigned
-                                  ? "bg-[#00a859]/10 text-[#00a859] cursor-default border border-[#00a859]/20"
-                                  : "bg-slate-100 text-slate-500 border border-slate-200 hover:bg-[#00a859] hover:text-white hover:border-[#00a859]"
-                              }`}
-                            >
-                              {allAssigned ? "All Selected" : "Select All"}
-                            </button>
-                          </td>
-                        </tr>
-                      );
-                    })
-                  )}
+                        ))}
+                        <td className="px-6 py-4 text-center bg-slate-50/50">
+                          <button
+                            onClick={() => bulkSelectFaculty(fac._id)}
+                            disabled={allDone}
+                            className={`text-[11px] font-bold px-3 py-1.5 rounded-lg border transition ${allDone ? "bg-emerald-50 text-emerald-600 border-emerald-100" : "bg-white text-slate-500 hover:border-[#00a859] hover:text-[#00a859]"}`}
+                          >
+                            {allDone ? "Selected" : "Select All"}
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
-            </div>
-          )}
-
-          {!loading && filteredFaculties.length > 0 && (
-            <div className="px-6 py-3 border-t border-slate-100 text-[11px] font-bold text-slate-400 bg-slate-50 uppercase tracking-wider">
-              Showing {filteredFaculties.length} of {faculties.length} faculty members
             </div>
           )}
         </div>

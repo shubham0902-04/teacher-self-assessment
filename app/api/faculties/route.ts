@@ -23,6 +23,11 @@ export async function GET() {
           if (hodUser && hodUser.departmentId) {
             filter.departmentId = hodUser.departmentId;
           }
+        } else if (payload.role === "Principal") {
+          const principalUser = await User.findById(payload.id).select("schoolId");
+          if (principalUser && principalUser.schoolId) {
+            filter.schoolId = principalUser.schoolId;
+          }
         }
       } catch (err) {
         console.error("JWT verification failed in faculties API", err);

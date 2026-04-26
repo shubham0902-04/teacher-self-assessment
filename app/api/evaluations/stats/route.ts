@@ -4,7 +4,6 @@ import TeacherEvaluation from "@/models/TeacherEvaluation";
 import { cookies } from "next/headers";
 import { jwtVerify } from "jose";
 
-/** Computes the current academic year dynamically */
 function getCurrentAcademicYear(): string {
   const now = new Date();
   const year = now.getFullYear();
@@ -17,33 +16,21 @@ export async function GET(req: Request) {
   try {
     await connectDB();
 
-    // ── Auth — only Admin and Chairman can access stats ───────────────────────
     const cookieStore = await cookies();
     const token = cookieStore.get("token")?.value;
-    if (!token) {
-      return NextResponse.json(
-        { success: false, message: "Unauthorized" },
-        { status: 401 },
-      );
-    }
+    if (!token) return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 });
 
     const secret = new TextEncoder().encode(process.env.JWT_SECRET);
     const { payload } = await jwtVerify(token, secret);
     const role = payload.role as string;
 
-    if (role !== "Admin" && role !== "Chairman") {
-      return NextResponse.json(
-        { success: false, message: "Forbidden" },
-        { status: 403 },
-      );
+    if (role !== "Admin" && role !== "Chairman" && role !== "Director") {
+      return NextResponse.json({ success: false, message: "Forbidden" }, { status: 403 });
     }
 
-    // ── Query params ──────────────────────────────────────────────────────────
     const { searchParams } = new URL(req.url);
-    const academicYear =
-      searchParams.get("academicYear") || getCurrentAcademicYear();
+    const academicYear = searchParams.get("academicYear") || getCurrentAcademicYear();
 
-    // ── Fetch all evaluations for the academic year ───────────────────────────
     const evaluations = await TeacherEvaluation.find({ academicYear })
       .populate("facultyId", "name email")
       .populate("departmentId", "departmentName departmentCode")
@@ -52,80 +39,103 @@ export async function GET(req: Request) {
 
     const total = evaluations.length;
 
-    // ── Status breakdown ──────────────────────────────────────────────────────
-    const statusList = [
-      "DRAFT",
-      "SUBMITTED_TO_HOD",
-      "RETURNED_BY_HOD",
-      "SUBMITTED_TO_PRINCIPAL",
-      "RETURNED_BY_PRINCIPAL",
-      "FINALIZED",
-    ];
+    // Status breakdown
+    const statusList = ["DRAFT", "SUBMITTED_TO_HOD", "RETURNED_BY_HOD", "SUBMITTED_TO_PRINCIPAL", "RETURNED_BY_PRINCIPAL", "FINALIZED"];
     const byStatus: Record<string, number> = {};
-    for (const s of statusList) byStatus[s] = 0;
-    for (const ev of evaluations) {
+    statusList.forEach(s => byStatus[s] = 0);
+    evaluations.forEach(ev => {
       const s = ev.status || "DRAFT";
       byStatus[s] = (byStatus[s] || 0) + 1;
-    }
+    });
 
-    // ── By department breakdown ───────────────────────────────────────────────
-    const deptMap: Record<
-      string,
-      { departmentName: string; count: number; finalized: number }
-    > = {};
-    for (const ev of evaluations) {
-      const dept = ev.departmentId as {
-        _id: string;
-        departmentName: string;
-      } | null;
-      if (!dept) continue;
-      const key = dept._id?.toString() ?? "unknown";
-      if (!deptMap[key]) {
-        deptMap[key] = { departmentName: dept.departmentName, count: 0, finalized: 0 };
-      }
-      deptMap[key].count += 1;
-      if (ev.status === "FINALIZED") deptMap[key].finalized += 1;
-    }
-    const byDepartment = Object.values(deptMap).sort(
-      (a, b) => b.count - a.count,
-    );
+    // Stats calculations
+    const schoolMap: Record<string, { schoolName: string; count: number; finalized: number; totalScore: number }> = {};
+    const deptMap: Record<string, { departmentName: string; schoolName: string; count: number; finalized: number; avgScore: number }> = {};
+    const performers: { evaluationId: string; name: string; dept: string; school: string; score: number }[] = [];
 
-    // ── Recent submissions (last 10 submitted to HOD or beyond) ──────────────
-    const recentSubmissions = evaluations
-      .filter((e) => e.status !== "DRAFT")
-      .sort((a, b) => {
-        const da = new Date(a.submittedToHODAt ?? a.updatedAt ?? 0).getTime();
-        const db = new Date(b.submittedToHODAt ?? b.updatedAt ?? 0).getTime();
-        return db - da;
-      })
-      .slice(0, 10)
-      .map((e) => {
-        const faculty = e.facultyId as { name?: string } | null;
-        const dept = e.departmentId as { departmentName?: string } | null;
-        return {
-          _id: e._id?.toString(),
-          facultyName: faculty?.name ?? "Unknown",
-          departmentName: dept?.departmentName ?? "Unknown",
-          status: e.status,
-          submittedAt: e.submittedToHODAt ?? e.updatedAt,
-        };
+    let overallTotalScore = 0;
+    let finalizedCount = 0;
+
+    evaluations.forEach((ev: any) => {
+      const school = ev.schoolId;
+      const dept = ev.departmentId;
+      if (!school || !dept) return;
+
+      // Calculate Total Score for this evaluation
+      let evalScore = 0;
+      ev.categoriesData?.forEach((cat: any) => {
+        cat.parameters?.forEach((param: any) => {
+          param.entries?.forEach((entry: any) => {
+            entry.fields?.forEach((field: any) => {
+              evalScore += field.marks?.principal || field.marks?.hod || field.marks?.faculty || 0;
+            });
+          });
+        });
       });
+
+      // School Stats
+      const sId = school._id.toString();
+      if (!schoolMap[sId]) schoolMap[sId] = { schoolName: school.schoolName, count: 0, finalized: 0, totalScore: 0 };
+      schoolMap[sId].count++;
+      if (ev.status === "FINALIZED") {
+        schoolMap[sId].finalized++;
+        schoolMap[sId].totalScore += evalScore;
+      }
+
+      // Dept Stats
+      const dId = dept._id.toString();
+      if (!deptMap[dId]) deptMap[dId] = { departmentName: dept.departmentName, schoolName: school.schoolName, count: 0, finalized: 0, avgScore: 0 };
+      deptMap[dId].count++;
+      if (ev.status === "FINALIZED") deptMap[dId].finalized++;
+
+      // Top Performers list
+      if (ev.status === "FINALIZED") {
+        performers.push({
+          evaluationId: ev._id.toString(),
+          name: ev.facultyId?.name || "Unknown",
+          dept: dept.departmentName,
+          school: school.schoolName,
+          score: evalScore
+        });
+        overallTotalScore += evalScore;
+        finalizedCount++;
+      }
+    });
+
+    const bySchool = Object.values(schoolMap).sort((a, b) => b.count - a.count);
+    const byDepartment = Object.values(deptMap).sort((a, b) => b.count - a.count);
+    const topPerformers = performers.sort((a, b) => b.score - a.score).slice(0, 10);
+    const avgScore = finalizedCount > 0 ? (overallTotalScore / finalizedCount).toFixed(1) : 0;
+
+    // Recent submissions
+    const recentSubmissions = evaluations
+      .filter((e: any) => e.status !== "DRAFT")
+      .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
+      .slice(0, 10)
+      .map((e: any) => ({
+        _id: e._id.toString(),
+        facultyName: e.facultyId?.name || "Unknown",
+        departmentName: e.departmentId?.departmentName || "Unknown",
+        status: e.status,
+        submittedAt: e.updatedAt,
+      }));
 
     return NextResponse.json({
       success: true,
       data: {
         academicYear,
         total,
+        finalized: finalizedCount,
+        avgScore,
         byStatus,
+        bySchool,
         byDepartment,
+        topPerformers,
         recentSubmissions,
       },
     });
   } catch (error) {
     console.error("GET /api/evaluations/stats error:", error);
-    return NextResponse.json(
-      { success: false, message: "Failed to fetch stats" },
-      { status: 500 },
-    );
+    return NextResponse.json({ success: false, message: "Failed to fetch stats" }, { status: 500 });
   }
 }

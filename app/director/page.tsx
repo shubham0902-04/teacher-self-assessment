@@ -2,6 +2,26 @@
 
 import { useEffect, useState } from "react";
 import dynamic from "next/dynamic";
+import { 
+  GraduationCap, 
+  Users, 
+  Building2, 
+  CheckCircle2, 
+  TrendingUp, 
+  Clock, 
+  ArrowUpRight, 
+  Search,
+  School,
+  FileText,
+  ChevronRight,
+  Target,
+  Printer,
+  Download
+} from "lucide-react";
+import { useAcademicYear } from "@/app/hooks/useAcademicYear";
+import { useAuth } from "@/app/hooks/useAuth";
+import { toast } from "sonner";
+import Link from "next/link";
 
 const ResponsiveContainer = dynamic(() => import("recharts").then((m) => m.ResponsiveContainer), { ssr: false });
 const BarChart = dynamic(() => import("recharts").then((m) => m.BarChart), { ssr: false });
@@ -9,609 +29,320 @@ const Bar = dynamic(() => import("recharts").then((m) => m.Bar), { ssr: false })
 const XAxis = dynamic(() => import("recharts").then((m) => m.XAxis), { ssr: false });
 const YAxis = dynamic(() => import("recharts").then((m) => m.YAxis), { ssr: false });
 const Tooltip = dynamic(() => import("recharts").then((m) => m.Tooltip), { ssr: false });
-const PieChart = dynamic(() => import("recharts").then((m) => m.PieChart), { ssr: false });
-const Pie = dynamic(() => import("recharts").then((m) => m.Pie), { ssr: false });
 const Cell = dynamic(() => import("recharts").then((m) => m.Cell), { ssr: false });
-const Legend = dynamic(() => import("recharts").then((m) => m.Legend), { ssr: false });
-import {
-  GraduationCap,
-  ClipboardCheck,
-  Clock,
-  CheckCircle2,
-  RotateCcw,
-  Send,
-  FileCheck,
-  AlertCircle,
-  LogOut,
-  BarChart3,
-  CalendarDays,
-  ChevronDown,
-} from "lucide-react";
-import { useAcademicYear } from "@/app/hooks/useAcademicYear";
-import { useAuth } from "@/app/hooks/useAuth";
-import { useRouter } from "next/navigation";
 
-// ─── Types ────────────────────────────────────────────────────────────────────
-
-type EvaluationStats = {
-  academicYear: string;
+type Stats = {
   total: number;
-  byStatus: Record<string, number>;
-  byDepartment: { departmentName: string; count: number; finalized: number }[];
-  recentSubmissions: {
-    _id: string;
-    facultyName: string;
-    departmentName: string;
-    status: string;
-    submittedAt: string;
-  }[];
+  finalized: number;
+  avgScore: number | string;
+  bySchool: { schoolName: string; count: number; finalized: number; totalScore: number }[];
+  topPerformers: { name: string; dept: string; school: string; score: number }[];
+  recentSubmissions: { _id: string; facultyName: string; departmentName: string; status: string; submittedAt: string }[];
 };
 
-// ─── Constants ────────────────────────────────────────────────────────────────
-
-const STATUS_META: Record<
-  string,
-  { label: string; color: string; bg: string; icon: React.ReactNode }
-> = {
-  DRAFT: {
-    label: "Draft",
-    color: "#d97706",
-    bg: "bg-amber-50",
-    icon: <Clock size={14} />,
-  },
-  SUBMITTED_TO_HOD: {
-    label: "Submitted to HOD",
-    color: "#2563eb",
-    bg: "bg-blue-50",
-    icon: <Send size={14} />,
-  },
-  RETURNED_BY_HOD: {
-    label: "Returned by HOD",
-    color: "#ea580c",
-    bg: "bg-orange-50",
-    icon: <RotateCcw size={14} />,
-  },
-  SUBMITTED_TO_PRINCIPAL: {
-    label: "With Principal",
-    color: "#7c3aed",
-    bg: "bg-purple-50",
-    icon: <FileCheck size={14} />,
-  },
-  RETURNED_BY_PRINCIPAL: {
-    label: "Returned by Principal",
-    color: "#dc2626",
-    bg: "bg-red-50",
-    icon: <AlertCircle size={14} />,
-  },
-  FINALIZED: {
-    label: "Finalized",
-    color: "#00a651",
-    bg: "bg-green-50",
-    icon: <CheckCircle2 size={14} />,
-  },
-};
-
-const PIE_COLORS = [
-  "#d97706",
-  "#2563eb",
-  "#ea580c",
-  "#7c3aed",
-  "#dc2626",
-  "#00a651",
-];
-
-// ─── Stat card ────────────────────────────────────────────────────────────────
-
-function StatCard({
-  label,
-  value,
-  sub,
-  color,
-  bg,
-  icon,
-}: {
-  label: string;
-  value: number | string;
-  sub?: string;
-  color: string;
-  bg: string;
-  icon: React.ReactNode;
-}) {
-  return (
-    <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
-      <div
-        className="w-9 h-9 rounded-xl flex items-center justify-center mb-4"
-        style={{ background: bg }}
-      >
-        <span style={{ color }}>{icon}</span>
-      </div>
-      <p className="text-2xl font-bold text-[#111] mb-0.5">{value}</p>
-      <p className="text-[13px] font-medium text-[#111]">{label}</p>
-      {sub && <p className="text-xs text-gray-400 mt-0.5">{sub}</p>}
-    </div>
-  );
-}
-
-// ─── Custom Tooltip ───────────────────────────────────────────────────────────
-
-function CustomBarTooltip({
-  active,
-  payload,
-  label,
-}: {
-  active?: boolean;
-  payload?: { name: string; value: number; color: string }[];
-  label?: string;
-}) {
-  if (!active || !payload?.length) return null;
-  return (
-    <div className="bg-white border border-gray-200 rounded-xl shadow-lg px-4 py-3 text-sm">
-      <p className="font-semibold text-[#111] mb-1 truncate max-w-[160px]">
-        {label}
-      </p>
-      {payload.map((p) => (
-        <p key={p.name} style={{ color: p.color }}>
-          {p.name}: <span className="font-bold">{p.value}</span>
-        </p>
-      ))}
-    </div>
-  );
-}
-
-// ─── Main ─────────────────────────────────────────────────────────────────────
-
-export default function DirectorDashboard() {
-  const router = useRouter();
+export default function DirectorOverview() {
+  const { academicYear, loaded } = useAcademicYear();
   const { userName } = useAuth();
-  const { academicYear, setYear, yearOptions, loaded } = useAcademicYear();
-
-  const [stats, setStats] = useState<EvaluationStats | null>(null);
+  const [stats, setStats] = useState<Stats | null>(null);
   const [loading, setLoading] = useState(true);
-  const [showYearDropdown, setShowYearDropdown] = useState(false);
 
-  const hour = new Date().getHours();
-  const greeting =
-    hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
-
-  // ── Fetch stats ─────────────────────────────────────────────────────────────
   useEffect(() => {
-    // Wait for localStorage preference before fetching
     if (!loaded) return;
-
-    async function load() {
-      setLoading(true);
+    async function fetchStats() {
       try {
-        const res = await fetch(
-          `/api/evaluations/stats?academicYear=${academicYear}`,
-        );
+        setLoading(true);
+        const res = await fetch(`/api/evaluations/stats?academicYear=${academicYear}`);
         const json = await res.json();
         if (json.success) setStats(json.data);
-      } catch {
-        /* silent */
+      } catch (err) {
+        toast.error("Failed to load analytics");
       } finally {
         setLoading(false);
       }
     }
-    load();
+    fetchStats();
   }, [academicYear, loaded]);
 
-  async function handleLogout() {
-    await fetch("/api/auth/logout", { method: "POST" });
-    localStorage.removeItem("role");
-    localStorage.removeItem("user");
-    router.push("/login");
-  }
-
-  // ── Derived data ────────────────────────────────────────────────────────────
-  const finalized = stats?.byStatus?.FINALIZED ?? 0;
-  const submitted =
-    (stats?.byStatus?.SUBMITTED_TO_HOD ?? 0) +
-    (stats?.byStatus?.SUBMITTED_TO_PRINCIPAL ?? 0);
-  const total = stats?.total ?? 0;
-  const completionPct =
-    total > 0 ? Math.round((finalized / total) * 100) : 0;
-
-  // Pie chart data
-  const pieData = Object.entries(stats?.byStatus ?? {})
-    .filter(([, v]) => v > 0)
-    .map(([key, value]) => ({
-      name: STATUS_META[key]?.label ?? key,
-      value,
-    }));
-
-  // Bar chart data (top 8 departments)
-  const barData = (stats?.byDepartment ?? []).slice(0, 8).map((d) => ({
-    name:
-      d.departmentName.length > 12
-        ? d.departmentName.slice(0, 12) + "…"
-        : d.departmentName,
-    Total: d.count,
-    Finalized: d.finalized,
+  const barData = (stats?.bySchool || []).map(s => ({
+    name: s.schoolName.split(" ").map(w => w[0]).join(""), 
+    fullName: s.schoolName,
+    Total: s.count,
+    Finalized: s.finalized
   }));
 
-  // ── Skeleton ────────────────────────────────────────────────────────────────
-  const Skeleton = ({ w = "w-16", h = "h-7" }: { w?: string; h?: string }) => (
-    <span className={`inline-block ${w} ${h} rounded-lg bg-gray-100 animate-pulse`} />
-  );
+  const handlePrint = () => {
+    window.open(`/director/reports/print?academicYear=${academicYear}`, '_blank');
+  };
 
   return (
-    <div className="min-h-screen bg-[#f8f8f8] text-[#111]">
-      {/* ── TOP NAV ───────────────────────────────────────────────────────── */}
-      <header
-        className="sticky top-0 z-30 flex items-center justify-between px-6 py-4 border-b border-white/[0.06]"
-        style={{ background: "#0f0f0f" }}
-      >
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-xl bg-[#ca1f23] flex items-center justify-center shadow-lg shadow-red-900/40">
-            <GraduationCap size={16} className="text-white" />
-          </div>
-          <div>
-            <p className="text-[13px] font-semibold text-white leading-tight">
-              Teacher Assessment
-            </p>
-            <p className="text-[11px] text-white/40 leading-tight">
-              Chairman Portal
-            </p>
-          </div>
+    <main className="flex-1 overflow-y-auto p-4 lg:p-6 space-y-6 bg-[#f8fafc] print:bg-white print:p-0">
+      <style jsx global>{`
+        @media print {
+          aside, header, button, .no-print {
+            display: none !important;
+          }
+          main {
+            padding: 0 !important;
+            margin: 0 !important;
+            width: 100% !important;
+          }
+          .print-full-width {
+            width: 100% !important;
+            grid-column: span 12 / span 12 !important;
+          }
+          .card {
+            border: 1px solid #eee !important;
+            box-shadow: none !important;
+          }
+        }
+      `}</style>
+
+      {/* Header & Welcome */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h2 className="text-[11px] font-black text-emerald-600 uppercase tracking-[0.2em] mb-0.5">System Overview</h2>
+          <h1 className="text-2xl font-black text-slate-800 tracking-tight">Institutional Analytics</h1>
+          <p className="text-[13px] text-slate-500 font-medium">Performance tracking for <span className="text-[#00a859] font-bold">{academicYear}</span></p>
         </div>
+        
         <div className="flex items-center gap-3">
-          {/* Year picker */}
-          <div className="relative">
-            <button
-              onClick={() => setShowYearDropdown((p) => !p)}
-              className="flex items-center gap-2 px-3 py-1.5 rounded-xl border border-white/10 text-white/70 hover:text-white text-xs font-medium transition"
-            >
-              <CalendarDays size={13} />
-              {academicYear}
-              <ChevronDown size={12} />
-            </button>
-            {showYearDropdown && (
-              <div className="absolute right-0 top-full mt-1 bg-white border border-gray-200 rounded-xl shadow-xl overflow-hidden z-50 min-w-[120px]">
-                {yearOptions.map((y) => (
-                  <button
-                    key={y}
-                    onClick={() => {
-                      setYear(y);
-                      setShowYearDropdown(false);
-                    }}
-                    className={`w-full text-left px-4 py-2.5 text-sm transition hover:bg-gray-50 ${
-                      y === academicYear
-                        ? "text-[#ca1f23] font-semibold"
-                        : "text-[#111]"
-                    }`}
-                  >
-                    {y}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-          <button
-            onClick={handleLogout}
-            title="Sign out"
-            className="w-8 h-8 rounded-xl flex items-center justify-center text-white/30 hover:text-white hover:bg-red-500/20 border border-transparent hover:border-red-500/30 transition-all"
+           <button 
+            onClick={handlePrint}
+            className="no-print hidden sm:flex items-center gap-2 px-4 py-2 rounded-xl bg-white border border-slate-200 text-[12px] font-bold text-slate-600 hover:bg-slate-50 transition-all shadow-sm"
           >
-            <LogOut size={15} />
+            <Printer size={16} />
+            Generate PDF
           </button>
-        </div>
-      </header>
-
-      <main className="p-6 space-y-6 max-w-7xl mx-auto">
-        {/* ── GREETING BANNER ──────────────────────────────────────────────── */}
-        <div
-          className="rounded-2xl p-6 relative overflow-hidden"
-          style={{
-            background:
-              "linear-gradient(135deg, #0f0f0f 0%, #1c0405 60%, #2d0b0c 100%)",
-          }}
-        >
-          <div
-            style={{
-              position: "absolute",
-              right: -30,
-              top: -30,
-              width: 160,
-              height: 160,
-              borderRadius: "50%",
-              background: "rgba(202,31,35,0.15)",
-            }}
-          />
-          <div
-            style={{
-              position: "absolute",
-              right: 60,
-              bottom: -50,
-              width: 110,
-              height: 110,
-              borderRadius: "50%",
-              background: "rgba(202,31,35,0.08)",
-            }}
-          />
-
-          <div className="relative z-10 flex items-center justify-between gap-4 flex-wrap">
-            <div>
-              <p className="text-white/40 text-xs mb-1">{greeting}</p>
-              <h1 className="text-xl font-semibold text-white mb-1">
-                {userName || "Chairman"} 👋
-              </h1>
-              <p className="text-white/30 text-xs">
-                Institution-wide Analytics —{" "}
-                <span className="text-white/50 font-medium">{academicYear}</span>
-              </p>
-            </div>
-
-            {/* Completion ring */}
-            <div className="hidden sm:flex flex-col items-end gap-2 shrink-0">
-              <div className="flex items-center gap-2">
-                <span className="text-white/40 text-xs">Completion Rate</span>
-                <span className="text-white text-sm font-semibold">
-                  {loading ? "—" : `${completionPct}%`}
-                </span>
-              </div>
-              <div className="w-36 h-1.5 rounded-full bg-white/10 overflow-hidden">
-                <div
-                  className="h-full rounded-full transition-all duration-1000"
-                  style={{
-                    width: loading ? "0%" : `${completionPct}%`,
-                    background:
-                      completionPct === 100
-                        ? "#00a651"
-                        : "linear-gradient(90deg,#ca1f23,#ff5555)",
-                  }}
-                />
-              </div>
-              <span className="text-white/25 text-xs">
-                {finalized} of {total} finalized
-              </span>
+          
+          <div className="flex items-center gap-3 bg-white p-1.5 rounded-xl border border-slate-200 shadow-sm">
+            <div className="px-3 py-1 text-right">
+              <p className="text-[9px] font-black text-slate-400 uppercase tracking-wider">Session</p>
+              <p className="text-[12px] font-bold text-slate-700 leading-none">{academicYear}</p>
             </div>
           </div>
         </div>
+      </div>
 
-        {/* ── STAT CARDS ───────────────────────────────────────────────────── */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          <StatCard
-            label="Total Evaluations"
-            value={loading ? "—" : total}
-            sub={`Academic year ${academicYear}`}
-            color="#ca1f23"
-            bg="rgba(202,31,35,0.08)"
-            icon={<ClipboardCheck size={16} />}
-          />
-          <StatCard
-            label="Finalized"
-            value={loading ? "—" : finalized}
-            sub={`${completionPct}% completion`}
-            color="#00a651"
-            bg="rgba(0,166,81,0.08)"
-            icon={<CheckCircle2 size={16} />}
-          />
-          <StatCard
-            label="In Review"
-            value={loading ? "—" : submitted}
-            sub="HOD + Principal"
-            color="#2563eb"
-            bg="rgba(37,99,235,0.08)"
-            icon={<Send size={16} />}
-          />
-          <StatCard
-            label="Departments Active"
-            value={loading ? "—" : stats?.byDepartment?.length ?? 0}
-            sub="With submissions"
-            color="#7c3aed"
-            bg="rgba(124,58,237,0.08)"
-            icon={<BarChart3 size={16} />}
-          />
-        </div>
+      {/* Primary Stats Grid */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <StatCard 
+          label="Total Evaluations" 
+          value={loading ? "..." : stats?.total || 0} 
+          icon={FileText} 
+          trend="+12%" 
+          color="blue"
+        />
+        <StatCard 
+          label="Finalized Forms" 
+          value={loading ? "..." : stats?.finalized || 0} 
+          icon={CheckCircle2} 
+          trend={`${stats ? Math.round((stats.finalized/(stats.total || 1))*100) : 0}% Rate`} 
+          color="emerald"
+        />
+        <StatCard 
+          label="Avg Score" 
+          value={loading ? "..." : stats?.avgScore || 0} 
+          icon={TrendingUp} 
+          trend="Top 5%" 
+          color="amber"
+        />
+        <StatCard 
+          label="Active Schools" 
+          value={loading ? "..." : stats?.bySchool?.length || 0} 
+          icon={School} 
+          trend="All Active" 
+          color="indigo"
+        />
+      </div>
 
-        {/* ── CHARTS ROW ───────────────────────────────────────────────────── */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Bar chart — evaluations by department */}
-          <div className="lg:col-span-2 rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
-            <h3 className="font-semibold text-[#111] text-[14px] mb-1">
-              Evaluations by Department
-            </h3>
-            <p className="text-xs text-gray-400 mb-5">
-              Total submitted vs finalized per department
-            </p>
+      {/* Main Charts & Leaderboard Row */}
+      <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
+        
+        {/* School Performance Chart */}
+        <div className="xl:col-span-8 bg-white rounded-2xl border border-slate-200 p-6 shadow-sm card">
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h3 className="text-md font-black text-slate-800">School Performance</h3>
+              <p className="text-[12px] text-slate-500 font-medium">Submission vs finalization comparison</p>
+            </div>
+          <div className="flex items-center gap-3 text-[10px] font-bold uppercase tracking-wider">
+            <div className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-slate-300" /> <span className="text-slate-600">Total</span></div>
+            <div className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-emerald-500" /> <span className="text-slate-600">Finalized</span></div>
+          </div>
+          </div>
+          
+          <div className="h-[250px] w-full">
             {loading ? (
-              <div className="h-52 flex items-center justify-center">
-                <Skeleton w="w-32" h="h-6" />
-              </div>
-            ) : barData.length === 0 ? (
-              <div className="h-52 flex items-center justify-center text-gray-400 text-sm">
-                No evaluation data yet
-              </div>
+              <div className="h-full w-full bg-slate-50 rounded-xl animate-pulse" />
             ) : (
-              <ResponsiveContainer width="100%" height={220}>
-                <BarChart
-                  data={barData}
-                  margin={{ top: 0, right: 0, left: -20, bottom: 0 }}
-                >
-                  <XAxis
-                    dataKey="name"
-                    tick={{ fontSize: 11, fill: "#9ca3af" }}
-                    axisLine={false}
-                    tickLine={false}
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={barData} margin={{ top: 0, right: 0, left: -25, bottom: 0 }}>
+                  <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 700, fill: '#94a3b8' }} />
+                  <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 700, fill: '#94a3b8' }} />
+                  <Tooltip 
+                    cursor={{ fill: '#f8fafc' }}
+                    content={({ active, payload }) => {
+                      if (active && payload && payload.length) {
+                        return (
+                          <div className="bg-slate-900 text-white p-3 rounded-xl shadow-xl border border-white/10">
+                            <p className="text-[9px] font-bold text-emerald-400 uppercase mb-0.5">{payload[0].payload.fullName}</p>
+                            <p className="text-[12px] font-black">{payload[0].value} Submissions</p>
+                            <p className="text-[11px] font-bold text-emerald-400">{payload[1].value} Finalized</p>
+                          </div>
+                        );
+                      }
+                      return null;
+                    }}
                   />
-                  <YAxis
-                    tick={{ fontSize: 11, fill: "#9ca3af" }}
-                    axisLine={false}
-                    tickLine={false}
-                    allowDecimals={false}
-                  />
-                  <Tooltip content={<CustomBarTooltip />} />
-                  <Legend
-                    iconType="circle"
-                    iconSize={8}
-                    wrapperStyle={{ fontSize: 12 }}
-                  />
-                  <Bar
-                    dataKey="Total"
-                    fill="#ca1f23"
-                    radius={[4, 4, 0, 0]}
-                    maxBarSize={28}
-                  />
-                  <Bar
-                    dataKey="Finalized"
-                    fill="#00a651"
-                    radius={[4, 4, 0, 0]}
-                    maxBarSize={28}
-                  />
+                  <Bar dataKey="Total" fill="#e2e8f0" radius={[4, 4, 0, 0]} maxBarSize={32} />
+                  <Bar dataKey="Finalized" fill="#10b981" radius={[4, 4, 0, 0]} maxBarSize={32} />
                 </BarChart>
               </ResponsiveContainer>
             )}
           </div>
+        </div>
 
-          {/* Pie chart — status breakdown */}
-          <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
-            <h3 className="font-semibold text-[#111] text-[14px] mb-1">
-              Status Distribution
-            </h3>
-            <p className="text-xs text-gray-400 mb-4">All evaluations</p>
+        {/* Top Performers Leaderboard */}
+        <div className="xl:col-span-4 bg-white rounded-2xl border border-slate-200 p-6 shadow-sm flex flex-col card">
+          <div className="flex items-center justify-between mb-5">
+            <h3 className="text-md font-black text-slate-800">Top Performers</h3>
+            <div className="w-7 h-7 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center">
+              <Target size={16} />
+            </div>
+          </div>
+
+          <div className="space-y-3 flex-1">
             {loading ? (
-              <div className="h-52 flex items-center justify-center">
-                <Skeleton w="w-24" h="h-6" />
-              </div>
-            ) : pieData.length === 0 ? (
-              <div className="h-52 flex items-center justify-center text-gray-400 text-sm">
-                No data
+              [1,2,3,4,5].map(i => <div key={i} className="h-12 bg-slate-50 rounded-xl animate-pulse" />)
+            ) : (stats?.topPerformers || []).length === 0 ? (
+              <div className="h-full flex flex-col items-center justify-center text-center p-6">
+                <Users size={24} className="text-slate-200 mb-2" />
+                <p className="text-slate-400 text-[12px] font-bold">No finalized evaluations</p>
               </div>
             ) : (
-              <ResponsiveContainer width="100%" height={220}>
-                <PieChart>
-                  <Pie
-                    data={pieData}
-                    cx="50%"
-                    cy="45%"
-                    innerRadius={52}
-                    outerRadius={80}
-                    paddingAngle={3}
-                    dataKey="value"
-                  >
-                    {pieData.map((_, index) => (
-                      <Cell
-                        key={`cell-${index}`}
-                        fill={PIE_COLORS[index % PIE_COLORS.length]}
-                      />
-                    ))}
-                  </Pie>
-                  <Tooltip
-                    contentStyle={{
-                      borderRadius: 12,
-                      border: "1px solid #e5e7eb",
-                      fontSize: 12,
-                    }}
-                  />
-                  <Legend
-                    iconType="circle"
-                    iconSize={8}
-                    wrapperStyle={{ fontSize: 11 }}
-                  />
-                </PieChart>
-              </ResponsiveContainer>
+              stats?.topPerformers.map((p, idx) => (
+                <div key={idx} className="flex items-center justify-between p-2.5 rounded-xl border border-transparent hover:border-slate-100 hover:bg-slate-50 transition-all group">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-lg bg-slate-900 text-white flex items-center justify-center text-[10px] font-black group-hover:bg-emerald-500 transition-colors">
+                      {idx + 1}
+                    </div>
+                    <div>
+                      <p className="text-[12px] font-bold text-slate-800 leading-tight">{p.name}</p>
+                      <p className="text-[9px] font-bold text-slate-400 uppercase tracking-tight">{p.dept}</p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-[13px] font-black text-[#00a859] leading-none">{p.score}</p>
+                    <p className="text-[8px] font-bold text-slate-400 uppercase mt-0.5">Pts</p>
+                  </div>
+                </div>
+              ))
             )}
           </div>
+          
+          <Link href="/director/faculty" className="w-full mt-5 py-2.5 rounded-lg border border-slate-200 text-[11px] font-black text-slate-600 hover:bg-slate-50 hover:text-emerald-600 transition-all uppercase tracking-widest text-center">
+            View Ranking System
+          </Link>
         </div>
+      </div>
 
-        {/* ── STATUS BREAKDOWN CARDS ───────────────────────────────────────── */}
-        <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
-          <h3 className="font-semibold text-[#111] text-[14px] mb-4">
-            Status Breakdown
-          </h3>
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-            {Object.entries(STATUS_META).map(([key, meta]) => {
-              const count = stats?.byStatus?.[key] ?? 0;
-              return (
-                <div
-                  key={key}
-                  className={`flex flex-col gap-2 p-3 rounded-xl ${meta.bg}`}
-                >
-                  <span style={{ color: meta.color }}>{meta.icon}</span>
-                  <p
-                    className="text-xl font-bold"
-                    style={{ color: meta.color }}
-                  >
-                    {loading ? "—" : count}
-                  </p>
-                  <p className="text-[11px] text-gray-500 leading-tight">
-                    {meta.label}
-                  </p>
-                </div>
-              );
-            })}
+      {/* Bottom Section: Recent Submissions */}
+      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden card">
+        <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
+          <div>
+            <h3 className="text-md font-black text-slate-800">Recent Activity</h3>
+            <p className="text-[12px] text-slate-500 font-medium">Real-time institutional submission feed</p>
           </div>
+          <Link href="/director/reports" className="p-2 rounded-lg border border-slate-200 text-slate-400 hover:text-[#00a859] hover:bg-emerald-50 transition-all no-print">
+            <Search size={16} />
+          </Link>
         </div>
-
-        {/* ── RECENT SUBMISSIONS ───────────────────────────────────────────── */}
-        <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
-          <h3 className="font-semibold text-[#111] text-[14px] mb-4">
-            Recent Submissions
-          </h3>
-          {loading ? (
-            <div className="space-y-2">
-              {[1, 2, 3].map((i) => (
-                <div
-                  key={i}
-                  className="h-12 rounded-xl bg-gray-100 animate-pulse"
-                />
-              ))}
-            </div>
-          ) : (stats?.recentSubmissions ?? []).length === 0 ? (
-            <div className="py-8 text-center text-gray-400 text-sm">
-              No submissions yet for {academicYear}
-            </div>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="text-xs text-gray-400 border-b border-gray-100">
-                    <th className="text-left font-medium pb-3 pr-4">Faculty</th>
-                    <th className="text-left font-medium pb-3 pr-4">
-                      Department
-                    </th>
-                    <th className="text-left font-medium pb-3 pr-4">Status</th>
-                    <th className="text-left font-medium pb-3">Submitted</th>
+        
+        <div className="overflow-x-auto">
+          <table className="min-w-full text-left">
+            <thead className="bg-slate-50 border-b border-slate-100">
+              <tr>
+                <th className="px-6 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Faculty</th>
+                <th className="px-6 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Dept</th>
+                <th className="px-6 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Status</th>
+                <th className="px-6 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Date</th>
+                <th className="px-6 py-3 text-right no-print"></th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {loading ? (
+                [1,2,3].map(i => (
+                  <tr key={i}><td colSpan={5} className="px-6 py-3"><div className="h-10 bg-slate-50 rounded-lg animate-pulse" /></td></tr>
+                ))
+              ) : (stats?.recentSubmissions || []).length === 0 ? (
+                <tr><td colSpan={5} className="px-6 py-12 text-center text-slate-400 font-bold">No activity</td></tr>
+              ) : (
+                stats?.recentSubmissions.map((s) => (
+                  <tr key={s._id} className="group hover:bg-slate-50 transition-colors">
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-2.5">
+                        <div className="w-7 h-7 rounded bg-emerald-50 text-emerald-600 flex items-center justify-center text-[10px] font-black border border-emerald-100">
+                          {s.facultyName.charAt(0)}
+                        </div>
+                        <p className="text-[13px] font-bold text-slate-700">{s.facultyName}</p>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 text-[12px] font-medium text-slate-500">{s.departmentName}</td>
+                    <td className="px-6 py-4">
+                      <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[9px] font-black uppercase border ${
+                        s.status === 'FINALIZED' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' :
+                        s.status.includes('SUBMITTED') ? 'bg-blue-50 text-blue-600 border-blue-100' :
+                        'bg-amber-50 text-amber-600 border-amber-100'
+                      }`}>
+                        {s.status.replace(/_/g, ' ')}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 text-[12px] font-medium text-slate-400">{new Date(s.submittedAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}</td>
+                    <td className="px-6 py-4 text-right no-print">
+                      <Link href={`/director/reports`} className="p-1.5 rounded-md bg-slate-100 text-slate-400 hover:bg-[#00a859] hover:text-white transition-all inline-block">
+                        <ChevronRight size={14} />
+                      </Link>
+                    </td>
                   </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-50">
-                  {(stats?.recentSubmissions ?? []).map((submission) => {
-                    const meta =
-                      STATUS_META[submission.status] ??
-                      STATUS_META["DRAFT"];
-                    return (
-                      <tr key={submission._id} className="hover:bg-gray-50/50">
-                        <td className="py-3 pr-4 font-medium text-[#111]">
-                          {submission.facultyName}
-                        </td>
-                        <td className="py-3 pr-4 text-gray-500">
-                          {submission.departmentName}
-                        </td>
-                        <td className="py-3 pr-4">
-                          <span
-                            className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium ${meta.bg}`}
-                            style={{ color: meta.color }}
-                          >
-                            {meta.icon}
-                            {meta.label}
-                          </span>
-                        </td>
-                        <td className="py-3 text-gray-400 text-xs">
-                          {submission.submittedAt
-                            ? new Date(submission.submittedAt).toLocaleDateString(
-                                "en-IN",
-                                { day: "2-digit", month: "short", year: "numeric" },
-                              )
-                            : "—"}
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          )}
+                ))
+              )}
+            </tbody>
+          </table>
         </div>
-      </main>
+        
+        <div className="px-6 py-3 bg-slate-50 border-t border-slate-100 flex items-center justify-between no-print">
+          <p className="text-[9px] font-bold text-slate-400 uppercase">Auto-sync active</p>
+          <Link href="/director/reports" className="text-[9px] font-black text-emerald-600 uppercase tracking-widest hover:underline">View Analytics Feed →</Link>
+        </div>
+      </div>
+
+    </main>
+  );
+}
+
+function StatCard({ label, value, icon: Icon, trend, color }: any) {
+  const colors: any = {
+    blue: "bg-blue-50 text-blue-600 border-blue-100",
+    emerald: "bg-emerald-50 text-emerald-600 border-emerald-100",
+    amber: "bg-amber-50 text-amber-600 border-amber-100",
+    indigo: "bg-indigo-50 text-indigo-600 border-indigo-100",
+  };
+
+  return (
+    <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm transition-all hover:shadow-md hover:-translate-y-0.5 group card">
+      <div className="flex items-center justify-between mb-3">
+        <div className={`w-9 h-9 rounded-xl flex items-center justify-center border ${colors[color]}`}>
+          <Icon size={18} />
+        </div>
+        <div className="px-1.5 py-0.5 rounded-md bg-slate-50 text-[8px] font-black text-slate-400 flex items-center gap-0.5 group-hover:bg-emerald-50 group-hover:text-emerald-600 transition-colors">
+          <ArrowUpRight size={8} />
+          {trend}
+        </div>
+      </div>
+      <div>
+        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">{label}</p>
+        <h3 className="text-xl font-black text-slate-800 tracking-tight">{value}</h3>
+      </div>
     </div>
   );
 }

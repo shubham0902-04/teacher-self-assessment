@@ -41,6 +41,8 @@ export function useAuth() {
     mounted,
     /** Convenience: the user's display name */
     userName: user?.name ?? "",
+    /** Convenience: the user's email */
+    userEmail: user?.email ?? "",
     /** Convenience: the user's role */
     role: user?.role ?? null,
   };
