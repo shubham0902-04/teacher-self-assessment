@@ -364,8 +364,8 @@ export default function ParameterFieldsPage() {
                               {/* Fields table */}
                               {paramFields.length > 0 ? (
                                 <div className="px-6 pb-5">
-                                  <div className="rounded-xl border border-slate-200/60 overflow-hidden bg-slate-50/50">
-                                    <table className="w-full text-left">
+                                  <div className="rounded-xl border border-slate-200/60 overflow-x-auto bg-slate-50/50">
+                                    <table className="min-w-full text-left">
                                       <thead>
                                         <tr className="border-b border-slate-100">
                                           <th className="px-5 py-3 text-[11px] font-bold text-slate-400 uppercase tracking-wider w-12">
